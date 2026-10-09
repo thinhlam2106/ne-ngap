@@ -1502,7 +1502,9 @@ var NN = (function () {
       var r = rain ? nearestRain(rain, sp.lat, sp.lng) : null;
       var rl = r ? stepLevel(r.eff, RAIN_STEPS) : 0;
       var tl = (tide && sp.c === 2) ? stepLevel(tide.now, TIDE_STEPS) : 0;
-      var lvl = Math.max(rl, tl);
+      // Triều cao một mình không đủ để nói "đang ngập": số triều lấy ngoài cửa biển, còn đường phố
+      // có cống ngăn triều, bờ bao. Triều chỉ làm nặng thêm khi đang có mưa; còn lại để camera kiểm chứng.
+      var lvl = rl;
       if (rl && tl) lvl = Math.min(2, lvl + 1);
       lvl = Math.min(2, lvl);
       if (!lvl) return;
@@ -2298,14 +2300,15 @@ if (typeof module !== 'undefined') module.exports = NN;
     if (map.getSource('ai')) map.getSource('ai').setData({ type: 'FeatureCollection', features: list.map(function (d) {
       return { type: 'Feature', properties: { id: d.id, level: d.level }, geometry: { type: 'Point', coordinates: [d.lng, d.lat] } };
     }) });
-    syncMine(); renderAI(); updateCount(); refreshTraffic(); renderNow();
+    syncMine(); renderAI();
+    if (live.rainRaw || live.sim) computeEst(); else { updateCount(); refreshTraffic(); renderNow(); }
     if (state.result && floodKey() !== lastFloodKey) runRoute(false);
   }
   function renderAI() {
     var box = $('ai-box'), f = ai.feed; if (!f) { box.hidden = true; return; }
     var list = aiFloods(), st = f.stats || {}, upd = (+f.updated_ts || 0) * 1000;
     var stale = Date.now() - upd > 40 * 60000;
-    var modeTxt = { rain: 'đang mưa nên xem tất cả camera', all: 'xem tất cả camera', 'after-rain': 'vừa tạnh mưa, 20 phút xem lại một lần', 'dry-hotspots': 'trời khô, chỉ xem camera ở điểm hay ngập', reports: 'xem camera gần chỗ người đi đường báo', idle: 'chờ lượt xem tiếp theo' }[f.mode] || '';
+    var modeTxt = { rain: 'đang mưa nên xem tất cả camera', all: 'xem tất cả camera', 'after-rain': 'vừa tạnh mưa, 20 phút xem lại một lần', 'dry-hotspots': 'trời khô, chỉ xem camera ở điểm hay ngập', reports: 'xem camera gần chỗ người đi đường báo', tide: 'triều cao, xem camera ở các điểm hay ngập do triều', idle: 'chờ lượt xem tiếp theo' }[f.mode] || '';
     var status = upd ? (st.classified ? 'AI xem ' + st.classified + ' ảnh camera lúc ' + hhmm(upd) : 'Cập nhật lúc ' + hhmm(upd)) + (modeTxt ? ' (' + modeTxt + ')' : '') + '. Tổng ' + (f.cameras_total || 0) + ' camera.' : '';
     if (!upd) status = 'Bộ quét AI chưa chạy lần nào.';
     else if (stale) status = 'Chưa có lượt xem camera mới từ ' + hhmm(upd) + '. Kết quả có thể đã cũ.';
@@ -2922,7 +2925,7 @@ if (typeof module !== 'undefined') module.exports = NN;
       live.rain = live.rainRaw ? NN.parseRain(live.rainRaw, now) : null;
       live.tide = live.tideRaw ? NN.parseTide(live.tideRaw, now) : null;
     }
-    live.est = NN.estimate(G, live.rain, live.tide);
+    live.est = NN.estimate(G, live.rain, live.tide).filter(function (e) { return live.sim || !camSaysDry(e.spot); });
     if (map.getSource('est')) {
       map.getSource('est').setData({ type: 'FeatureCollection', features: live.est.map(function (e) { return { type: 'Feature', properties: { id: e.id, level: e.level }, geometry: { type: 'Point', coordinates: [e.lng, e.lat] } }; }) });
       map.getSource('rainheat').setData({ type: 'FeatureCollection', features: (live.rain || []).filter(function (r) { return r.ok && r.now >= 0.3; }).map(function (r) { return { type: 'Feature', properties: { mmh: r.now }, geometry: { type: 'Point', coordinates: [r.lng, r.lat] } }; }) });
@@ -2930,6 +2933,13 @@ if (typeof module !== 'undefined') module.exports = NN;
     renderNow(); updateCount(); refreshTraffic(); updateRainLegend(); renderCamWall();
     if (state.result && floodKey() !== lastFloodKey) runRoute(false);
   }
+  // Camera gần điểm này vừa được AI xem (trong 30 phút) và thấy đường khô: bỏ ước tính, tin camera.
+  function camSaysDry(sp) {
+    var f = ai.feed; if (!f || !Array.isArray(f.dry) || !sp || !sp.cams || !sp.cams.length) return false;
+    if (Date.now() / 1000 - (+f.updated_ts || 0) > 30 * 60) return false;
+    return sp.cams.some(function (c) { return f.dry.indexOf(String(c.id)) >= 0; });
+  }
+  function tideSpots() { return G && G.spots ? G.spots.filter(function (sp) { return sp.c === 2; }).length : 0; }
   function hhmm(ms) { var d = new Date(ms); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
   function num(x, k) { return x.toFixed(k == null ? 0 : k).replace('.', ','); }
   // phân cấp cường độ mưa theo giờ (WMO): nhỏ < 2,5; vừa 2,5–10; to 10–50; rất to > 50 mm/giờ
@@ -2962,10 +2972,13 @@ if (typeof module !== 'undefined') module.exports = NN;
     if (nAi && !live.sim) { title.textContent = 'Camera thấy ' + nAi + ' chỗ đang ngập' + (est.length ? ', thêm ' + est.length + ' điểm có nguy cơ' : ''); dot.className = 'now-dot flood'; }
     else if (est.length) title.textContent = pre + est.length + ' điểm có nguy cơ đang ngập';
     else if (maxNow >= 0.3) title.textContent = pre + 'Đang ' + rainWord(maxNow) + ', chưa tới mức gây ngập';
+    else if (live.tide && live.tide.now >= NN.TIDE_STEPS[0]) title.textContent = pre + 'Không mưa, triều đang lên cao';
     else title.textContent = pre + 'Không mưa, chưa có dấu hiệu ngập';
     var parts = [];
     if (wet.length) parts.push('Mưa vừa trở lên ở ' + uniq(wet).join(', ') + '.');
     if (!live.sim && soon.length) parts.push('Một giờ tới có thể mưa to ở ' + uniq(soon).join(', ') + '.');
+    if (!live.sim && live.tide && live.tide.now >= NN.TIDE_STEPS[0])
+      parts.push('Triều ngoài cửa biển đang cao, ' + tideSpots() + ' điểm hay ngập do triều ven sông có thể có nước. AI đang xem camera ở các điểm này; chỗ nào thấy ngập thật sẽ hiện ở mục AI phía trên.');
     if (live.sim) parts.push('Số liệu giả lập, không phải thời tiết thật. Cơn mưa đặt ở tâm bản đồ.');
     else parts.push('Cập nhật ' + hhmm(live.rainAt) + ', tự làm mới mỗi 10 phút.');
     sub.textContent = parts.join(' ');
@@ -2973,7 +2986,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     facts.innerHTML =
       '<div class="fact"><b>' + num(maxNow) + ' mm/giờ</b><span>mưa lớn nhất lúc này</span></div>' +
       '<div class="fact"><b>' + num(max1h) + ' mm</b><span>mưa 1 giờ qua, nơi nhiều nhất</span></div>' +
-      '<div class="fact"><b>' + (t ? num(t.now, 2) + ' m' : '—') + '</b><span>' + (t ? (t.peak != null ? 'mực triều, đỉnh ' + num(t.peak, 2) + ' m lúc ' + hhmm(t.peakT) : 'mực triều') : 'chưa có số liệu triều') + '</span></div>';
+      '<div class="fact"><b>' + (t ? num(t.now, 2) + ' m' : '—') + '</b><span>' + (t ? (t.peak != null ? 'triều ngoài cửa biển, đỉnh ' + num(t.peak, 2) + ' m lúc ' + hhmm(t.peakT) : 'triều ngoài cửa biển') : 'chưa có số liệu triều') + '</span></div>';
     var sum = [0, 0, 0, 0, 0]; est.forEach(function (e) { sum[e.level]++; });
     $('est-summary').hidden = !est.length;
     $('est-summary').innerHTML = [1, 2, 3, 4].map(function (l) { return '<div class="sum" style="--c:' + lvColor(l) + '"><b>' + sum[l] + '</b><span>' + esc(LEVELS[l].short) + '</span></div>'; }).join('');
