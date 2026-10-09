@@ -1,1 +1,1 @@
-{"updated": null, "updated_ts": 0, "mode": "idle", "detections": [], "stats": {}, "cameras_total": 0}
+{"updated":"2026-10-09T09:34:00+07:00","updated_ts":1791513240,"mode":"all","model":"claude-haiku-5-5","weather":{"rain_1h":0.5,"tide":1.2},"stats":{"targets":795,"images":673,"failed":122,"frozen":0,"placeholder":0,"classified":673,"unusable":1,"tokens_in":259413,"tokens_out":41738,"cost_usd":0.04681,"stopped":""},"cameras_total":795,"spend_today_usd":0.04681,"budget_usd":1.5,"detections":[]}
