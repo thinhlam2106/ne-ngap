@@ -2,9 +2,10 @@
 Né Ngập – AI xem camera giao thông TP.HCM để phát hiện ngập.
 
 Mỗi lần chạy (GitHub Actions gọi 10 phút/lần):
-  1. Xem trời có mưa hoặc triều cao không (Open-Meteo). Đang mưa hoặc triều cao thì
-     xem tất cả camera mỗi lần chạy; trong 2 giờ sau mưa thì 20 phút một lần;
-     trời khô thì chỉ xem camera gần các điểm hay ngập, 3 giờ một lần.
+  1. Xem trời có mưa hoặc triều cao không (Open-Meteo). Đang mưa thì xem tất cả camera
+     mỗi lần chạy; trong 2 giờ sau mưa thì 20 phút một lần; triều cao mà không mưa thì
+     xem camera gần các điểm hay ngập do triều; trời khô thì chỉ xem camera gần các điểm
+     hay ngập, 3 giờ một lần.
   2. Tải ảnh chụp mới của từng camera (hệ thống camera TP.HCM do Notis vận hành).
   3. Gửi ảnh theo lô cho Claude Haiku, nhận lại mức ngập theo bánh xe máy.
   4. Chỉ công bố một chỗ ngập khi AI chắc chắn, hoặc thấy ngập ở 2 lần quét liên tiếp.
@@ -206,7 +207,7 @@ def fetch_image(cam):
 def weather():
     """Lượng mưa lớn nhất trong 1 giờ qua trên lưới TP.HCM và mực triều hiện tại."""
     if MOCK:
-        return {"rain_1h": float(os.environ.get("MOCK_RAIN", "12")), "tide": 1.2}
+        return {"rain_1h": float(os.environ.get("MOCK_RAIN", "12")), "tide": float(os.environ.get("MOCK_TIDE", "1.2"))}
     lats, lons = [], []
     la = 10.65
     while la <= 10.951:
@@ -468,32 +469,38 @@ def main():
 
     cams = load_cameras()
     spots = load_json(SPOTS_FILE, [])
-    hot = set()
+    hot, tide_cams = set(), set()
     for c in cams:
         for s in spots:
             if abs(c["lat"] - s["lat"]) < 0.01 and abs(c["lng"] - s["lng"]) < 0.01 and dist_m(c["lat"], c["lng"], s["lat"], s["lng"]) <= HOT_RADIUS_M:
-                hot.add(c["id"]); break
+                hot.add(c["id"])
+                if s.get("c") == 2:
+                    tide_cams.add(c["id"])
 
     w = weather()
     new_reports = fetch_reports(state, ts)
     if new_reports:
         log(f"Nhận {len(new_reports)} báo cáo mới của người đi đường")
-    wet_now = (w["rain_1h"] or 0) >= 2 or (w["tide"] or 0) >= 1.45
-    if wet_now:
+    raining = (w["rain_1h"] or 0) >= 2
+    tide_high = (w["tide"] or 0) >= 1.45
+    if raining:
+        state["last_rain"] = ts
+    if raining or tide_high:
         state["last_wet"] = ts
-    recently_wet = ts - state.get("last_wet", 0) <= 2 * 3600       # nước còn đọng 2 giờ sau mưa
+    recently_rained = ts - state.get("last_rain", 0) <= 2 * 3600     # nước còn đọng 2 giờ sau mưa
+    full_due = ts - state.get("last_full_scan", 0) >= 19 * 60
 
-    if scan_all or wet_now:
+    if scan_all or raining:
         mode, targets = ("all" if scan_all else "rain"), cams
         state["last_full_scan"] = ts
-    elif recently_wet:
-        # tạnh mưa nhưng nước còn đọng: 20 phút xem lại một lần
-        if ts - state.get("last_full_scan", 0) >= 19 * 60:
-            mode, targets = "after-rain", cams
-            state["last_full_scan"] = ts
-        else:
-            mode, targets = "idle", []
-    elif ts - state.get("last_dry_scan", 0) >= float(os.environ.get("DRY_SCAN_HOURS") or 3) * 3600 - 120:
+    elif recently_rained and full_due:
+        # tạnh mưa nhưng nước còn đọng: 20 phút xem lại toàn bộ một lần
+        mode, targets = "after-rain", cams
+        state["last_full_scan"] = ts
+    elif tide_high:
+        # triều cao mà không mưa: chỉ ngập ở vùng trũng ven sông, xem camera gần các điểm hay ngập do triều
+        mode, targets = "tide", [c for c in cams if c["id"] in tide_cams]
+    elif not recently_rained and ts - state.get("last_dry_scan", 0) >= float(os.environ.get("DRY_SCAN_HOURS") or 3) * 3600 - 120:
         mode, targets = "dry-hotspots", [c for c in cams if c["id"] in hot]
         state["last_dry_scan"] = ts
     else:
@@ -649,6 +656,8 @@ def main():
         "weather": w, "stats": stats, "cameras_total": len(cams),
         "spend_today_usd": state["spend"].get(today, 0.0), "budget_usd": budget,
         "detections": detections,
+        # camera AI vừa xem lượt này và thấy đường khô: bản đồ dùng để bỏ ước tính ngập ở gần đó
+        "dry": sorted(cid for cid, r in fresh.items() if r["usable"] and r["level"] == 0 and r["conf"] >= 0.6),
         "reports": [{k: r[k] for k in ("id", "status", "cam_name", "cam_dist", "level_cam", "crowd", "at") if k in r}
                     for r in sorted(reps.values(), key=lambda r: -r["at"]) if ts - r["at"] <= 3 * 3600][:300],
     }
