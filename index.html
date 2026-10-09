@@ -450,8 +450,8 @@ button { cursor: pointer; }
       <div id="items" class="items"></div>
       <div class="layer-toggles">
         <input type="checkbox" id="lyr-rain" checked hidden>
-        <label class="check"><input type="checkbox" id="lyr-radar"><span>Ảnh radar mưa (RainViewer)</span></label>
-        <div class="muted" id="radar-note" style="font-size:12px;margin:-2px 0 6px 28px;line-height:1.45">Radar ở TP.HCM hay báo nhiễu, nhất là ban đêm. Lớp này tự bật khi camera xác nhận đang mưa thật.</div>
+        <label class="check" hidden><input type="checkbox" id="lyr-radar"><span>Ảnh radar mưa (RainViewer)</span></label>
+        <div class="muted" id="radar-note" hidden style="font-size:12px;margin:-2px 0 6px 28px;line-height:1.45">Radar ở TP.HCM hay báo nhiễu, nhất là ban đêm. Lớp này tự bật khi camera xác nhận đang mưa thật.</div>
         <a class="src" href="https://giaothong.hochiminhcity.gov.vn/" target="_blank" rel="noopener">Xem camera giao thông trực tiếp của TP.HCM ↗</a>
         <label class="check" id="lyr-tt-row" hidden><input type="checkbox" id="lyr-tt"><span>Kẹt xe trực tiếp (TomTom)</span></label>
         <div class="muted" id="tt-lg" hidden style="font-size:12px;margin:-2px 0 6px 28px;line-height:1.5"><span style="color:#2fa84f">■</span> xe chạy bình thường · <span style="color:#f5a623">■</span> chậm · <span style="color:#e2332b">■</span> rất chậm · <span style="color:#8b1a1a">■</span> gần như đứng yên. Đo từ tốc độ xe thật, cập nhật vài phút một lần.</div>
@@ -459,7 +459,7 @@ button { cursor: pointer; }
       <details class="sim" id="why">
         <summary>Bản đồ dựa vào đâu để báo ngập?</summary>
         <div class="sim-body">
-          <div><b>Mưa:</b> radar thời tiết (RainViewer) và mô hình dự báo (Open-Meteo) đều có thể sai ở TP.HCM: radar hay báo nhiễu ban đêm, mô hình hay lệch chỗ, lệch giờ. Vì vậy khi một trong hai báo mưa, máy chủ xem khoảng 12 camera ngay vùng đó và nhờ AI nhìn xem có đang mưa thật không. Chỉ khi camera xác nhận, bản đồ mới hiện vùng mưa trên radar và AI mới xem toàn bộ camera để tìm chỗ ngập.</div>
+          <div><b>Mưa:</b> bản đồ chỉ hiện mưa mà camera thấy (vòng xanh quanh camera). Radar thời tiết (RainViewer) và mô hình dự báo (Open-Meteo) đều có thể sai ở TP.HCM: radar miễn phí hay báo nhiễu, nhất là ban đêm; mô hình hay lệch chỗ, lệch giờ. Hai nguồn này chỉ làm chuông báo: khi một trong hai báo mưa, máy chủ xem khoảng 12 camera ngay vùng đó và nhờ AI nhìn xem có đang mưa thật không. Camera xác nhận thì AI mới xem toàn bộ camera để tìm chỗ ngập.</div>
           <div><b>AI xem camera:</b> khoảng 15 phút một lần. Đang mưa (đã xác nhận) thì xem tất cả camera giao thông TP.HCM và đánh giá mức nước theo bánh xe máy. Triều cao thì xem camera ven sông; trời khô thì 3 giờ xem camera ở điểm hay ngập một lần. Một chỗ chỉ hiện lên bản đồ khi AI rất chắc, hoặc thấy ngập ở hai lần xem liên tiếp.</div>
           <div><b>Ước tính:</b> chỉ dùng ở điểm hay ngập (theo CSGT) mà gần đó không có camera vừa được AI xem. Mưa từ 20 mm trong khoảng một giờ gần đây thì báo nguy cơ ngập tới mắt cá chân, từ 40 mm thì tới nửa bánh xe. Triều cao chỉ làm nặng thêm khi đang mưa.</div>
           <div><b>Giới hạn:</b> ước tính không bao giờ báo ngang bô hay lút yên. Hai mức đó chỉ hiện khi có người đi đường báo. Các ngưỡng trên là ước lượng ban đầu, chưa được kiểm chứng bằng số liệu đo ngập thật.</div>
@@ -576,6 +576,7 @@ button { cursor: pointer; }
     </div>
     <div class="ttl">Mức ngập</div>
     <div class="lg"><span class="aic" style="--c:var(--lv2)"></span>AI thấy ngập qua camera</div>
+    <div class="lg" id="lg-camrain" hidden><span class="c" style="--c:#2f8fd8"></span>Camera thấy đang mưa</div>
     <div class="lg hide-sm"><span class="c est" style="--c:var(--lv2)"></span>Nguy cơ ngập (ước tính)</div>
     <div class="lg"><span class="c" style="--c:var(--lv1)"></span>Mắt cá chân</div>
     <div class="lg"><span class="c" style="--c:var(--lv2)"></span>Nửa bánh xe</div>
@@ -1794,6 +1795,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     map.addSource('cams', { type: 'geojson', data: { type: 'FeatureCollection', features: G.cams.map(function (cm) {
       return { type: 'Feature', properties: { id: cm.id }, geometry: { type: 'Point', coordinates: [cm.lng, cm.lat] } };
     }) } });
+    map.addSource('camrain', { type: 'geojson', data: EMPTY });
     var sg = spotGeo();
     map.addSource('spot-pts', { type: 'geojson', data: sg.pts });
     map.addSource('spot-lines', { type: 'geojson', data: sg.lines });
@@ -1853,6 +1855,8 @@ if (typeof module !== 'undefined') module.exports = NN;
         id: 'spot-icon', type: 'symbol', source: 'spot-pts', minzoom: 10.5,
         layout: { 'icon-image': ['concat', 'spot-', ['to-string', ['get', 'c']]], 'icon-size': ['interpolate', ['linear'], ['zoom'], 10.5, 0.6, 14, 0.9, 17, 1.1], 'icon-allow-overlap': true, 'icon-ignore-placement': true }
       },
+      { id: 'camrain-halo', type: 'circle', source: 'camrain', paint: { 'circle-color': '#2f8fd8', 'circle-opacity': 0.28, 'circle-blur': 0.5, 'circle-radius': ['interpolate', ['exponential', 2], ['zoom'], 10, 7, 13, 26, 16, 120], 'circle-pitch-alignment': 'map' } },
+      { id: 'camrain-dot', type: 'circle', source: 'camrain', maxzoom: 13.5, paint: { 'circle-color': '#2f8fd8', 'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 3, 13, 5], 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 1.2 } },
       {
         id: 'cam-icon', type: 'symbol', source: 'cams', minzoom: 13.5,
         layout: { 'icon-image': 'cam', 'icon-size': ['interpolate', ['linear'], ['zoom'], 13.5, 0.75, 16, 1], 'icon-allow-overlap': true, 'icon-padding': 0 }
@@ -2302,7 +2306,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     if (map.getSource('ai')) map.getSource('ai').setData({ type: 'FeatureCollection', features: list.map(function (d) {
       return { type: 'Feature', properties: { id: d.id, level: d.level }, geometry: { type: 'Point', coordinates: [d.lng, d.lat] } };
     }) });
-    syncMine(); renderAI(); radarAuto(); updateRainLegend();
+    syncMine(); renderAI(); radarAuto(); updateRainLegend(); renderCamRain();
     if (live.rainRaw || live.sim) computeEst(); else { updateCount(); refreshTraffic(); renderNow(); }
     if (state.result && floodKey() !== lastFloodKey) runRoute(false);
   }
@@ -2330,6 +2334,17 @@ if (typeof module !== 'undefined') module.exports = NN;
     if (d.src === 'report') return 'Người đi đường báo lúc ' + hhmm(d.since) + ', camera ' + d.camName + (d.camDist ? ' (cách ' + Math.round(d.camDist / 10) * 10 + ' m)' : '') + ' xác nhận lúc ' + hhmm(d.seen);
     if (d.src === 'crowd') return d.crowd + ' người cùng báo quanh đây, lần gần nhất lúc ' + hhmm(d.seen) + '. Không có camera gần để kiểm chứng';
     return 'AI thấy lúc ' + hhmm(d.seen) + (d.times > 1 ? ', ' + d.times + ' lần quét liên tiếp' : '') + (d.since < d.seen - 60000 ? ', ngập từ ' + hhmm(d.since) : '');
+  }
+  function camRainIds() {
+    var f = ai.feed;
+    if (!f || !Array.isArray(f.raining_cams) || Date.now() / 1000 - (+f.updated_ts || 0) > 40 * 60) return [];
+    return f.raining_cams.map(String);
+  }
+  function renderCamRain() {
+    var ids = camRainIds(), feats = [];
+    ids.forEach(function (id) { var cm = camById(id); if (cm) feats.push({ type: 'Feature', properties: { id: id }, geometry: { type: 'Point', coordinates: [cm.lng, cm.lat] } }); });
+    if (map.getSource('camrain')) map.getSource('camrain').setData({ type: 'FeatureCollection', features: feats });
+    $('lg-camrain').hidden = !feats.length;
   }
   function openAiPopup(id) {
     var d = aiFloods().find(function (x) { return x.id === id; }); if (!d) return;
@@ -2715,7 +2730,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     var cm = camById(id); if (!cm) return;
     openPopupId = null; if (popup) popup.remove();
     popup = new maplibregl.Popup({ maxWidth: '340px', offset: 12, className: 'campop' }).setLngLat([cm.lng, cm.lat])
-      .setHTML('<div class="pop">' + camHTML(cm, true) + quickLevels(cm) +
+      .setHTML('<div class="pop">' + (camRainIds().indexOf(String(cm.id)) >= 0 ? '<div class="m"><b style="color:#2f8fd8">AI thấy đang mưa ở camera này</b> (lượt xem lúc ' + hhmm(ai.feed.updated_ts * 1000) + ').</div>' : '') + camHTML(cm, true) + quickLevels(cm) +
         '<div class="m">Camera giao thông TP.HCM, ảnh tự làm mới mỗi 15 giây.</div></div>').addTo(map);
     loadCamsIn(popup.getElement());
   }
@@ -2950,8 +2965,8 @@ if (typeof module !== 'undefined') module.exports = NN;
     var card = $('now-card'), title = $('now-title'), sub = $('now-sub'), facts = $('now-facts'), dot = $('now-dot');
     card.classList.toggle('sim', !!live.sim);
     var pre = live.sim ? 'Mô phỏng: ' : '';
-    var rdFresh = !live.sim && radarState().confirmed;
-    if (!live.sim && !live.rain && live.err && !rdFresh) {
+    var rdFresh = false;   // không dùng số radar cho người dùng nữa (xem ghi chú ở radarAuto)
+    if (!live.sim && !live.rain && live.err && !rdFresh && !camRainIds().length) {
       dot.className = 'now-dot';
       title.textContent = 'Chưa có số liệu mưa trực tiếp';
       sub.textContent = live.err === 'blocked'
@@ -2960,7 +2975,7 @@ if (typeof module !== 'undefined') module.exports = NN;
       facts.innerHTML = ''; $('est-items').innerHTML = ''; $('est-summary').hidden = true;
       return;
     }
-    if (!live.rain && !rdFresh) { title.textContent = 'Đang lấy số liệu mưa…'; return; }
+    if (!live.rain && !rdFresh && !camRainIds().length) { title.textContent = 'Đang lấy số liệu mưa…'; return; }
     var ok = (live.rain || []).filter(function (r) { return r.ok; });
     var maxNow = 0, max1h = 0, maxNext = 0, wet = [], soon = [];
     ok.forEach(function (r) {
@@ -2999,7 +3014,8 @@ if (typeof module !== 'undefined') module.exports = NN;
     sub.textContent = parts.join(' ');
     var t = live.tide;
     facts.innerHTML =
-      '<div class="fact"><b>' + num(maxNow, maxNow > 0 && maxNow < 1 ? 1 : 0) + ' mm/giờ</b><span>' + (rdOk ? 'mưa mạnh nhất lúc này, đo bằng radar' : live.sim ? 'mưa lớn nhất lúc này' : 'mưa lớn nhất lúc này, theo mô hình') + '</span></div>' +
+      (camRain.length ? '<div class="fact"><b>' + camRain.length + ' camera</b><span>đang thấy mưa, AI xem lúc ' + hhmm(ai.feed.updated_ts * 1000) + '</span></div>' :
+      '<div class="fact"><b>' + num(maxNow, maxNow > 0 && maxNow < 1 ? 1 : 0) + ' mm/giờ</b><span>' + (rdOk ? 'mưa mạnh nhất lúc này, đo bằng radar' : live.sim ? 'mưa lớn nhất lúc này' : 'mưa lớn nhất lúc này, theo mô hình') + '</span></div>') +
       '<div class="fact"><b>' + num(max1h) + ' mm</b><span>mưa 1 giờ qua, nơi nhiều nhất' + (live.sim ? '' : ' (mô hình)') + '</span></div>' +
       '<div class="fact"><b>' + (t ? num(t.now, 2) + ' m' : '—') + '</b><span>' + (t ? (t.peak != null ? 'triều ngoài cửa biển, đỉnh ' + num(t.peak, 2) + ' m lúc ' + hhmm(t.peakT) : 'triều ngoài cửa biển') : 'chưa có số liệu triều') + '</span></div>';
     var sum = [0, 0, 0, 0, 0]; est.forEach(function (e) { sum[e.level]++; });
@@ -3089,7 +3105,9 @@ if (typeof module !== 'undefined') module.exports = NN;
     if (st.confirmed) n.textContent = 'Camera xác nhận đang mưa (' + st.chk.raining + '/' + st.chk.usable + ' camera trong vùng radar thấy mưa).';
     else if (st.noisy) n.textContent = 'Radar đang báo mưa nhưng ' + (st.chk.usable ? st.chk.usable + ' camera trong vùng đó không thấy mưa' : 'camera chưa xác nhận') + ', có thể là nhiễu nên tạm ẩn.';
     else n.textContent = 'Radar ở TP.HCM hay báo nhiễu, nhất là ban đêm. Lớp này tự bật khi camera xác nhận đang mưa thật.';
-    if (radarManual !== null || !G) return;
+    // Bản đồ không còn hiện ảnh radar: bản radar miễn phí ở TP.HCM hay nhiễu và khác với app RainViewer.
+    // Radar chỉ còn làm "chuông báo" để máy chủ biết lúc nào cần xem camera. Mưa trên bản đồ là mưa camera thấy.
+    if (true) return;
     if ($('lyr-radar').checked !== st.confirmed) { $('lyr-radar').checked = st.confirmed; showRadar(st.confirmed, false); }
   }
   $('lyr-radar').onchange = function () {
