@@ -270,11 +270,11 @@ button { cursor: pointer; }
 .rtag.good { background: color-mix(in srgb, var(--ok) 16%, var(--panel)); color: var(--ok); }
 .legend .j { width: 18px; height: 5px; border-radius: 3px; flex: none; background: linear-gradient(90deg, var(--jam-yellow) 0 50%, var(--jam-red) 50% 100%); }
 
-/* Thang lượng mưa (theo bảng màu radar NEXRAD, quy đổi dBZ ra mm/giờ bằng công thức Marshall–Palmer) */
+/* Thang lượng mưa (bảng màu "Universal Blue" của RainViewer, quy đổi dBZ ra mm/giờ bằng công thức Marshall–Palmer) */
 .rain-lg { display: flex; flex-direction: column; gap: 3px; padding-bottom: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--line); width: 100%; }
 .legend:has(.rain-lg:not([hidden])) { max-width: 260px; min-width: 232px; }
 .rain-lg .unit { text-transform: none; letter-spacing: 0; font-weight: 600; color: var(--ink-3); }
-.rain-bar { height: 10px; border-radius: 3px; background: linear-gradient(90deg, #009cf7 0%, #0000f7 10%, #00ff00 20%, #087305 40%, #ffff00 50%, #ecce00 60%, #fe9300 70%, #ff0000 80%, #bd0000 90%, #bd0000 100%); }
+.rain-bar { height: 10px; border-radius: 3px; background: linear-gradient(90deg, #88ddee 0%, #00a3e0 10%, #0077aa 20%, #004768 38%, #ffee00 40%, #ffaa00 50%, #ff8100 58%, #ff4400 60%, #c10000 70%, #5d0000 78%, #ffaaff 80%, #ff4eff 98%, #ffffff 100%); }
 .rain-words, .rain-ticks { position: relative; height: 14px; font-size: 10.5px; color: var(--ink-2); }
 .rain-words span { position: absolute; text-align: center; font-weight: 600; white-space: nowrap; }
 .rain-ticks span { position: absolute; transform: translateX(-50%); font-variant-numeric: tabular-nums; }
@@ -384,6 +384,7 @@ button { cursor: pointer; }
   .maplibregl-ctrl-bottom-right { display: none; }
   .legend .rain-src { white-space: normal; }
   .legend .rain-lg .ttl { display: block; }
+  .rain-src { display: none; }
   .report-card { left: 8px; right: 8px; width: auto; max-width: none; bottom: auto; top: calc(62px + env(safe-area-inset-top, 0px)); max-height: calc(100% - 180px); overflow-y: auto; }
   .pickbar, .toast { top: calc(100px + env(safe-area-inset-top, 0px)); }
 }
@@ -448,8 +449,8 @@ button { cursor: pointer; }
       <div class="summary" id="summary"></div>
       <div id="items" class="items"></div>
       <div class="layer-toggles">
-        <label class="check"><input type="checkbox" id="lyr-rain" checked><span>Vùng đang mưa (mô hình, mỗi ô ~5 km)</span></label>
-        <label class="check"><input type="checkbox" id="lyr-radar"><span>Ảnh radar mưa (RainViewer)</span></label>
+        <input type="checkbox" id="lyr-rain" checked hidden>
+        <label class="check"><input type="checkbox" id="lyr-radar" checked><span>Vùng đang mưa (radar đo thật, RainViewer)</span></label>
         <a class="src" href="https://giaothong.hochiminhcity.gov.vn/" target="_blank" rel="noopener">Xem camera giao thông trực tiếp của TP.HCM ↗</a>
         <label class="check" id="lyr-tt-row" hidden><input type="checkbox" id="lyr-tt"><span>Kẹt xe trực tiếp (TomTom)</span></label>
         <div class="muted" id="tt-lg" hidden style="font-size:12px;margin:-2px 0 6px 28px;line-height:1.5"><span style="color:#2fa84f">■</span> xe chạy bình thường · <span style="color:#f5a623">■</span> chậm · <span style="color:#e2332b">■</span> rất chậm · <span style="color:#8b1a1a">■</span> gần như đứng yên. Đo từ tốc độ xe thật, cập nhật vài phút một lần.</div>
@@ -457,9 +458,9 @@ button { cursor: pointer; }
       <details class="sim" id="why">
         <summary>Bản đồ dựa vào đâu để báo ngập?</summary>
         <div class="sim-body">
-          <div><b>Số liệu dùng:</b> lượng mưa từng 15 phút tại 49 điểm phủ TP.HCM và mực triều ở cửa biển Vũng Tàu, lấy từ Open-Meteo, làm mới mỗi 10 phút. Ở Việt Nam, số mưa này đến từ mô hình dự báo thời tiết, không phải radar đo trực tiếp, nên cơn giông nhỏ, cục bộ có thể bị lệch chỗ hoặc bỏ sót.</div>
-          <div><b>Cách quy đổi:</b> chỉ xét ở các điểm có nguy cơ ngập do CSGT cảnh báo. Mưa từ 20 mm trong khoảng một giờ gần đây (mưa càng gần càng tính nặng) thì báo nguy cơ ngập tới mắt cá chân; từ 40 mm thì tới nửa bánh xe. Điểm ngập do triều: mực triều từ 1,45 m báo tới mắt cá, từ 1,60 m báo tới nửa bánh. Có cả mưa lẫn triều thì nâng một mức.</div>
-          <div><b>AI xem camera:</b> 10 phút một lần, máy chủ tải ảnh của các camera giao thông TP.HCM và nhờ AI (Claude) đánh giá mức nước theo bánh xe máy. Một chỗ chỉ hiện lên bản đồ khi AI rất chắc, hoặc thấy ngập ở hai lần xem liên tiếp. Trời khô thì chỉ xem camera ở điểm hay ngập, mỗi giờ một lần.</div>
+          <div><b>Mưa:</b> vùng màu trên bản đồ là ảnh radar thời tiết (RainViewer), tức mưa đo thật, làm mới khoảng 10 phút một lần, mỗi ô khoảng 1,2 km. Mô hình dự báo Open-Meteo chỉ dùng để báo trước mưa trong một giờ tới và để ước tính ở nơi không có camera.</div>
+          <div><b>AI xem camera:</b> khoảng 15 phút một lần, máy chủ xem radar và mực triều. Radar thấy mưa từ khoảng 3 mm/giờ thì tải ảnh tất cả camera giao thông TP.HCM và nhờ AI (Claude) đánh giá mức nước theo bánh xe máy. Triều cao thì xem camera ven sông; trời khô thì 3 giờ xem camera ở điểm hay ngập một lần. Một chỗ chỉ hiện lên bản đồ khi AI rất chắc, hoặc thấy ngập ở hai lần xem liên tiếp.</div>
+          <div><b>Ước tính:</b> chỉ dùng ở điểm hay ngập (theo CSGT) mà gần đó không có camera vừa được AI xem. Mưa từ 20 mm trong khoảng một giờ gần đây thì báo nguy cơ ngập tới mắt cá chân, từ 40 mm thì tới nửa bánh xe. Triều cao chỉ làm nặng thêm khi đang mưa.</div>
           <div><b>Giới hạn:</b> ước tính không bao giờ báo ngang bô hay lút yên. Hai mức đó chỉ hiện khi có người đi đường báo. Các ngưỡng trên là ước lượng ban đầu, chưa được kiểm chứng bằng số liệu đo ngập thật.</div>
         </div>
       </details>
@@ -567,9 +568,9 @@ button { cursor: pointer; }
   <div class="legend" aria-label="Chú giải">
     <div class="rain-lg" id="rain-lg" hidden>
       <div class="ttl">Lượng mưa <span class="unit">mm/giờ</span></div>
-      <div class="rain-words"><span style="left:0;width:38.8%">nhỏ</span><span style="left:38.8%;width:19.2%">vừa</span><span style="left:58%;width:22.4%">to</span><span style="left:80.4%;width:19.6%">rất to</span></div>
+      <div class="rain-words"><span style="left:0;width:28.8%">nhỏ</span><span style="left:28.8%;width:19.2%">vừa</span><span style="left:48%;width:22.4%">to</span><span style="left:70.4%;width:29.6%">rất to</span></div>
       <div class="rain-bar" aria-hidden="true"></div>
-      <div class="rain-ticks"><span style="left:26%">1</span><span style="left:48.4%">5</span><span style="left:58%">10</span><span style="left:70.8%">25</span><span style="left:80.4%">50</span><span style="left:90%">100</span></div>
+      <div class="rain-ticks"><span style="left:16%">1</span><span style="left:38.4%">5</span><span style="left:48%">10</span><span style="left:60.8%">25</span><span style="left:70.4%">50</span><span style="left:80%">100</span></div>
       <div class="rain-src" id="rain-src"></div>
     </div>
     <div class="ttl">Mức ngập</div>
@@ -1767,8 +1768,8 @@ if (typeof module !== 'undefined') module.exports = NN;
       'rep-dot': { 'circle-color': ['case', ['get', 'pend'], tok('ink-3'), ['match', ['get', 'level'], 1, tok('lv1'), 2, tok('lv2'), 3, tok('lv3'), tok('lv4')]], 'circle-radius': ['interpolate', ['linear'], ['zoom'], 11, 6, 15, 11, 18, 14], 'circle-stroke-color': tok('panel'), 'circle-stroke-width': ['case', ['get', 'local'], 1.5, 2.5], 'circle-opacity': ['get', 'op'], 'circle-stroke-opacity': ['get', 'op'] },
       'rep-num': { 'text-color': '#ffffff', 'text-opacity': ['get', 'op'] },
       'rain-heat': {
-        // cùng thang màu với radar: xanh dương, xanh lá (mưa nhỏ) → vàng (vừa) → cam, đỏ (to, rất to)
-        'circle-color': ['interpolate', ['linear'], ['get', 'mmh'], 0.15, '#009cf7', 0.32, '#0000f7', 0.65, '#00ff00', 2.73, '#087305', 5.62, '#ffff00', 11.5, '#ecce00', 23.7, '#fe9300', 48.6, '#ff0000', 100, '#bd0000'],
+        // chỉ dùng khi mô phỏng; cùng thang màu với radar: xanh (nhỏ, vừa) → vàng, cam (to) → đỏ (rất to) → hồng
+        'circle-color': ['interpolate', ['linear'], ['get', 'mmh'], 0.3, '#88ddee', 0.65, '#00a3e0', 1.3, '#0077aa', 4.8, '#004768', 5.6, '#ffee00', 11.5, '#ffaa00', 23.7, '#ff4400', 48.6, '#c10000', 100, '#ffaaff'],
         // bán kính ~3,5 km mỗi điểm lưới, đổi ra điểm ảnh theo mức zoom
         'circle-radius': ['interpolate', ['exponential', 2], ['zoom'], 10, 23, 16, 1490],
         'circle-blur': 0.85, 'circle-opacity': 0.38, 'circle-pitch-alignment': 'map'
@@ -2300,7 +2301,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     if (map.getSource('ai')) map.getSource('ai').setData({ type: 'FeatureCollection', features: list.map(function (d) {
       return { type: 'Feature', properties: { id: d.id, level: d.level }, geometry: { type: 'Point', coordinates: [d.lng, d.lat] } };
     }) });
-    syncMine(); renderAI();
+    syncMine(); renderAI(); updateRainLegend();
     if (live.rainRaw || live.sim) computeEst(); else { updateCount(); refreshTraffic(); renderNow(); }
     if (state.result && floodKey() !== lastFloodKey) runRoute(false);
   }
@@ -2928,7 +2929,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     live.est = NN.estimate(G, live.rain, live.tide).filter(function (e) { return live.sim || !camSaysDry(e.spot); });
     if (map.getSource('est')) {
       map.getSource('est').setData({ type: 'FeatureCollection', features: live.est.map(function (e) { return { type: 'Feature', properties: { id: e.id, level: e.level }, geometry: { type: 'Point', coordinates: [e.lng, e.lat] } }; }) });
-      map.getSource('rainheat').setData({ type: 'FeatureCollection', features: (live.rain || []).filter(function (r) { return r.ok && r.now >= 0.3; }).map(function (r) { return { type: 'Feature', properties: { mmh: r.now }, geometry: { type: 'Point', coordinates: [r.lng, r.lat] } }; }) });
+      map.getSource('rainheat').setData({ type: 'FeatureCollection', features: (live.sim ? live.rain || [] : []).filter(function (r) { return r.ok && r.now >= 0.3; }).map(function (r) { return { type: 'Feature', properties: { mmh: r.now }, geometry: { type: 'Point', coordinates: [r.lng, r.lat] } }; }) });
     }
     renderNow(); updateCount(); refreshTraffic(); updateRainLegend(); renderCamWall();
     if (state.result && floodKey() !== lastFloodKey) runRoute(false);
@@ -2948,7 +2949,8 @@ if (typeof module !== 'undefined') module.exports = NN;
     var card = $('now-card'), title = $('now-title'), sub = $('now-sub'), facts = $('now-facts'), dot = $('now-dot');
     card.classList.toggle('sim', !!live.sim);
     var pre = live.sim ? 'Mô phỏng: ' : '';
-    if (!live.sim && !live.rain && live.err) {
+    var rdFresh = !live.sim && ai.feed && ai.feed.weather && ai.feed.weather.radar && Date.now() / 1000 - (+ai.feed.weather.radar.time || 0) < 40 * 60;
+    if (!live.sim && !live.rain && live.err && !rdFresh) {
       dot.className = 'now-dot';
       title.textContent = 'Chưa có số liệu mưa trực tiếp';
       sub.textContent = live.err === 'blocked'
@@ -2957,8 +2959,8 @@ if (typeof module !== 'undefined') module.exports = NN;
       facts.innerHTML = ''; $('est-items').innerHTML = ''; $('est-summary').hidden = true;
       return;
     }
-    if (!live.rain) { title.textContent = 'Đang lấy số liệu mưa…'; return; }
-    var ok = live.rain.filter(function (r) { return r.ok; });
+    if (!live.rain && !rdFresh) { title.textContent = 'Đang lấy số liệu mưa…'; return; }
+    var ok = (live.rain || []).filter(function (r) { return r.ok; });
     var maxNow = 0, max1h = 0, maxNext = 0, wet = [], soon = [];
     ok.forEach(function (r) {
       maxNow = Math.max(maxNow, r.now); max1h = Math.max(max1h, r.last1h); maxNext = Math.max(maxNext, r.next1h);
@@ -2967,25 +2969,31 @@ if (typeof module !== 'undefined') module.exports = NN;
     });
     var uniq = function (a) { return a.filter(function (x, i) { return a.indexOf(x) === i; }).slice(0, 4); };
     var est = live.est;
+    // radar do bộ quét đọc (số đo thật), dùng thay cho mô hình khi còn mới
+    var rd = !live.sim && ai.feed && ai.feed.weather && ai.feed.weather.radar, rdOk = rd && Date.now() / 1000 - (+rd.time || 0) < 40 * 60;
+    var rWet = [];
+    if (rdOk && Array.isArray(rd.cells)) rd.cells.forEach(function (c) { if (rWet.length < 60) { var d = G && NN.areaLabel(G, +c[0], +c[1]); if (d) rWet.push(d.split(' · ').pop().replace(' cũ', '')); } });
+    if (rdOk) maxNow = +rd.max_mmh || 0;
     dot.className = 'now-dot' + (est.length ? ' flood' : maxNow >= 0.3 ? ' rain' : '');
     var nAi = aiFloods().length;
     if (nAi && !live.sim) { title.textContent = 'Camera thấy ' + nAi + ' chỗ đang ngập' + (est.length ? ', thêm ' + est.length + ' điểm có nguy cơ' : ''); dot.className = 'now-dot flood'; }
     else if (est.length) title.textContent = pre + est.length + ' điểm có nguy cơ đang ngập';
-    else if (maxNow >= 0.3) title.textContent = pre + 'Đang ' + rainWord(maxNow) + ', chưa tới mức gây ngập';
+    else if (maxNow >= 0.3) title.textContent = pre + 'Đang ' + rainWord(maxNow) + (rdOk && rWet.length ? ' ở ' + uniq(rWet).slice(0, 2).join(', ') : '') + ', chưa thấy ngập';
     else if (live.tide && live.tide.now >= NN.TIDE_STEPS[0]) title.textContent = pre + 'Không mưa, triều đang lên cao';
     else title.textContent = pre + 'Không mưa, chưa có dấu hiệu ngập';
     var parts = [];
-    if (wet.length) parts.push('Mưa vừa trở lên ở ' + uniq(wet).join(', ') + '.');
-    if (!live.sim && soon.length) parts.push('Một giờ tới có thể mưa to ở ' + uniq(soon).join(', ') + '.');
+    if (rdOk) { if (rWet.length) parts.push('Radar lúc ' + hhmm(rd.time * 1000) + ' thấy mưa ở ' + uniq(rWet).join(', ') + '.'); }
+    else if (wet.length) parts.push('Mưa vừa trở lên ở ' + uniq(wet).join(', ') + ' (theo mô hình dự báo).');
+    if (!live.sim && soon.length) parts.push('Dự báo một giờ tới có thể mưa to ở ' + uniq(soon).join(', ') + '.');
     if (!live.sim && live.tide && live.tide.now >= NN.TIDE_STEPS[0])
       parts.push('Triều ngoài cửa biển đang cao, ' + tideSpots() + ' điểm hay ngập do triều ven sông có thể có nước. AI đang xem camera ở các điểm này; chỗ nào thấy ngập thật sẽ hiện ở mục AI phía trên.');
     if (live.sim) parts.push('Số liệu giả lập, không phải thời tiết thật. Cơn mưa đặt ở tâm bản đồ.');
-    else parts.push('Cập nhật ' + hhmm(live.rainAt) + ', tự làm mới mỗi 10 phút.');
+    else if (live.rainAt) parts.push('Dự báo cập nhật ' + hhmm(live.rainAt) + ', tự làm mới mỗi 10 phút.');
     sub.textContent = parts.join(' ');
     var t = live.tide;
     facts.innerHTML =
-      '<div class="fact"><b>' + num(maxNow) + ' mm/giờ</b><span>mưa lớn nhất lúc này</span></div>' +
-      '<div class="fact"><b>' + num(max1h) + ' mm</b><span>mưa 1 giờ qua, nơi nhiều nhất</span></div>' +
+      '<div class="fact"><b>' + num(maxNow, maxNow > 0 && maxNow < 1 ? 1 : 0) + ' mm/giờ</b><span>' + (rdOk ? 'mưa mạnh nhất lúc này, đo bằng radar' : live.sim ? 'mưa lớn nhất lúc này' : 'mưa lớn nhất lúc này, theo mô hình') + '</span></div>' +
+      '<div class="fact"><b>' + num(max1h) + ' mm</b><span>mưa 1 giờ qua, nơi nhiều nhất' + (live.sim ? '' : ' (mô hình)') + '</span></div>' +
       '<div class="fact"><b>' + (t ? num(t.now, 2) + ' m' : '—') + '</b><span>' + (t ? (t.peak != null ? 'triều ngoài cửa biển, đỉnh ' + num(t.peak, 2) + ' m lúc ' + hhmm(t.peakT) : 'triều ngoài cửa biển') : 'chưa có số liệu triều') + '</span></div>';
     var sum = [0, 0, 0, 0, 0]; est.forEach(function (e) { sum[e.level]++; });
     $('est-summary').hidden = !est.length;
@@ -3029,34 +3037,44 @@ if (typeof module !== 'undefined') module.exports = NN;
   simLabels();
   // lớp bản đồ
   $('lyr-rain').onchange = function () { if (map.getLayer('rain-heat')) map.setLayoutProperty('rain-heat', 'visibility', this.checked ? 'visible' : 'none'); updateRainLegend(); };
-  // chú giải lượng mưa: hiện khi bật radar, hoặc khi lớp vùng mưa đang có chỗ mưa
+  // chú giải lượng mưa: hiện khi lớp radar đang bật (hoặc khi mô phỏng)
   function updateRainLegend() {
     var radarOn = $('lyr-radar').checked && map.getLayer && map.getLayer('radar');
-    var wet = (live.rain || []).some(function (r) { return r.ok && r.now >= 0.3; });
-    var modelOn = $('lyr-rain').checked && wet;
-    $('rain-lg').hidden = !(radarOn || modelOn);
+    var simOn = !!live.sim;
+    // radar bật mà bộ quét vừa đọc radar thấy không có mưa: ẩn thang màu cho gọn
+    var rd = ai.feed && ai.feed.weather && ai.feed.weather.radar;
+    var dryNow = rd && Date.now() / 1000 - (+rd.time || 0) < 40 * 60 && !(+rd.rain_px);
+    $('rain-lg').hidden = !((radarOn && !dryNow) || simOn);
     var src = [];
     if (radarOn && live.radarAt) src.push('Radar RainViewer lúc ' + hhmm(live.radarAt));
-    if (modelOn) src.push((live.sim ? 'Mưa mô phỏng' : 'Mưa theo mô hình Open-Meteo, ' + hhmm(live.rainAt)));
-    $('rain-src').textContent = src.join(' · ') + '. Số mm/giờ là quy đổi gần đúng.';
+    if (simOn) src.push('Mưa mô phỏng');
+    $('rain-src').textContent = src.join(' · ') + '. Số mm/giờ là quy đổi gần đúng từ độ phản hồi radar.';
+  }
+  var radarPath = '';
+  function loadRadar(loud) {
+    return fetchJSON('https://api.rainviewer.com/public/weather-maps.json').then(function (j) {
+      var fr = j && j.radar && j.radar.past && j.radar.past[j.radar.past.length - 1];
+      if (!fr || !j.host) throw new Error('no frame');
+      var tiles = [j.host + fr.path + '/256/{z}/{x}/{y}/2/1_0.png'];
+      if (!map.getSource('radar')) {
+        map.addSource('radar', { type: 'raster', tiles: tiles, tileSize: 256, maxzoom: 7, attribution: 'Radar: RainViewer' });
+        map.addLayer({ id: 'radar', type: 'raster', source: 'radar', paint: { 'raster-opacity': 0.6 }, layout: { visibility: $('lyr-radar').checked ? 'visible' : 'none' } }, 'spot-line');
+      } else if (fr.path !== radarPath && map.getSource('radar').setTiles) map.getSource('radar').setTiles(tiles);
+      radarPath = fr.path; live.radarAt = fr.time * 1000;
+      updateRainLegend();
+      if (loud) toast('Ảnh radar lúc ' + hhmm(fr.time * 1000) + '. Không thấy màu nào nghĩa là lúc đó radar không thấy mưa.', 5000);
+    });
   }
   $('lyr-radar').onchange = function () {
     var on = this.checked;
-    if (!on) { if (map.getLayer('radar')) map.setLayoutProperty('radar', 'visibility', 'none'); updateRainLegend(); return; }
-    if (map.getLayer('radar')) { map.setLayoutProperty('radar', 'visibility', 'visible'); updateRainLegend(); return; }
-    fetchJSON('https://api.rainviewer.com/public/weather-maps.json').then(function (j) {
-      var fr = j && j.radar && j.radar.past && j.radar.past[j.radar.past.length - 1];
-      if (!fr || !j.host) throw new Error('no frame');
-      map.addSource('radar', { type: 'raster', tiles: [j.host + fr.path + '/256/{z}/{x}/{y}/6/1_0.png'], tileSize: 256, maxzoom: 7, attribution: 'Radar: RainViewer' });
-      map.addLayer({ id: 'radar', type: 'raster', source: 'radar', paint: { 'raster-opacity': 0.6 } }, 'spot-line');
-      live.radarAt = fr.time * 1000;
-      updateRainLegend();
-      toast('Ảnh radar lúc ' + hhmm(fr.time * 1000) + '. Nếu không thấy màu nào, có thể lúc này không mưa hoặc nguồn radar chưa phủ khu vực này.', 5000);
-    }).catch(function () {
-      $('lyr-radar').checked = false; updateRainLegend();
-      toast('Không tải được ảnh radar lúc này.', 4500);
-    });
+    try { localStorage.setItem('nn-radar', on ? '1' : '0'); } catch (e) {}
+    if (map.getLayer('radar')) { map.setLayoutProperty('radar', 'visibility', on ? 'visible' : 'none'); updateRainLegend(); if (on) loadRadar(false).catch(function () {}); return; }
+    if (!on) { updateRainLegend(); return; }
+    loadRadar(true).catch(function () { $('lyr-radar').checked = false; updateRainLegend(); toast('Không tải được ảnh radar lúc này.', 4500); });
   };
+  try { if (localStorage.getItem('nn-radar') === '0') $('lyr-radar').checked = false; } catch (e) {}
+  mapLoaded.then(function () { if ($('lyr-radar').checked) loadRadar(false).catch(function () { /* thử lại ở lượt sau */ }); });
+  setInterval(function () { if ($('lyr-radar').checked) loadRadar(false).catch(function () {}); }, 5 * 60000);
   setInterval(function () { if (!live.sim && live.rainRaw) computeEst(); }, 60000);
   var TT_DEFAULT = 'zD2s8qIPNAuDit6obPqwYhkqIM2WCZTB';
   function ttKey() { var d = window.NN_TT_KEY || TT_DEFAULT; try { return localStorage.getItem('nn-tomtom') || d; } catch (e) { return d; } }
