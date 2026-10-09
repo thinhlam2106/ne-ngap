@@ -307,6 +307,11 @@ button { cursor: pointer; }
 .ai-head { display: flex; gap: 8px; align-items: center; font-size: 15px; }
 .ai-head .badge { font-size: 10.5px; font-weight: 800; letter-spacing: .06em; padding: 2px 6px; border-radius: 5px; background: var(--ink); color: var(--panel); }
 .ai-status { font-size: 12px; color: var(--ink-2); }
+.mine { border: 1px dashed var(--line); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.mine .mi { display: grid; grid-template-columns: 10px 1fr; gap: 8px; font-size: 12.5px; color: var(--ink-2); }
+.mine .mi i { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; background: var(--ink-3); }
+.mine .mi.ok i { background: var(--accent); } .mine .mi.no i { background: var(--line); border: 1px solid var(--ink-3); }
+.mine .mi b { color: var(--ink); font-weight: 600; }
 .ai-item { display: grid; grid-template-columns: 34px 1fr; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); }
 .ai-item .t { font-weight: 600; text-align: left; background: none; border: 0; padding: 0; cursor: pointer; }
 .ai-item .m { font-size: 12.5px; color: var(--ink-2); }
@@ -439,14 +444,15 @@ button { cursor: pointer; }
       </details>
       <div class="divider"></div>
       <div class="sec-title" style="font-size:15px">Người đi đường báo</div>
+      <div class="mine" id="mine" hidden></div>
       <div class="summary" id="summary"></div>
       <div id="items" class="items"></div>
       <div class="layer-toggles">
         <label class="check"><input type="checkbox" id="lyr-rain" checked><span>Vùng đang mưa (mô hình, mỗi ô ~5 km)</span></label>
         <label class="check"><input type="checkbox" id="lyr-radar"><span>Ảnh radar mưa (RainViewer)</span></label>
         <a class="src" href="https://giaothong.hochiminhcity.gov.vn/" target="_blank" rel="noopener">Xem camera giao thông trực tiếp của TP.HCM ↗</a>
-        <label class="check"><input type="checkbox" id="lyr-jam" checked><span>Ùn ứ quanh chỗ người dân báo ngập</span></label>
         <label class="check" id="lyr-tt-row" hidden><input type="checkbox" id="lyr-tt"><span>Kẹt xe trực tiếp (TomTom)</span></label>
+        <div class="muted" id="tt-lg" hidden style="font-size:12px;margin:-2px 0 6px 28px;line-height:1.5"><span style="color:#2fa84f">■</span> xe chạy bình thường · <span style="color:#f5a623">■</span> chậm · <span style="color:#e2332b">■</span> rất chậm · <span style="color:#8b1a1a">■</span> gần như đứng yên. Đo từ tốc độ xe thật, cập nhật vài phút một lần.</div>
       </div>
       <details class="sim" id="why">
         <summary>Bản đồ dựa vào đâu để báo ngập?</summary>
@@ -526,7 +532,7 @@ button { cursor: pointer; }
           <div>Bản đồ mở chưa có dữ liệu số nhà ở TP.HCM, nên khi gõ số nhà, ghim chỉ nằm đúng đường. Muốn chính xác từng căn, dán khoá API miễn phí của Goong (goong.io, dịch vụ bản đồ Việt Nam) vào đây. Khoá chỉ lưu trên máy này.</div>
           <input class="text" id="goong-key" type="text" placeholder="Khoá API Goong" autocomplete="off">
           <div class="row"><button class="ghost" id="goong-save">Lưu khoá</button><span class="muted" id="goong-state"></span></div>
-          <div style="margin-top:8px">Muốn tô đỏ, vàng theo tình hình xe chạy thật như app gọi xe: dán khoá API miễn phí của TomTom (developer.tomtom.com).</div>
+          <div style="margin-top:8px">Lớp “Kẹt xe trực tiếp” dùng dữ liệu tốc độ xe thật của TomTom, đã có sẵn khoá. Nếu lớp này báo hết lượt dùng trong ngày, bạn có thể dán khoá TomTom riêng (developer.tomtom.com) vào đây.</div>
           <input class="text" id="tt-key" type="text" placeholder="Khoá API TomTom" autocomplete="off">
           <div class="row"><button class="ghost" id="tt-save">Lưu khoá</button><span class="muted" id="tt-state"></span></div>
         </div>
@@ -573,7 +579,6 @@ button { cursor: pointer; }
     <div class="lg"><span class="c" style="--c:var(--lv2)"></span>Nửa bánh xe</div>
     <div class="lg"><span class="c" style="--c:var(--lv3)"></span>Ngang bô xe</div>
     <div class="lg"><span class="c" style="--c:var(--lv4)"></span>Lút yên xe</div>
-    <div class="lg hide-sm"><span class="j"></span>Ùn ứ quanh chỗ ngập được báo</div>
     <div class="lg hide-sm"><span class="ic" id="lg-rain"></span>Hay ngập do mưa</div>
     <div class="lg hide-sm"><span class="ic" id="lg-tide"></span>Hay ngập do triều</div>
   </div>
@@ -1572,12 +1577,20 @@ if (typeof module !== 'undefined') module.exports = NN;
     draft: null, level: 0
   };
   var store = {
-    mode: 'wait',            // wait | live | local
+    mode: 'wait',            // wait | live (claude.ai, chung tức thì) | queue (AI kiểm chứng qua camera) | local
     canWrite: null, uid: null, db: null,
     remote: new Map(), remoteUpd: [], local: lsGet('nn-local-v1', { reports: [], updates: [] }),
     voted: lsGet('nn-voted', {})
   };
   var active = [];   // báo cáo đang hoạt động (đã hợp nhất)
+  var mine = [];     // báo cáo của chính máy này đang chờ AI kiểm chứng
+  // Hàng chờ báo cáo: trang gửi báo cáo lên ntfy.sh, bộ quét AI trên GitHub lấy về, xem camera gần đó rồi mới công bố.
+  var REPORT_TOPIC = window.NN_REPORT_TOPIC || 'ne-ngap-bao-ngap-hcm-k7q2';
+  function devId() {
+    var d = lsGet('nn-dev', null);
+    if (!d) { d = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); lsSet('nn-dev', d); }
+    return d;
+  }
 
   // ---------- tải dữ liệu đường phố ----------
   function getJSON(url, fallback) {
@@ -1748,8 +1761,8 @@ if (typeof module !== 'undefined') module.exports = NN;
       'jam': { 'line-color': ['match', ['get', 'lv'], 2, tok('jam-red'), tok('jam-yellow')], 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 11, ['match', ['get', 'c'], [0, 1, 2], 2.2, 1.4], 14, ['match', ['get', 'c'], [0, 1, 2], 4.5, 3], 17.5, ['match', ['get', 'c'], [0, 1, 2], 11, 8]], 'line-opacity': 0.9 },
       'route-safe-case': { 'line-color': tok('route-case'), 'line-width': W(6.5, 10, 18) },
       'route-safe': { 'line-color': tok('route'), 'line-width': W(4, 6.5, 12.5) },
-      'rep-halo': { 'circle-color': ['match', ['get', 'level'], 1, tok('lv1'), 2, tok('lv2'), 3, tok('lv3'), tok('lv4')], 'circle-radius': ['interpolate', ['linear'], ['zoom'], 11, 10, 15, 26, 18, 48], 'circle-opacity': ['*', 0.22, ['get', 'op']], 'circle-blur': 0.4 },
-      'rep-dot': { 'circle-color': ['match', ['get', 'level'], 1, tok('lv1'), 2, tok('lv2'), 3, tok('lv3'), tok('lv4')], 'circle-radius': ['interpolate', ['linear'], ['zoom'], 11, 6, 15, 11, 18, 14], 'circle-stroke-color': tok('panel'), 'circle-stroke-width': ['case', ['get', 'local'], 1.5, 2.5], 'circle-opacity': ['get', 'op'], 'circle-stroke-opacity': ['get', 'op'] },
+      'rep-halo': { 'circle-color': ['case', ['get', 'pend'], tok('ink-3'), ['match', ['get', 'level'], 1, tok('lv1'), 2, tok('lv2'), 3, tok('lv3'), tok('lv4')]], 'circle-radius': ['interpolate', ['linear'], ['zoom'], 11, 10, 15, 26, 18, 48], 'circle-opacity': ['*', 0.22, ['get', 'op']], 'circle-blur': 0.4 },
+      'rep-dot': { 'circle-color': ['case', ['get', 'pend'], tok('ink-3'), ['match', ['get', 'level'], 1, tok('lv1'), 2, tok('lv2'), 3, tok('lv3'), tok('lv4')]], 'circle-radius': ['interpolate', ['linear'], ['zoom'], 11, 6, 15, 11, 18, 14], 'circle-stroke-color': tok('panel'), 'circle-stroke-width': ['case', ['get', 'local'], 1.5, 2.5], 'circle-opacity': ['get', 'op'], 'circle-stroke-opacity': ['get', 'op'] },
       'rep-num': { 'text-color': '#ffffff', 'text-opacity': ['get', 'op'] },
       'rain-heat': {
         // cùng thang màu với radar: xanh dương, xanh lá (mưa nhỏ) → vàng (vừa) → cam, đỏ (to, rất to)
@@ -1806,7 +1819,6 @@ if (typeof module !== 'undefined') module.exports = NN;
       { id: 'road-major', type: 'line', source: 'roads', filter: major, layout: { 'line-cap': 'round', 'line-join': 'round' } },
       { id: 'rain-heat', type: 'circle', source: 'rainheat' },
       { id: 'spot-line', type: 'line', source: 'spot-lines', layout: { 'line-cap': 'butt', 'line-join': 'round' } },
-      { id: 'jam', type: 'line', source: 'jam', filter: ['any', ['<=', ['get', 'c'], 4], ['>=', ['zoom'], 14]], layout: { 'line-cap': 'round', 'line-join': 'round' } },
       { id: 'route-alt', type: 'line', source: 'routes', filter: ['==', ['get', 'sel'], 0], layout: { 'line-cap': 'round', 'line-join': 'round' } },
       { id: 'route-safe-case', type: 'line', source: 'routes', filter: ['==', ['get', 'sel'], 1], layout: { 'line-cap': 'round', 'line-join': 'round' } },
       { id: 'route-safe', type: 'line', source: 'routes', filter: ['==', ['get', 'sel'], 1], layout: { 'line-cap': 'round', 'line-join': 'round' } },
@@ -2187,8 +2199,7 @@ if (typeof module !== 'undefined') module.exports = NN;
   function selectRoute(i) { state.sel = i; drawRoutes(); renderRoute(); }
   function runRoute(fit) {
     if (!G || !state.A || !state.B) return;
-    if (!live.cong) refreshTraffic();
-    var res = NN.plan(G, state.A, state.B, state.vehicle, floodsNow(), state.avoidHot, live.cong);
+    var res = NN.plan(G, state.A, state.B, state.vehicle, floodsNow(), state.avoidHot, null);
     var out = $('route-out');
     if (res.error) {
       clearRoute();
@@ -2208,7 +2219,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     }
   }
   function floodRow(r) {
-    return '<li>' + wheel(r.level, 22) + '<span><b>' + esc(LEVELS[r.level].short) + '</b> · ' + esc(r.street || 'không rõ tên đường') + (r.est ? ' <span class="est-tag">ước tính</span>' : r.ai ? ' <span class="est-tag">AI qua camera</span>' : '') + '</span></li>';
+    return '<li>' + wheel(r.level, 22) + '<span><b>' + esc(LEVELS[r.level].short) + '</b> · ' + esc(r.street || 'không rõ tên đường') + (r.est ? ' <span class="est-tag">ước tính</span>' : r.ai ? ' <span class="est-tag">' + (r.src === 'report' ? 'người dân báo, camera xác nhận' : r.src === 'crowd' ? 'nhiều người cùng báo' : 'AI qua camera') + '</span>' : '') + '</span></li>';
   }
   function renderRoute() {
     var res = state.result, out = $('route-out'); if (!res) return;
@@ -2232,7 +2243,6 @@ if (typeof module !== 'undefined') module.exports = NN;
       if (tags.length) h += '<div class="row">' + tags.join('') + '</div>';
       if (r.floods.length) h += '<div class="rnote">Đi qua ' + r.floods.length + ' chỗ ngập:</div><ul class="flist">' + r.floods.slice(0, 4).map(floodRow).join('') + '</ul>';
       else h += '<div class="rnote good">Không qua chỗ đang ngập.</div>';
-      if (r.delay >= 120) h += '<div class="rnote">Có thể chậm hơn bình thường khoảng ' + Math.round(r.delay / 60) + ' phút (ước tính).</div>';
       var quiet = r.spots.filter(function (sp) { return !estIds[sp.id]; });
       if (quiet.length && i === state.sel) {
         var nm = []; quiet.forEach(function (sp) { if (nm.indexOf(sp.s) < 0) nm.push(sp.s); });
@@ -2242,7 +2252,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     });
     var sel = res.routes[state.sel];
     if (sel && sel.worst >= 3) h += '<div class="warn"><b>' + esc(LEVELS[sel.worst].name) + '.</b> ' + esc(LEVELS[sel.worst].advice) + '</div>';
-    h += '<div class="muted">Thời gian ước tính cho ' + veh + ', có cộng thêm giờ cao điểm, mưa và chỗ ngập theo quy tắc ước lượng, không phải số liệu giao thông thật. Chạm vào tuyến hoặc nhãn thời gian trên bản đồ để chọn. Tuyến tự tính lại khi có ngập mới.</div>';
+    h += '<div class="muted">Thời gian tính cho ' + veh + ' khi đường thông thoáng, chưa tính kẹt xe. Chạm vào tuyến hoặc nhãn thời gian trên bản đồ để chọn. Tuyến tự tính lại khi có ngập mới.</div>';
     out.innerHTML = h;
   }
   $('route-out').addEventListener('click', function (e) {
@@ -2261,7 +2271,8 @@ if (typeof module !== 'undefined') module.exports = NN;
       var repo = seg && !/\.html?$/.test(seg) ? seg : user + '.github.io';
       return 'https://raw.githubusercontent.com/' + user + '/' + repo + '/main/data/flood-ai.json';
     }
-    return 'data/flood-ai.json';
+    // trang đặt ở nơi khác (Netlify, mở file trên máy...): đọc kết quả AI từ kho GitHub của nhóm
+    return 'https://raw.githubusercontent.com/thinhlam2106/ne-ngap/main/data/flood-ai.json';
   }
   function aiFloods() {
     if (!ai.feed || !Array.isArray(ai.feed.detections)) return [];
@@ -2269,8 +2280,10 @@ if (typeof module !== 'undefined') module.exports = NN;
     return ai.feed.detections.filter(function (d) {
       return d && d.confirmed && d.level >= 1 && d.level <= 4 && isFinite(+d.lat) && isFinite(+d.lng) && nowS - (+d.seen || 0) <= 45 * 60;
     }).map(function (d) {
-      return { id: 'ai-' + d.cam, cam: String(d.cam), lat: +d.lat, lng: +d.lng, level: +d.level, street: String(d.name || 'Camera').slice(0, 80),
-        note: String(d.note || '').slice(0, 120), seen: +d.seen * 1000, since: (+d.since || +d.seen) * 1000, times: +d.times || 1, conf: +d.conf || 0, ai: true };
+      var src = d.src === 'report' || d.src === 'crowd' ? d.src : 'cam';
+      return { id: src === 'cam' ? 'ai-' + d.cam : 'rp-' + String(d.rid || d.cam), cam: d.cam ? String(d.cam) : '', lat: +d.lat, lng: +d.lng, level: +d.level, street: String(d.name || 'Camera').slice(0, 80),
+        note: String(d.note || '').slice(0, 120), seen: +d.seen * 1000, since: (+d.since || +d.seen) * 1000, times: +d.times || 1, conf: +d.conf || 0, ai: true,
+        src: src, camName: String(d.cam_name || '').slice(0, 80), camDist: +d.cam_dist || 0, crowd: +d.crowd || 0, repLevel: +d.reported_level || 0 };
     });
   }
   function pullAI() {
@@ -2285,40 +2298,54 @@ if (typeof module !== 'undefined') module.exports = NN;
     if (map.getSource('ai')) map.getSource('ai').setData({ type: 'FeatureCollection', features: list.map(function (d) {
       return { type: 'Feature', properties: { id: d.id, level: d.level }, geometry: { type: 'Point', coordinates: [d.lng, d.lat] } };
     }) });
-    renderAI(); updateCount(); refreshTraffic(); renderNow();
+    syncMine(); renderAI(); updateCount(); refreshTraffic(); renderNow();
     if (state.result && floodKey() !== lastFloodKey) runRoute(false);
   }
   function renderAI() {
     var box = $('ai-box'), f = ai.feed; if (!f) { box.hidden = true; return; }
     var list = aiFloods(), st = f.stats || {}, upd = (+f.updated_ts || 0) * 1000;
     var stale = Date.now() - upd > 40 * 60000;
-    var modeTxt = { rain: 'đang mưa nên xem tất cả camera', all: 'xem tất cả camera', 'after-rain': 'vừa tạnh mưa, 20 phút xem lại một lần', 'dry-hotspots': 'trời khô, chỉ xem camera ở điểm hay ngập', idle: 'chờ lượt xem tiếp theo' }[f.mode] || '';
+    var modeTxt = { rain: 'đang mưa nên xem tất cả camera', all: 'xem tất cả camera', 'after-rain': 'vừa tạnh mưa, 20 phút xem lại một lần', 'dry-hotspots': 'trời khô, chỉ xem camera ở điểm hay ngập', reports: 'xem camera gần chỗ người đi đường báo', idle: 'chờ lượt xem tiếp theo' }[f.mode] || '';
     var status = upd ? (st.classified ? 'AI xem ' + st.classified + ' ảnh camera lúc ' + hhmm(upd) : 'Cập nhật lúc ' + hhmm(upd)) + (modeTxt ? ' (' + modeTxt + ')' : '') + '. Tổng ' + (f.cameras_total || 0) + ' camera.' : '';
     if (!upd) status = 'Bộ quét AI chưa chạy lần nào.';
     else if (stale) status = 'Chưa có lượt xem camera mới từ ' + hhmm(upd) + '. Kết quả có thể đã cũ.';
     if (st.stopped === 'budget') status += ' Đã chạm trần chi phí trong ngày, tạm dừng.';
-    var h = '<div class="ai-head"><span class="badge">AI</span><b>' + (list.length ? 'Camera thấy ' + list.length + ' chỗ đang ngập' : upd ? 'Camera chưa thấy chỗ nào ngập' : 'AI xem camera') + '</b></div>' +
+    var h = '<div class="ai-head"><span class="badge">AI</span><b>' + (list.length ? list.length + ' chỗ đang ngập đã kiểm chứng' : upd ? 'Camera chưa thấy chỗ nào ngập' : 'AI xem camera') + '</b></div>' +
       '<div class="ai-status">' + esc(status) + '</div>';
     h += list.slice(0, 30).map(function (d) {
       return '<div class="ai-item">' + wheel(d.level, 34) + '<div style="min-width:0"><button class="t" data-ai="' + esc(d.id) + '">' + esc(d.street) + '</button>' +
         '<div class="m"><b>' + esc(LEVELS[d.level].name) + '</b> · ' + esc(LEVELS[d.level].cm) + '</div>' +
         (d.note ? '<div class="m">“' + esc(d.note) + '”</div>' : '') +
-        '<div class="m">AI thấy lúc ' + hhmm(d.seen) + (d.times > 1 ? ', ' + d.times + ' lần quét liên tiếp' : '') + (d.since < d.seen - 60000 ? ', ngập từ ' + hhmm(d.since) : '') + '</div></div></div>';
+        '<div class="m">' + aiWho(d) + '</div></div></div>';
     }).join('');
     box.innerHTML = h; box.hidden = false;
     box.classList.toggle('calm', !list.length);
   }
+  function aiWho(d) {
+    if (d.src === 'report') return 'Người đi đường báo lúc ' + hhmm(d.since) + ', camera ' + d.camName + (d.camDist ? ' (cách ' + Math.round(d.camDist / 10) * 10 + ' m)' : '') + ' xác nhận lúc ' + hhmm(d.seen);
+    if (d.src === 'crowd') return d.crowd + ' người cùng báo quanh đây, lần gần nhất lúc ' + hhmm(d.seen) + '. Không có camera gần để kiểm chứng';
+    return 'AI thấy lúc ' + hhmm(d.seen) + (d.times > 1 ? ', ' + d.times + ' lần quét liên tiếp' : '') + (d.since < d.seen - 60000 ? ', ngập từ ' + hhmm(d.since) : '');
+  }
   function openAiPopup(id) {
     var d = aiFloods().find(function (x) { return x.id === id; }); if (!d) return;
     openPopupId = null; if (popup) popup.remove();
-    var cm = camById(d.cam) || { id: d.cam, name: d.street, lat: d.lat, lng: d.lng, notis: true };
+    var cm = d.cam ? (camById(d.cam) || { id: d.cam, name: d.camName || d.street, lat: d.lat, lng: d.lng, notis: true }) : null;
+    var head = d.src === 'report' ? 'Người dân báo, camera xác nhận' : d.src === 'crowd' ? 'Nhiều người cùng báo' : 'AI thấy ' + LEVELS[d.level].name.toLowerCase();
+    if (!cm) {
+      popup = new maplibregl.Popup({ maxWidth: '300px', offset: 14 }).setLngLat([d.lng, d.lat]).setHTML(
+        '<div class="pop"><div class="lv">' + wheel(d.level, 28) + '<span>' + esc(head) + '</span></div>' +
+        '<div class="m"><b>' + esc(d.street) + '</b> · ' + esc(LEVELS[d.level].name) + ', ' + esc(LEVELS[d.level].cm) + '</div>' +
+        '<div class="m">' + esc(aiWho(d)) + '.</div><div class="m">' + esc(LEVELS[d.level].advice) + '</div></div>').addTo(map);
+      return;
+    }
     popup = new maplibregl.Popup({ maxWidth: '340px', offset: 14, className: 'campop' }).setLngLat([d.lng, d.lat]).setHTML(
-      '<div class="pop"><div class="lv">' + wheel(d.level, 28) + '<span>AI thấy ' + esc(LEVELS[d.level].name.toLowerCase()) + '</span></div>' +
+      '<div class="pop"><div class="lv">' + wheel(d.level, 28) + '<span>' + esc(head) + '</span></div>' +
+      (d.src === 'report' ? '<div class="m">' + esc(aiWho(d)) + '. Camera thấy ' + esc(LEVELS[d.level].name.toLowerCase()) + '.</div>' : '') +
       '<div class="m"><b>' + esc(d.street) + '</b> · ' + esc(LEVELS[d.level].cm) + '</div>' +
       (d.note ? '<div class="m">“' + esc(d.note) + '”</div>' : '') +
       '<div class="m">' + esc(LEVELS[d.level].advice) + '</div>' +
       camHTML(cm, true) +
-      '<div class="m">Ảnh trên là ảnh mới nhất. AI xem lúc ' + hhmm(d.seen) + '. AI có thể nhầm, nhất là ban đêm; nếu thấy khác, chạm mức đúng để sửa:</div>' +
+      '<div class="m">Ảnh trên là ảnh mới nhất' + (d.src === 'report' ? ' của camera ' + esc(d.camName) : '') + '. AI xem lúc ' + hhmm(d.seen) + '. AI có thể nhầm, nhất là ban đêm; nếu thấy khác, chạm mức đúng để sửa:</div>' +
       quickLevels(cm) + '</div>').addTo(map);
     loadCamsIn(popup.getElement());
   }
@@ -2331,27 +2358,9 @@ if (typeof module !== 'undefined') module.exports = NN;
   setInterval(function () { if (ai.feed) applyAI(); }, 60000);
 
   // ---------- kẹt xe (ước tính) ----------
-  function refreshTraffic() {
-    if (!G) return;
-    live.cong = NN.congestion(G, floodsNow(), live.rain, Date.now());
-    if (!map.getSource('jam')) return;
-    // màu trên bản đồ chỉ dựa vào chỗ người đi đường báo ngập, không suy từ giờ giấc hay ước tính
-    var feats = [], cong = NN.congestion(G, active.concat(aiFloods()), null, Date.now(), { display: true });
-    G.ways.forEach(function (w, wi) {
-      if (w[0] > 6) return;
-      var run = null, base = 0;
-      // các đoạn của tuyến này nằm liên tiếp trong mảng đoạn
-      for (var j = 4; j < w.length; j++) {
-        var sIdx = G.wayFirstSeg[wi] + (j - 4), f = cong[sIdx];
-        var lv = f < 0.55 ? 2 : f < 0.8 ? 1 : 0;
-        if (run && run.lv === lv) { run.c.push([G.lon[w[j]], G.lat[w[j]]]); continue; }
-        if (run && run.lv) feats.push({ type: 'Feature', properties: { lv: run.lv, c: w[0] }, geometry: { type: 'LineString', coordinates: run.c } });
-        run = { lv: lv, c: [[G.lon[w[j - 1]], G.lat[w[j - 1]]], [G.lon[w[j]], G.lat[w[j]]]] };
-      }
-      if (run && run.lv) feats.push({ type: 'Feature', properties: { lv: run.lv, c: w[0] }, geometry: { type: 'LineString', coordinates: run.c } });
-    });
-    map.getSource('jam').setData({ type: 'FeatureCollection', features: feats });
-  }
+  // Không còn tự đoán kẹt xe. Thời gian đi tính theo đường thông thoáng; kẹt xe thật chỉ hiện khi bật lớp TomTom.
+  function refreshTraffic() { live.cong = null; }
+
 
   // ---------- báo cáo ----------
   function validReport(id, x) {
@@ -2372,7 +2381,13 @@ if (typeof module !== 'undefined') module.exports = NN;
     var now = Date.now();
     var all = [];
     store.remote.forEach(function (r) { all.push(r); });
-    store.local.reports.forEach(function (x) { var r = validReport(x.id, x); if (r) { r.local = true; all.push(r); } });
+    var pend = [];
+    store.local.reports.forEach(function (x) {
+      var r = validReport(x.id, x); if (!r) return;
+      r.local = true;
+      if (x.pend) { r.pend = x.pend; r.info = x.info || null; pend.push(r); } else all.push(r);
+    });
+    mine = pend;
     var upd = {};
     store.remoteUpd.concat(store.local.updates).forEach(function (u) { (upd[u.r] = upd[u.r] || []).push(u); });
     var list = [];
@@ -2388,11 +2403,13 @@ if (typeof module !== 'undefined') module.exports = NN;
       map.getSource('reports').setData({
         type: 'FeatureCollection', features: list.map(function (r) {
           var op = Math.max(0.45, 1 - r.st.age / NN.TTL_MS * 0.6);
-          return { type: 'Feature', properties: { id: r.id, level: r.level, op: op, local: !!r.local }, geometry: { type: 'Point', coordinates: [r.lng, r.lat] } };
-        })
+          return { type: 'Feature', properties: { id: r.id, level: r.level, op: op, local: !!r.local, pend: false }, geometry: { type: 'Point', coordinates: [r.lng, r.lat] } };
+        }).concat(mine.filter(function (r) { return r.pend === 'sent' || r.pend === 'checking'; }).map(function (r) {
+          return { type: 'Feature', properties: { id: r.id, level: r.level, op: 0.75, local: true, pend: true }, geometry: { type: 'Point', coordinates: [r.lng, r.lat] } };
+        }))
       });
     }
-    renderList();
+    renderList(); renderMine();
     if (typeof spotState !== 'undefined' && spotState && spotState.near) renderSpots();
     if (typeof camWall !== 'undefined' && G && G.cams) renderCamWall();
     if (floodKey() !== lastTrafficKey) { lastTrafficKey = floodKey(); refreshTraffic(); }
@@ -2406,6 +2423,48 @@ if (typeof module !== 'undefined') module.exports = NN;
   var lastTrafficKey = '';
   setInterval(function () { refreshTraffic(); if (state.result) runRoute(false); }, 5 * 60000);
 
+  // ---------- báo cáo của máy này: theo dõi kết quả AI kiểm chứng ----------
+  function mineText(r) {
+    var i = r.info || {}, dd = i.cam_dist ? ' (cách ' + Math.round(i.cam_dist / 10) * 10 + ' m)' : '';
+    switch (r.pend) {
+      case 'confirmed': return 'Camera ' + (i.cam_name || '') + dd + ' xác nhận có ngập. Mọi người đã thấy điểm này.';
+      case 'crowd': return 'Không có camera gần đó, nhưng ' + (i.crowd || 3) + ' người cùng báo nên điểm đã hiện cho mọi người.';
+      case 'not_seen': return 'Camera ' + (i.cam_name || 'gần nhất') + dd + ' chưa thấy nước trên đường qua 2 lượt xem. Chỗ ngập có thể nằm ngoài tầm camera, nên điểm chưa hiện cho mọi người.';
+      case 'no_camera': return 'Trong vòng 400 m không có camera để kiểm chứng. Điểm sẽ hiện cho mọi người nếu có thêm người ở gần đó cùng báo.';
+      case 'unverifiable': return 'Camera gần đó đang mất tín hiệu nên chưa kiểm chứng được.';
+      case 'cleared': return 'Camera thấy nước đã rút, điểm đã gỡ khỏi bản đồ.';
+      case 'expired': return 'Điểm đã hết hạn và được gỡ khỏi bản đồ.';
+      case 'checking': return 'AI đang xem camera gần đó để kiểm chứng.';
+      default: return 'Đã gửi lúc ' + hhmm(r.at) + '. Đang chờ lượt AI xem camera kế tiếp (thường 10–20 phút).';
+    }
+  }
+  function syncMine() {
+    if (!ai.feed || !Array.isArray(ai.feed.reports) || !store.local.reports.length) return;
+    var by = {}; ai.feed.reports.forEach(function (x) { if (x && x.id) by[x.id] = x; });
+    var changed = false, msgs = [];
+    store.local.reports.forEach(function (x) {
+      if (!x.pend) return;
+      var f = by[x.id]; if (!f || typeof f.status !== 'string') return;
+      if (f.status !== x.pend) {
+        x.pend = f.status; x.info = { cam_name: String(f.cam_name || '').slice(0, 80), cam_dist: +f.cam_dist || 0, crowd: +f.crowd || 0 };
+        changed = true;
+        if (f.status === 'confirmed' || f.status === 'crowd' || f.status === 'not_seen' || f.status === 'no_camera') msgs.push(mineText(x));
+      }
+    });
+    if (changed) { lsSet('nn-local-v1', store.local); refreshReports(); }
+    if (msgs.length) toast('Báo ngập của bạn: ' + msgs[0], 8000);
+  }
+  function renderMine() {
+    var box = $('mine'); if (!box) return;
+    var cut = Date.now() - 3 * 3600e3, list = mine.filter(function (r) { return r.at > cut; }).slice(-3).reverse();
+    if (!list.length) { box.hidden = true; return; }
+    box.innerHTML = '<div class="ai-status"><b>Báo cáo của bạn</b></div>' + list.map(function (r) {
+      var cls = r.pend === 'confirmed' || r.pend === 'crowd' ? 'ok' : (r.pend === 'sent' || r.pend === 'checking') ? '' : 'no';
+      return '<div class="mi ' + cls + '"><i></i><div><b>' + esc(r.street || 'Chỗ bạn chọn') + '</b> · ' + esc(LEVELS[r.level].short) + ', lúc ' + hhmm(r.at) + '<br>' + esc(mineText(r)) + '</div></div>';
+    }).join('');
+    box.hidden = false;
+  }
+
   function renderList() {
     var sum = [0, 0, 0, 0, 0];
     active.forEach(function (r) { sum[r.level]++; });
@@ -2415,7 +2474,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     $('summary').hidden = !active.length;
     if (!active.length) {
       $('items').innerHTML = '<div class="empty" style="padding:6px 0;align-items:flex-start;text-align:left">' +
-        '<div class="hint">Chưa ai báo ngập trong 3 giờ qua. Đang đứng trước đoạn ngập? Bấm nút Báo ngập trên bản đồ.</div>' +
+        '<div class="hint">' + (store.mode === 'queue' ? 'Báo cáo của người đi đường được AI kiểm chứng qua camera gần đó rồi mới hiện cho mọi người, trong mục AI phía trên. Đang đứng trước đoạn ngập? Bấm nút Báo ngập.' : 'Chưa ai báo ngập trong 3 giờ qua. Đang đứng trước đoạn ngập? Bấm nút Báo ngập trên bản đồ.') + '</div>' +
         '<button class="ghost" id="empty-report">Báo chỗ đang ngập</button></div>';
       var b = $('empty-report'); if (b) b.onclick = openReport;
       return;
@@ -2455,6 +2514,14 @@ if (typeof module !== 'undefined') module.exports = NN;
   }
   function renderPopup() {
     var r = active.find(function (x) { return x.id === openPopupId; });
+    var pm = !r && mine.find(function (x) { return x.id === openPopupId; });
+    if (pm) {
+      popup.setLngLat([pm.lng, pm.lat]).setHTML('<div class="pop"><div class="lv">' + wheel(pm.level, 28) + '<span>Bạn báo: ' + esc(LEVELS[pm.level].name.toLowerCase()) + '</span></div>' +
+        '<div class="m"><b>' + esc(pm.street || '') + '</b></div><div class="m">' + esc(mineText(pm)) + '</div>' +
+        '<div class="m">Chỉ máy của bạn thấy chấm xám này. Khi camera xác nhận, điểm sẽ hiện cho mọi người.</div></div>');
+      if (!popup.isOpen()) popup.addTo(map);
+      return;
+    }
     if (!r) { if (popup) popup.remove(); openPopupId = null; return; }
     var now = Date.now(), v = store.voted[r.id];
     var html = '<div class="pop"><div class="lv">' + wheel(r.level, 28) + '<span>' + esc(LEVELS[r.level].name) + '</span></div>' +
@@ -2660,7 +2727,8 @@ if (typeof module !== 'undefined') module.exports = NN;
       }
       var doc = { lat: +cm.lat.toFixed(6), lng: +cm.lng.toFixed(6), level: lvl, note: 'Thấy qua camera ' + cm.name, street: cm.name.split(' - ')[0].slice(0, 80), at: Date.now(), by: store.uid || null, cam: cm.id };
       saveReport(doc).then(function (where) {
-        toast(where === 'live' ? 'Đã báo ' + LEVELS[lvl].name.toLowerCase() + ' tại ' + cm.name + '. Mọi người thấy ngay.' : 'Đã lưu báo cáo trên máy này.');
+        toast(where === 'live' ? 'Đã báo ' + LEVELS[lvl].name.toLowerCase() + ' tại ' + cm.name + '. Mọi người thấy ngay.'
+          : where === 'queued' ? 'Đã nhận. Lượt xem kế tiếp AI sẽ xem kỹ camera này; nếu đúng, mọi người sẽ thấy.' : 'Đã lưu báo cáo trên máy này.', 5000);
         if (popup) popup.remove();
       }).catch(function (err) { toast(err && err.message ? err.message : 'Chưa gửi được.', 4000); });
       return;
@@ -2747,7 +2815,9 @@ if (typeof module !== 'undefined') module.exports = NN;
     var doc = { lat: +state.draft.lat.toFixed(6), lng: +state.draft.lng.toFixed(6), level: state.level, note: $('note').value.trim().slice(0, 120), street: state.draft.street || '', at: Date.now(), by: store.uid || null };
     var btn = $('send'); btn.disabled = true; btn.textContent = 'Đang gửi…';
     saveReport(doc).then(function (where) {
-      toast(where === 'live' ? 'Đã gửi. Mọi người đang mở bản đồ thấy điểm ngập này ngay.' : 'Đã lưu trên máy bạn. Chỉ bạn thấy điểm này.');
+      toast(where === 'live' ? 'Đã gửi. Mọi người đang mở bản đồ thấy điểm ngập này ngay.'
+        : where === 'queued' ? 'Đã nhận. AI sẽ xem camera gần đó để kiểm chứng, thường mất 10–20 phút. Nếu đúng, mọi người sẽ thấy điểm này.'
+        : 'Đã lưu trên máy bạn. Chỉ bạn thấy điểm này.', where === 'queued' ? 6500 : undefined);
       state.draft = null; state.level = 0; setMarker('R', null);
       $('note').value = ''; $('in-r').value = ''; $('where-name').textContent = 'Chạm vào bản đồ đúng chỗ ngập'; $('where-sub').textContent = 'hoặc nhập địa chỉ bên dưới';
       $('where').classList.remove('set'); $('lvl-advice').textContent = '';
@@ -2774,6 +2844,18 @@ if (typeof module !== 'undefined') module.exports = NN;
     return 'other';
   }
   function saveReport(doc) {
+    if (store.mode === 'queue') {
+      doc.id = newId();
+      var msg = { v: 1, id: doc.id, lat: doc.lat, lng: doc.lng, level: doc.level, note: doc.note, street: doc.street, dev: devId() };
+      var ctl = window.AbortController ? new AbortController() : null, t = setTimeout(function () { if (ctl) ctl.abort(); }, 15000);
+      return fetch('https://ntfy.sh/' + REPORT_TOPIC, { method: 'POST', body: JSON.stringify(msg), signal: ctl ? ctl.signal : undefined })
+        .then(function (r) {
+          clearTimeout(t);
+          if (r.status === 429) throw new Error('Bạn vừa gửi nhiều báo cáo liên tiếp. Đợi vài phút rồi gửi lại.');
+          if (!r.ok) throw new Error('Chưa gửi được (máy chủ báo lỗi ' + r.status + '). Thử lại sau ít phút.');
+          doc.pend = 'sent'; saveLocal('reports', doc); return 'queued';
+        }, function () { clearTimeout(t); throw new Error('Chưa gửi được, kiểm tra kết nối mạng rồi thử lại.'); });
+    }
     if (store.mode === 'live' && store.canWrite !== false) {
       var id = newId();
       return store.db.collection('reports').doc(id).set(doc).then(function () { return 'live'; }, function (e) {
@@ -2963,26 +3045,31 @@ if (typeof module !== 'undefined') module.exports = NN;
     });
   };
   setInterval(function () { if (!live.sim && live.rainRaw) computeEst(); }, 60000);
-  function ttKey() { try { return localStorage.getItem('nn-tomtom') || window.NN_TT_KEY || ''; } catch (e) { return window.NN_TT_KEY || ''; } }
+  var TT_DEFAULT = 'zD2s8qIPNAuDit6obPqwYhkqIM2WCZTB';
+  function ttKey() { var d = window.NN_TT_KEY || TT_DEFAULT; try { return localStorage.getItem('nn-tomtom') || d; } catch (e) { return d; } }
+  function ttPref() { try { return localStorage.getItem('nn-tt-on') !== '0'; } catch (e) { return true; } }
   function setTomTom(on) {
-    if (map.getLayer('tt-flow')) { map.setLayoutProperty('tt-flow', 'visibility', on ? 'visible' : 'none'); if (map.getLayer('jam')) map.setLayoutProperty('jam', 'visibility', on ? 'none' : ($('lyr-jam').checked ? 'visible' : 'none')); return; }
+    $('tt-lg').hidden = !on;
+    if (map.getLayer('tt-flow')) { map.setLayoutProperty('tt-flow', 'visibility', on ? 'visible' : 'none'); return; }
     if (!on || !ttKey()) return;
     map.addSource('tt-flow', { type: 'raster', tileSize: 256, maxzoom: 18, attribution: 'Giao thông: TomTom',
       tiles: ['https://api.tomtom.com/traffic/map/4/tile/flow/relative0/{z}/{x}/{y}.png?tileSize=256&thickness=6&key=' + encodeURIComponent(ttKey())] });
-    map.addLayer({ id: 'tt-flow', type: 'raster', source: 'tt-flow', paint: { 'raster-opacity': 0.9 } }, 'route-alt');
-    if (map.getLayer('jam')) map.setLayoutProperty('jam', 'visibility', 'none');
+    map.addLayer({ id: 'tt-flow', type: 'raster', source: 'tt-flow', paint: { 'raster-opacity': 0.9 } }, map.getLayer('route-alt') ? 'route-alt' : undefined);
   }
-  $('lyr-tt').onchange = function () { setTomTom(this.checked); };
-  $('lyr-jam').onchange = function () { if (map.getLayer('jam')) map.setLayoutProperty('jam', 'visibility', this.checked ? 'visible' : 'none'); };
+  $('lyr-tt').onchange = function () { setTomTom(this.checked); try { localStorage.setItem('nn-tt-on', this.checked ? '1' : '0'); } catch (e) {} };
   if (!IN_CLAUDE) {
-    $('tt-key').value = ttKey();
-    if (ttKey()) { $('lyr-tt-row').hidden = false; $('tt-state').textContent = 'Đang dùng khoá TomTom'; }
+    var ownTT = false; try { ownTT = !!localStorage.getItem('nn-tomtom'); } catch (e) {}
+    $('tt-key').value = ownTT ? ttKey() : '';
+    $('tt-state').textContent = ownTT ? 'Đang dùng khoá riêng của bạn' : 'Đang dùng khoá có sẵn của Né Ngập';
+    if (ttKey()) {
+      $('lyr-tt-row').hidden = false;
+      if (ttPref()) { $('lyr-tt').checked = true; mapLoaded.then(function () { setTomTom($('lyr-tt').checked); }); }
+    }
     $('tt-save').onclick = function () {
       var k = $('tt-key').value.trim();
-      try { if (k) localStorage.setItem('nn-tomtom', k); else localStorage.removeItem('nn-tomtom'); } catch (e) { window.NN_TT_KEY = k; }
-      $('lyr-tt-row').hidden = !k;
-      $('tt-state').textContent = k ? 'Đã lưu. Bật “Kẹt xe trực tiếp” ở thẻ Đang ngập.' : 'Đã xoá khoá';
-      if (k) { $('lyr-tt').checked = true; if (map.getLayer('tt-flow')) { map.removeLayer('tt-flow'); map.removeSource('tt-flow'); } setTomTom(true); }
+      try { if (k) localStorage.setItem('nn-tomtom', k); else localStorage.removeItem('nn-tomtom'); } catch (e) { if (k) window.NN_TT_KEY = k; }
+      $('tt-state').textContent = k ? 'Đã lưu khoá riêng của bạn.' : 'Đang dùng khoá có sẵn của Né Ngập';
+      $('lyr-tt').checked = true; if (map.getLayer('tt-flow')) { map.removeLayer('tt-flow'); map.removeSource('tt-flow'); } setTomTom(true);
     };
   }
   if (!IN_CLAUDE) {
@@ -3005,15 +3092,17 @@ if (typeof module !== 'undefined') module.exports = NN;
   function setLive(s, text) { $('live').dataset.s = s; $('liveText').textContent = text; }
   function updatePermNote() {
     var n = $('perm-note');
+    if (store.mode === 'queue') { n.textContent = 'AI sẽ xem camera gần chỗ bạn báo để kiểm chứng (thường 10–20 phút). Nếu đúng, mọi người sẽ thấy và chỉ đường sẽ né chỗ này.'; return; }
     if (store.mode === 'local') n.textContent = 'Báo cáo được lưu trên máy này.';
     else if (store.canWrite === false) n.textContent = 'Tài khoản đang ở quyền chỉ xem, báo cáo lưu trên máy này.';
     else n.textContent = 'Mọi người đang mở bản đồ thấy ngay. Tự ẩn sau 3 giờ.';
     if (store.mode === 'live') setLive('live', store.canWrite === false ? 'Trực tiếp · chỉ xem' : 'Trực tiếp');
   }
   function goLocal() { store.mode = 'local'; setLive('local', 'Thử trên máy'); updatePermNote(); refreshReports(); }
+  function goQueue() { store.mode = 'queue'; setLive('live', 'Trực tiếp'); updatePermNote(); refreshReports(); }
 
   (function connect() {
-    if (!window.claude || typeof window.claude.use !== 'function') { goLocal(); return; }
+    if (!window.claude || typeof window.claude.use !== 'function') { goQueue(); return; }
     Promise.all([window.claude.use('db'), window.claude.use('user')]).then(function (v) {
       var db = v[0], user = v[1];
       if (!db) { goLocal(); return; }
