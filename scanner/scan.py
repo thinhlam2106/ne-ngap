@@ -253,6 +253,90 @@ def weather():
     return out
 
 
+# ---------------------------------------------------------------- radar mưa (RainViewer)
+# Bảng màu "Universal Blue" của RainViewer (dBZ -> RGB), từ 15 dBZ trở lên (mưa thật, không tính nhiễu).
+UB = {15: "88ddee", 16: "6cd1eb", 17: "51c5e8", 18: "36bae5", 19: "1baee2", 20: "00a3e0", 21: "009ad5", 22: "0091ca",
+      23: "0088bf", 24: "007fb4", 25: "0077aa", 26: "0070a3", 27: "00699c", 28: "006295", 29: "005b8e", 30: "005588",
+      31: "005180", 32: "004e78", 33: "004a70", 34: "004768", 35: "ffee00", 36: "ffe000", 37: "ffd200", 38: "ffc500",
+      39: "ffb700", 40: "ffaa00", 41: "ff9f00", 42: "ff9500", 43: "ff8b00", 44: "ff8100", 45: "ff4400", 46: "f23600",
+      47: "e62800", 48: "d91b00", 49: "cd0d00", 50: "c10000", 51: "a80000", 52: "8f0000", 53: "760000", 54: "5d0000",
+      55: "ffaaff", 56: "ff9fff", 57: "ff95ff", 58: "ff8bff", 59: "ff81ff", 60: "ff77ff", 61: "ff6cff", 62: "ff62ff",
+      63: "ff58ff", 64: "ff4eff", 65: "ffffff"}
+UB_RGB = [(d, tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))) for d, h in UB.items()]
+RADAR_BBOX = (10.35, 11.20, 106.35, 107.05)     # lat_min, lat_max, lng_min, lng_max (TP.HCM mới)
+RADAR_Z = 7                                     # RainViewer miễn phí chỉ tới zoom 7 (mỗi điểm ảnh ~1,2 km)
+
+
+def dbz_to_mmh(dbz):
+    """Marshall–Palmer: Z = 200·R^1.6."""
+    return round((10 ** (dbz / 10) / 200) ** (1 / 1.6), 1)
+
+
+def _dbz_of(rgba):
+    r, g, b, a = rgba
+    if a < 250:
+        return None                              # dưới 15 dBZ: bán trong suốt, coi như không mưa
+    best, bd = None, 1e9
+    for d, (R, G, B) in UB_RGB:
+        e = (r - R) ** 2 + (g - G) ** 2 + (b - B) ** 2
+        if e < bd:
+            best, bd = d, e
+    return best if bd < 900 else None
+
+
+def radar():
+    """Ảnh radar mới nhất của RainViewer trên TP.HCM. Trả về dict hoặc None nếu lỗi."""
+    if MOCK:
+        mm = float(os.environ.get("MOCK_RADAR_DBZ", "0"))
+        cells = [[10.80, 106.71, dbz_to_mmh(mm)]] * 6 if mm >= 15 else []
+        return {"time": now_ts() - 300, "max_dbz": mm if cells else 0, "max_mmh": dbz_to_mmh(mm) if cells else 0,
+                "heavy_px": 6 if mm >= 30 else 0, "rain_px": len(cells), "cells": cells}
+    try:
+        j = requests.get("https://api.rainviewer.com/public/weather-maps.json", headers={"User-Agent": UA}, timeout=15).json()
+        fr = j["radar"]["past"][-1]
+        host = j["host"]
+        n = 2 ** RADAR_Z
+
+        def tx(lng): return (lng + 180) / 360 * n
+        def ty(lat):
+            la = math.radians(lat)
+            return (1 - math.asinh(math.tan(la)) / math.pi) / 2 * n
+        la0, la1, lo0, lo1 = RADAR_BBOX
+        xs = range(int(tx(lo0)), int(tx(lo1)) + 1)
+        ys = range(int(ty(la1)), int(ty(la0)) + 1)
+        cells, max_dbz, heavy, rainy = [], 0, 0, 0
+        for x in xs:
+            for y in ys:
+                url = f"{host}{fr['path']}/256/{RADAR_Z}/{x}/{y}/2/0_0.png"
+                r = requests.get(url, headers={"User-Agent": UA}, timeout=15)
+                r.raise_for_status()
+                im = Image.open(io.BytesIO(r.content)).convert("RGBA")
+                px = im.load()
+                for j2 in range(im.height):
+                    gy = (y * 256 + j2 + 0.5) / 256 / n
+                    lat = math.degrees(math.atan(math.sinh(math.pi * (1 - 2 * gy))))
+                    if not (la0 <= lat <= la1):
+                        continue
+                    for i2 in range(im.width):
+                        lng = (x * 256 + i2 + 0.5) / 256 / n * 360 - 180
+                        if not (lo0 <= lng <= lo1):
+                            continue
+                        d = _dbz_of(px[i2, j2])
+                        if d is None:
+                            continue
+                        rainy += 1
+                        max_dbz = max(max_dbz, d)
+                        if d >= 30:
+                            heavy += 1
+                        cells.append([round(lat, 3), round(lng, 3), dbz_to_mmh(d)])
+        cells.sort(key=lambda c: -c[2])
+        return {"time": int(fr["time"]), "max_dbz": max_dbz, "max_mmh": dbz_to_mmh(max_dbz) if max_dbz else 0,
+                "heavy_px": heavy, "rain_px": rainy, "cells": cells[:400]}
+    except Exception as e:
+        log("Không đọc được radar:", repr(e)[:120])
+        return None
+
+
 # ---------------------------------------------------------------- báo cáo của người đi đường
 def fetch_reports(state, ts):
     """Lấy báo cáo mới từ hàng chờ ntfy.sh. Trả về danh sách báo cáo hợp lệ chưa từng thấy."""
@@ -478,10 +562,16 @@ def main():
                     tide_cams.add(c["id"])
 
     w = weather()
+    rd = radar()
+    if rd:
+        w["radar"] = rd
+        log(f"Radar lúc {iso(rd['time'])}: mưa ở {rd['rain_px']} ô ~1,2 km, mạnh nhất {rd['max_mmh']} mm/giờ")
     new_reports = fetch_reports(state, ts)
     if new_reports:
         log(f"Nhận {len(new_reports)} báo cáo mới của người đi đường")
-    raining = (w["rain_1h"] or 0) >= 2
+    # Đang mưa: radar thấy mưa từ ~3 mm/giờ (30 dBZ) trên ít nhất 3 ô, hoặc mô hình báo trên 2 mm/giờ qua.
+    # Radar là số đo thật nên được ưu tiên; mô hình chỉ để phòng khi radar lỗi.
+    raining = bool(rd and rd["heavy_px"] >= 3) or (w["rain_1h"] or 0) >= 2
     tide_high = (w["tide"] or 0) >= 1.45
     if raining:
         state["last_rain"] = ts
@@ -520,7 +610,7 @@ def main():
     # ưu tiên camera kiểm chứng báo cáo, rồi camera gần điểm hay ngập
     prio = lambda cid: 0 if cid in verify else (1 if cid in hot else 2)
     targets = sorted(targets, key=lambda c: prio(c["id"]))
-    log(f"Chế độ {mode}: mưa 1 giờ {w['rain_1h']} mm, triều {w['tide']} m, sẽ xem {len(targets)} camera. Đã tiêu hôm nay ${spent:.3f}/{budget}")
+    log(f"Chế độ {mode}: radar {'mạnh nhất ' + str(rd['max_mmh']) + ' mm/giờ' if rd else 'lỗi'}, mô hình mưa 1 giờ {w['rain_1h']} mm, triều {w['tide']} m, sẽ xem {len(targets)} camera. Đã tiêu hôm nay ${spent:.3f}/{budget}")
 
     stats = {"targets": len(targets), "verify_cams": len(verify), "reports_new": len(new_reports), "images": 0, "failed": 0, "frozen": 0, "placeholder": 0, "classified": 0,
              "unusable": 0, "tokens_in": 0, "tokens_out": 0, "cost_usd": 0.0, "stopped": ""}
