@@ -83,6 +83,7 @@ Each image is preceded by its camera number. For EVERY camera, report:
   4 = water at a motorbike seat or higher, over 50 cm.
   Only give level 1 or more if you can actually see a water surface on the road (ripples, wakes or spray from moving vehicles, submerged curbs or wheels). When unsure between two levels, choose the lower one.
 - confidence: 0 to 1, how sure you are of the level.
+- raining: true only if rain is visibly falling right now: rain streaks (especially under street lights), droplets on the lens, splashes or rings on puddles, or most riders in raincoats or under umbrellas on a wet road. A dry road, or a wet road with no sign of falling rain, is false.
 - note: at most 15 words in Vietnamese describing what you see (e.g. "Nước ngập nửa bánh xe máy, xe đi chậm").
 Call the report_cameras tool once with one entry per camera number."""
 
@@ -101,9 +102,10 @@ TOOL = {
                         "usable": {"type": "boolean"},
                         "level": {"type": "integer", "minimum": 0, "maximum": 4},
                         "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                        "raining": {"type": "boolean"},
                         "note": {"type": "string"},
                     },
-                    "required": ["camera", "usable", "level", "confidence", "note"],
+                    "required": ["camera", "usable", "level", "confidence", "raining", "note"],
                 },
             }
         },
@@ -449,6 +451,58 @@ def verify_reports(state, cams, fresh, ts, wet_recent):
         del reps[k]
 
 
+# ---------------------------------------------------------------- kiểm chứng mưa bằng camera
+RAIN_CHECK_CAMS = 12
+
+
+def pick_rain_check_cams(cams, rd, hot, ts):
+    """Chọn ~12 camera nằm ngay trong vùng radar báo mưa (hoặc rải đều nếu chỉ mô hình báo)."""
+    chosen, ids = [], set()
+    if rd:
+        for lat, lng, mmh in rd.get("cells", []):
+            if mmh < 2.7 or len(chosen) >= RAIN_CHECK_CAMS:
+                continue
+            best = None
+            for c in cams:
+                if c["id"] in ids or abs(c["lat"] - lat) > 0.015 or abs(c["lng"] - lng) > 0.015:
+                    continue
+                d = dist_m(lat, lng, c["lat"], c["lng"])
+                if d <= 1500 and (best is None or d < best[0]):
+                    best = (d, c)
+            if best:
+                chosen.append(best[1]); ids.add(best[1]["id"])
+    if len(chosen) < RAIN_CHECK_CAMS // 2:
+        # rải đều khắp thành phố: mỗi ô ~5 km lấy một camera, ưu tiên camera ở điểm hay ngập
+        cells = {}
+        for c in sorted(cams, key=lambda c: (c["id"] not in hot, hashlib.md5((c["id"] + str(ts // 3600)).encode()).hexdigest())):
+            k = (round(c["lat"] / 0.05), round(c["lng"] / 0.05))
+            cells.setdefault(k, c)
+        for c in cells.values():
+            if len(chosen) >= RAIN_CHECK_CAMS:
+                break
+            if c["id"] not in ids:
+                chosen.append(c); ids.add(c["id"])
+    return chosen
+
+
+def rain_check(check_cams):
+    """Xem ảnh các camera được chọn. Trả về (kết quả từng camera, token vào, token ra, số camera thấy mưa, số ảnh dùng được)."""
+    imgs = []
+    with cf.ThreadPoolExecutor(max_workers=12) as pool:
+        for c, (data, info) in zip(check_cams, pool.map(fetch_image, check_cams)):
+            if data is not None:
+                imgs.append((c, data))
+    res, tin, tout = {}, 0, 0
+    for i in range(0, len(imgs), BATCH):
+        try:
+            r, (a, b) = classify(imgs[i:i + BATCH])
+            res.update(r); tin += a; tout += b
+        except Exception as e:
+            log("Lỗi gọi AI khi kiểm chứng mưa:", repr(e)[:120])
+    usable = [r for r in res.values() if r["usable"]]
+    return res, tin, tout, sum(1 for r in usable if r["rain"]), len(usable)
+
+
 # ---------------------------------------------------------------- AI
 _client = None
 
@@ -490,7 +544,7 @@ def sanitize(r):
     lvl = int(lvl) if isinstance(lvl, (int, float)) else 0
     conf = r.get("confidence", 0)
     conf = float(conf) if isinstance(conf, (int, float)) else 0.0
-    return {"usable": bool(r.get("usable", False)), "level": max(0, min(4, lvl)),
+    return {"usable": bool(r.get("usable", False)), "level": max(0, min(4, lvl)), "rain": bool(r.get("raining", False)),
             "conf": round(max(0.0, min(1.0, conf)), 2), "note": str(r.get("note", ""))[:120]}
 
 
@@ -511,6 +565,7 @@ def mock_classify(batch):
         lvl = [0] * 20 + [1, 1, 2, 2, 3]
         level = lvl[h % len(lvl)]
         res[cam["id"]] = {"usable": h % 23 != 0, "level": level, "conf": 0.6 + (h % 40) / 100,
+                          "rain": (h % 100) < float(os.environ.get("MOCK_CAM_RAIN", "0.5")) * 100,
                           "note": "Nước ngập nửa bánh xe máy" if level >= 2 else ("Có nước trên đường" if level else "Đường khô")}
     return res, (len(batch) * 320 + 450, len(batch) * 40)
 
@@ -569,9 +624,27 @@ def main():
     new_reports = fetch_reports(state, ts)
     if new_reports:
         log(f"Nhận {len(new_reports)} báo cáo mới của người đi đường")
-    # Đang mưa: radar thấy mưa từ ~3 mm/giờ (30 dBZ) trên ít nhất 3 ô, hoặc mô hình báo trên 2 mm/giờ qua.
-    # Radar là số đo thật nên được ưu tiên; mô hình chỉ để phòng khi radar lỗi.
-    raining = bool(rd and rd["heavy_px"] >= 3) or (w["rain_1h"] or 0) >= 2
+    # Radar (RainViewer) ở TP.HCM hay báo nhiễu, nhất là ban đêm (sóng dội vào nhà cửa quanh trạm Nhà Bè),
+    # còn mô hình dự báo hay lệch chỗ, lệch giờ. Vì vậy radar hay mô hình báo mưa chỉ là gợi ý: bộ quét xem
+    # ~12 camera ngay trong vùng được báo, AI thấy mưa thật ở ít nhất 3 camera (hoặc 1/3 số ảnh xem được) mới coi là đang mưa.
+    radar_says = bool(rd and rd["heavy_px"] >= 3)
+    model_says = (w["rain_1h"] or 0) >= 2
+    pre, pre_tokens, check = {}, (0, 0), None
+    raining = False
+    if (radar_says or model_says) and not scan_all and (spent < budget or MOCK):
+        chk = pick_rain_check_cams(cams, rd if radar_says else None, hot, ts)
+        pre, tin0, tout0, n_rain, n_ok = rain_check(chk)
+        pre_tokens = (tin0, tout0)
+        if n_ok >= 4:
+            raining = n_rain >= max(3, math.ceil(n_ok / 3))
+        else:
+            raining = radar_says and model_says        # camera không xem được: chỉ tin khi cả hai nguồn cùng báo
+        check = {"cams": len(chk), "usable": n_ok, "raining": n_rain, "confirmed": raining,
+                 "trigger": "radar" + ("+model" if model_says else "") if radar_says else "model"}
+        log(f"Kiểm chứng mưa ({check['trigger']}): {n_rain}/{n_ok} camera thấy đang mưa -> {'ĐANG MƯA' if raining else 'không mưa, bỏ qua'}")
+    w["rain_check"] = check
+    if rd:
+        rd["confirmed"] = bool(check and check["confirmed"] and radar_says)
     tide_high = (w["tide"] or 0) >= 1.45
     if raining:
         state["last_rain"] = ts
@@ -615,6 +688,11 @@ def main():
     stats = {"targets": len(targets), "verify_cams": len(verify), "reports_new": len(new_reports), "images": 0, "failed": 0, "frozen": 0, "placeholder": 0, "classified": 0,
              "unusable": 0, "tokens_in": 0, "tokens_out": 0, "cost_usd": 0.0, "stopped": ""}
 
+    if pre:
+        stats["tokens_in"] += pre_tokens[0]; stats["tokens_out"] += pre_tokens[1]
+        stats["cost_usd"] = round(stats["tokens_in"] / 1e6 * PRICE_IN + stats["tokens_out"] / 1e6 * PRICE_OUT, 5)
+        stats["rain_check"] = len(pre)
+        targets = [c for c in targets if c["id"] not in pre]
     if targets and spent >= budget and not MOCK:
         stats["stopped"] = "budget"
         targets = []
@@ -658,6 +736,12 @@ def main():
         return classify([(c, d) for c, d, _ in b])
 
     fresh = {}
+    for cid, r in pre.items():                     # kết quả của lượt kiểm chứng mưa cũng tính vào
+        fresh[cid] = r
+        stats["classified"] += 1
+        if r["usable"]:
+            h = state["cams"].setdefault(cid, {}).setdefault("hist", [])
+            h.append([ts, r["level"], r["conf"], r["note"]]); del h[:-4]
     with cf.ThreadPoolExecutor(max_workers=4) as pool:
         pending = {}
         it = iter(batches)
@@ -698,6 +782,14 @@ def main():
         state["spend"][today] = round(spent + stats["cost_usd"], 5)
     # chỉ giữ chi phí 14 ngày gần nhất
     state["spend"] = dict(sorted(state["spend"].items())[-14:])
+
+    # camera tự thấy mưa ở nhiều nơi (dù radar, mô hình không báo): coi như vừa mưa, các lượt sau xem toàn bộ camera
+    seen_ok = [r for r in fresh.values() if r["usable"]]
+    seen_rain = sum(1 for r in seen_ok if r.get("rain"))
+    if not raining and seen_ok and seen_rain >= max(5, math.ceil(len(seen_ok) / 3)):
+        state["last_rain"] = state["last_wet"] = ts
+        state["last_full_scan"] = 0
+        log(f"Camera thấy đang mưa ở {seen_rain}/{len(seen_ok)} chỗ: lượt sau sẽ xem toàn bộ camera")
 
     # 3. kiểm chứng báo cáo của người đi đường
     verify_reports(state, cams, fresh, ts, ts - state.get("last_wet", 0) <= 3 * 3600)
@@ -747,6 +839,7 @@ def main():
         "spend_today_usd": state["spend"].get(today, 0.0), "budget_usd": budget,
         "detections": detections,
         # camera AI vừa xem lượt này và thấy đường khô: bản đồ dùng để bỏ ước tính ngập ở gần đó
+        "raining_cams": sorted(cid for cid, r in fresh.items() if r["usable"] and r.get("rain")),
         "dry": sorted(cid for cid, r in fresh.items() if r["usable"] and r["level"] == 0 and r["conf"] >= 0.6),
         "reports": [{k: r[k] for k in ("id", "status", "cam_name", "cam_dist", "level_cam", "crowd", "at") if k in r}
                     for r in sorted(reps.values(), key=lambda r: -r["at"]) if ts - r["at"] <= 3 * 3600][:300],
