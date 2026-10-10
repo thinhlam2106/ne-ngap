@@ -616,14 +616,32 @@ def kttv_radar(http):
                     mp[xx, yy] = 255
         k = max(3, round(W / 130) | 1)               # ~5 điểm ảnh với ảnh 660
         op = mask.filter(ImageFilter.MinFilter(k)).filter(ImageFilter.MaxFilter(k + 2)).load()
-        op2 = mask.filter(ImageFilter.MinFilter(k + 4)).filter(ImageFilter.MaxFilter(k + 6)).load()
         out = Image.new("RGBA", (W, H), (0, 0, 0, 0)); o = out.load()
         S, N, Wl, E = kttv_bounds()
         la0, la1, lo0, lo1 = RADAR_BBOX
         # Quanh trạm Nhà Bè (~25 km, gồm cả trung tâm TP) hay có vòng sóng dội vào nhà cửa. Ở vùng này chỉ giữ điểm
         # mà lớp mm/10 phút của Đài (đã lọc) cũng có mưa; nếu không có lớp đó thì phải qua bộ lọc nhiễu mạnh hơn.
         cx, cy = W / 2, H / 2
-        r_in, r_near = (0.012 * W) ** 2, (0.028 * W) ** 2
+        r_in, r_near = (0.012 * W) ** 2, (0.034 * W) ** 2
+        # Vòng ~20 km quanh trạm: sóng dội vào nhà cửa hiện thành đốm nhỏ cố định (Thủ Thiêm, Bình Thạnh...).
+        # Ở đây chỉ giữ vùng màu đủ lớn (từ ~65 km² trở lên) hoặc lan ra ngoài vòng, tức là mây mưa thật đang kéo tới.
+        amin, rr_out = 0.00018 * W * W, (0.034 * W * 1.3) ** 2
+        big, seen = set(), set()
+        for yy in range(int(cy - 0.034 * W), int(cy + 0.034 * W) + 1):
+            for xx in range(int(cx - 0.034 * W), int(cx + 0.034 * W) + 1):
+                if (xx, yy) in seen or not (0 <= xx < W and 0 <= yy < H) or not op[xx, yy]:
+                    continue
+                comp, stack, ok = [], [(xx, yy)], False
+                seen.add((xx, yy))
+                while stack:
+                    a, b = stack.pop(); comp.append((a, b))
+                    if (a - cx) ** 2 + (b - cy) ** 2 > rr_out or len(comp) >= amin:
+                        ok = True
+                    for na, nb in ((a + 1, b), (a - 1, b), (a, b + 1), (a, b - 1)):
+                        if 0 <= na < W and 0 <= nb < H and (na, nb) not in seen and op[na, nb]:
+                            seen.add((na, nb)); stack.append((na, nb))
+                if ok:
+                    big.update(comp)
         cells, max_dbz, heavy, rainy = [], 0, 0, 0
         for yy in range(H):
             lat = N - (yy + 0.5) / H * (N - S)
@@ -634,12 +652,12 @@ def kttv_radar(http):
                 if d2 < r_in:
                     continue
                 if d2 < r_near:
+                    if (xx, yy) not in big:
+                        continue
                     if mg:
                         g, mw, mh = mg
                         if g[int(yy * mh / H) * mw + int(xx * mw / W)] is None:
                             continue
-                    elif not op2[xx, yy]:
-                        continue
                 rr, gg, bb = px[xx, yy]
                 o[xx, yy] = (rr, gg, bb, 230)
                 lng = Wl + (xx + 0.5) / W * (E - Wl)
@@ -651,7 +669,7 @@ def kttv_radar(http):
                     if dbz >= 30: heavy += 1
                     if (xx + yy) % 2 == 0:
                         cells.append([round(lat, 3), round(lng, 3), dbz_to_mmh(dbz)])
-        out.resize((W // 2, H // 2), Image.LANCZOS).save(RADAR_PNG, optimize=True)   # nửa kích thước cho kho gọn (~1,8 km/điểm ảnh)
+        out.quantize(colors=64, method=Image.FASTOCTREE).save(RADAR_PNG, optimize=True)   # giữ đủ độ phân giải (~0,9 km/điểm ảnh), bảng 64 màu cho nhẹ
         cells.sort(key=lambda c: -c[2])
         # mỗi điểm ảnh ~0,9 km; quy về ô ~1,2 km cho cùng ngưỡng với RainViewer
         scale = (2 * KTTV_RANGE_KM / W) ** 2 / 1.44
@@ -694,22 +712,28 @@ def kttv_forecast(http, obs_t):
         if not frames:
             log(f"Dự báo AI của Đài: chưa có khung nào sau {iso(obs_t)} (bản dự báo có thể chưa cập nhật)")
             return None
-        comp, W, H, series, union = None, 0, 0, [], {}
+        W, H, series, union, tiles = 0, 0, [], {}, []
+        lut = {v: c for v, c in MM10_LUT}
         for t, f in frames:
             im = Image.open(io.BytesIO(http.get(KTTV_FILE + f.split("?")[0]))).convert("RGBA")
             if im.width > 400:                          # nửa kích thước cho nhanh (~1,8 km/điểm ảnh)
                 im = im.resize((im.width // 2, im.height // 2), Image.NEAREST)
             g, W, H = mm10_grid(im, open_k=3)
-            comp = g if comp is None else [a if b is None or (a is not None and a >= b) else b for a, b in zip(comp, g)]
             mx, n, cells = mm10_hcm(g, W, H)
             series.append([t, mx, n])
             for la, lo, v in cells:
                 if v >= 1 and union.get((la, lo), (0, 0))[0] < v:
                     union[(la, lo)] = (v, t)
-        out = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-        lut = {v: c for v, c in MM10_LUT}
-        out.putdata([(0, 0, 0, 0) if v is None else (43, 155, 238, 90) if v < 1 else (*lut.get(v, MM10_LUT[-1][1]), 210) for v in comp])
-        out.save(FORECAST_PNG, optimize=True)
+            tile = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+            tile.putdata([(0, 0, 0, 0) if v is None else (43, 155, 238, 80) if v < 1 else (*lut.get(v, MM10_LUT[-1][1]), 215) for v in g])
+            tiles.append(tile)
+        # mọi khung gộp vào một ảnh lưới (4 cột) để trang tải một lần rồi cắt ra; mỗi khung 220 px (~2,7 km/điểm ảnh)
+        TS, COLS = 220, 4
+        rows = (len(tiles) + COLS - 1) // COLS
+        sheet = Image.new("RGBA", (TS * COLS, TS * rows), (0, 0, 0, 0))
+        for i, tile in enumerate(tiles):
+            sheet.paste(tile.resize((TS, TS), Image.BILINEAR), ((i % COLS) * TS, (i // COLS) * TS))
+        sheet.quantize(colors=48, method=Image.FASTOCTREE).save(FORECAST_PNG, optimize=True)   # bảng 48 màu: ~15 KB thay vì ~60 KB
         first = next((t for t, mx, n in series if n >= 3), None)
         peak = max(series, key=lambda s: (s[1], s[2]))
         cells = sorted(([la, lo, v, t] for (la, lo), (v, t) in union.items()), key=lambda c: (c[3], -c[2]))[:300]
@@ -717,7 +741,7 @@ def kttv_forecast(http, obs_t):
         log(f"Dự báo AI của Đài ({len(frames)} khung tới {iso(frames[-1][0])}): "
             + (f"mưa có thể tới TP.HCM lúc {iso(first)}, lớn nhất {peak[1]} mm/10 phút" if first else "chưa thấy mưa trên TP.HCM"))
         return {"src": "kttvnb-ml", "model": "ConvLSTM_v1", "obs": obs_t, "from": frames[0][0], "to": frames[-1][0], "img": "forecast.png",
-                "size": [W, H], "bounds": [[round(Wl, 4), round(N, 4)], [round(E, 4), round(N, 4)], [round(E, 4), round(S, 4)], [round(Wl, 4), round(S, 4)]],
+                "sprite": {"cols": COLS, "size": TS, "n": len(tiles)}, "frames": [t for t, _ in frames], "bounds": [[round(Wl, 4), round(N, 4)], [round(E, 4), round(N, 4)], [round(E, 4), round(S, 4)], [round(Wl, 4), round(S, 4)]],
                 "series": series, "first": first, "peak": peak[:2] if peak[1] >= 1 else None, "cells": cells}
     except Exception as e:
         log("Không lấy được dự báo AI của Đài:", repr(e)[:300])
