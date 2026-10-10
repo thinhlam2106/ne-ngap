@@ -43,6 +43,8 @@ jobs:
         run: python scanner/scan.py
 
       - name: Lưu kết quả lên bản đồ
+        env:
+          FEED_TOPIC: ${{ vars.FEED_TOPIC || 'ne-ngap-feed-hcm-k7q2' }}
         run: |
           git config user.name "ne-ngap-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -50,5 +52,12 @@ jobs:
           for f in data/radar.png data/forecast.png; do if [ -f "$f" ]; then git add "$f"; fi; done
           if git diff --cached --quiet; then echo "Không có gì mới."; exit 0; fi
           git commit -m "Cập nhật ngập từ camera"
-          for i in 1 2 3; do git pull --rebase -X theirs && git push && exit 0; sleep 5; done
+          for i in 1 2 3; do
+            if git pull --rebase -X theirs && git push; then
+              # báo cho các trang đang mở: có kết quả mới ở commit này (trang đọc file theo mã commit, không bị bộ đệm 5 phút)
+              curl -s -m 10 -d "$(git rev-parse HEAD)" "https://ntfy.sh/${FEED_TOPIC}" > /dev/null || true
+              exit 0
+            fi
+            sleep 5
+          done
           exit 1
