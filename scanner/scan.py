@@ -637,19 +637,18 @@ def kttv_radar(http, state=None):
         # Lưu tỉ lệ có màu (trung bình trượt) cho ô vuông ~45 km quanh trạm; điểm có màu ở hơn 30% số lượt gần đây là nhiễu.
         R = int(0.034 * W) + 1
         side = 2 * R + 1
+        # Chỉ học khi chắc trời khô (camera xác nhận), để mưa thật kéo dài không bị học nhầm thành nhiễu: xem learn_clutter().
         cmap = (state or {}).get("clutter") or {}
         ema = cmap.get("v") if cmap.get("w") == W and len(cmap.get("v") or []) == side * side else [0.0] * (side * side)
+        hits = []
         for j in range(side):
             yy = int(cy) - R + j
             for i in range(side):
                 xx = int(cx) - R + i
-                hit = 1.0 if (0 <= xx < W and 0 <= yy < H and mp[xx, yy]) else 0.0
-                ema[j * side + i] = round(ema[j * side + i] * 0.85 + hit * 0.15, 3)
-        if state is not None:
-            state["clutter"] = {"w": W, "v": ema}
+                hits.append(1 if (0 <= xx < W and 0 <= yy < H and mp[xx, yy]) else 0)
         def clutter(xx, yy):
             i, j = xx - (int(cx) - R), yy - (int(cy) - R)
-            return 0 <= i < side and 0 <= j < side and ema[j * side + i] > 0.3
+            return 0 <= i < side and 0 <= j < side and ema[j * side + i] > 0.4
         big, seen = set(), set()
         for yy in range(int(cy - 0.034 * W), int(cy + 0.034 * W) + 1):
             for xx in range(int(cx - 0.034 * W), int(cx + 0.034 * W) + 1):
@@ -699,7 +698,7 @@ def kttv_radar(http, state=None):
         cells.sort(key=lambda c: -c[2])
         # mỗi điểm ảnh ~0,9 km; quy về ô ~1,2 km cho cùng ngưỡng với RainViewer
         scale = (2 * KTTV_RANGE_KM / W) ** 2 / 1.44
-        rd = {"src": "kttvnb", "time": t, "file": f, "img": "radar.png", "size": [W, H],
+        rd = {"src": "kttvnb", "time": t, "file": f, "img": "radar.png", "size": [W, H], "_hits": hits, "_box": [W, side, R, int(cx), int(cy)],
               "bounds": [[round(Wl, 4), round(N, 4)], [round(E, 4), round(N, 4)], [round(E, 4), round(S, 4)], [round(Wl, 4), round(S, 4)]],
               "max_dbz": max_dbz, "max_mmh": dbz_to_mmh(max_dbz) if max_dbz else 0,
               "heavy_px": round(heavy * scale), "rain_px": round(rainy * scale), "cells": cells[:400]}
@@ -1125,16 +1124,45 @@ def decide(cam_state, ts, wet=True, strict=False):
 VETO_M = 2500
 
 
-def veto_radar(rd, pts):
+def clutter_lookup(state, rd):
+    """Hàm tra mức "hay có nhiễu" (0–1) của một toạ độ trong ô vuông quanh trạm."""
+    cm = (state or {}).get("clutter") or {}
+    box = rd.get("_box")
+    if not box or cm.get("w") != box[0] or len(cm.get("v") or []) != box[1] * box[1]:
+        return lambda la, lo: 0.0
+    W, side, R, cx, cy = box
+    (Wl, N), (E, _), (_, S) = rd["bounds"][0], rd["bounds"][1], rd["bounds"][2]
+    H = rd.get("size", [W, W])[1]
+    def f(la, lo):
+        x, y = int((lo - Wl) / (E - Wl) * W), int((N - la) / (N - S) * H)
+        i, j = x - (cx - R), y - (cy - R)
+        return cm["v"][j * side + i] if 0 <= i < side and 0 <= j < side else 0.0
+    return f
+
+
+def learn_clutter(state, rd, dry):
+    """Cập nhật bản đồ nhiễu từ lượt này, chỉ khi chắc trời khô; rồi bỏ dữ liệu tạm khỏi kết quả."""
+    if not rd or "_hits" not in rd:
+        return
+    hits, box = rd.pop("_hits"), rd.pop("_box")
+    if not dry:
+        return
+    cm = state.get("clutter") or {}
+    v = cm.get("v") if cm.get("w") == box[0] and len(cm.get("v") or []) == len(hits) else [0.0] * len(hits)
+    state["clutter"] = {"w": box[0], "v": [round(a * 0.85 + h * 0.15, 3) for a, h in zip(v, hits)]}
+
+
+def veto_radar(rd, pts, state=None):
     """Bỏ các ô radar trong bán kính 2,5 km quanh camera AI vừa thấy trời khô; vẽ lại ảnh radar cho khớp."""
     if not pts:
         return
     zones = [(a, b, VETO_M) for a, b in pts]
-    # camera khô nằm cả trong vòng ~25 km quanh trạm: vệt radar ở vòng này lượt này đều là sóng dội, bỏ cả vòng
+    # camera khô nằm cả trong vòng ~25 km quanh trạm: ở vòng này bỏ thêm những điểm từng hay có nhiễu (theo bản đồ nhiễu đã học),
+    # không xoá cả vòng để mưa thật ở chỗ khác trong vòng vẫn còn
     ca, co = KTTV_CENTER
-    if sum(1 for a, b in pts if dist_m(a, b, ca, co) <= 25000) >= max(3, len(pts) * 0.6):
-        zones.append((ca, co, 22000))
-    near = lambda la, lo: any(dist_m(la, lo, a, b) <= r for a, b, r in zones)
+    ring = sum(1 for a, b in pts if dist_m(a, b, ca, co) <= 25000) >= max(3, len(pts) * 0.6)
+    ema_at = clutter_lookup(state, rd)
+    near = lambda la, lo: any(dist_m(la, lo, a, b) <= r for a, b, r in zones) or (ring and dist_m(la, lo, ca, co) <= 22000 and ema_at(la, lo) > 0.1)
     before = len(rd.get("cells", []))
     rd["cells"] = [c for c in rd.get("cells", []) if not near(c[0], c[1])]
     if rd.get("mm10"):
@@ -1149,17 +1177,20 @@ def veto_radar(rd, pts):
         W, H = im.size
         (Wl, N), (E, _), (_, S) = rd["bounds"][0], rd["bounds"][1], rd["bounds"][2]
         px = im.load()
-        for a, b, rr in zones:
+        rings = zones + ([(ca, co, 22000)] if ring else [])
+        for a, b, rr in rings:
             r_px = rr / (111320 * (N - S) / H)
             cxp, cyp = (b - Wl) / (E - Wl) * W, (N - a) / (N - S) * H
             for y in range(max(0, int(cyp - r_px)), min(H, int(cyp + r_px) + 1)):
                 for x in range(max(0, int(cxp - r_px)), min(W, int(cxp + r_px) + 1)):
-                    if (x - cxp) ** 2 + (y - cyp) ** 2 <= r_px * r_px:
+                    if (x - cxp) ** 2 + (y - cyp) ** 2 <= r_px * r_px and px[x, y][3]:
+                        if rr == 22000 and ema_at(N - (y + 0.5) / H * (N - S), Wl + (x + 0.5) / W * (E - Wl)) <= 0.1:
+                            continue
                         px[x, y] = (0, 0, 0, 0)
         im.quantize(colors=64, method=Image.FASTOCTREE).save(RADAR_PNG, optimize=True)
     except Exception as e:
         log("Không vẽ lại được ảnh radar:", repr(e)[:100])
-    log(f"Camera thấy khô ở {len(pts)} chỗ: bỏ {before - len(rd['cells'])} ô radar nhiễu quanh đó" + (" (cả vòng quanh trạm Nhà Bè)" if len(zones) > len(pts) else ""))
+    log(f"Camera thấy khô ở {len(pts)} chỗ: bỏ {before - len(rd['cells'])} ô radar nhiễu quanh đó" + (" (và các điểm hay nhiễu quanh trạm Nhà Bè)" if ring else ""))
 
 
 LEVEL_VI = {1: ("mắt cá chân", "Ngập mắt cá chân (dưới 10 cm)"), 2: ("nửa bánh xe", "Ngập nửa bánh xe máy (15–25 cm)"),
@@ -1285,7 +1316,7 @@ def main():
     # thì vệt radar quanh các camera đó là nhiễu, xoá khỏi số liệu và khỏi ảnh hiển thị.
     if rd and rd.get("src") == "kttvnb" and check and not check["confirmed"] and check["usable"] >= 4:
         dry_pts = [(by_id_all[c]["lat"], by_id_all[c]["lng"]) for c, r in pre.items() if r["usable"] and not r.get("rain") and c in by_id_all]
-        veto_radar(rd, dry_pts)
+        veto_radar(rd, dry_pts, state)
     if rd:
         rd["confirmed"] = bool(check and check["confirmed"] and radar_says)
     tide_high = (w["tide"] or 0) >= 1.45
@@ -1503,6 +1534,8 @@ def main():
         "reports": [{k: r[k] for k in ("id", "status", "cam_name", "cam_dist", "level_cam", "crowd", "at") if k in r}
                     for r in sorted(reps.values(), key=lambda r: -r["at"]) if ts - r["at"] <= 3 * 3600][:300],
     }
+    # học bản đồ nhiễu chỉ khi chắc khô: không đang mưa, camera kiểm chứng (nếu có) không thấy mưa, và camera lượt này gần như không thấy mưa
+    learn_clutter(state, w.get("radar"), not raining and not (check and check["raining"]) and seen_rain <= 1)
     try:
         publish_alerts(state, detections, w.get("forecast"), ts)
     except Exception as e:
