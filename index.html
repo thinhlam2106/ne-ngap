@@ -2925,13 +2925,58 @@ if (typeof module !== 'undefined') module.exports = NN;
         src: src, camName: String(d.cam_name || '').slice(0, 80), camDist: +d.cam_dist || 0, crowd: +d.crowd || 0, repLevel: +d.reported_level || 0 };
     });
   }
-  function pullAI() {
-    var url = aiFeedUrl();
-    fetch(url + (url.indexOf('?') < 0 ? '?' : '&') + 't=' + Date.now(), { cache: 'no-store' })
-      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then(function (j) { if (!j || typeof j !== 'object') throw new Error('bad'); ai.feed = j; ai.ok = true; ai.at = Date.now(); applyAI(); })
-      .catch(function () { if (!ai.ok) $('ai-box').hidden = true; });
+  // Lấy kết quả mới nhất. raw.githubusercontent.com giữ bản cũ tới 5 phút (bỏ qua ?t=...), nên mỗi lượt quét xong
+  // bộ quét báo mã commit mới qua ntfy; trang đọc file theo đúng mã commit đó (địa chỉ mới, không dính bản cũ).
+  var FEED_TOPIC = window.NN_FEED_TOPIC || 'ne-ngap-feed-hcm-k7q2';
+  ai.sha = null; ai.base = null;
+  function feedRepoRaw() {
+    var m = aiFeedUrl().match(/^(https:\/\/raw\.githubusercontent\.com\/[^\/]+\/[^\/]+\/)[^\/]+\/data\/flood-ai\.json/);
+    return m ? m[1] : null;
   }
+  function feedBase() { return ai.base || aiFeedUrl().replace(/flood-ai\.json.*$/, ''); }
+  function loadFeed(url, base, sha, tries) {
+    return fetch(url, { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (j) {
+        if (!j || typeof j !== 'object') throw new Error('bad');
+        if (ai.feed && +j.updated_ts < +ai.feed.updated_ts) return;        // bản cũ hơn cái đang có: bỏ qua
+        ai.feed = j; ai.ok = true; ai.at = Date.now(); ai.base = base; if (sha) ai.sha = sha; applyAI();
+      })
+      .catch(function (e) {
+        if (sha && (tries || 0) < 3) return new Promise(function (res) { setTimeout(res, 4000); }).then(function () { return loadFeed(url, base, sha, (tries || 0) + 1); });
+        if (sha) return pullMain();
+        if (!ai.ok) $('ai-box').hidden = true;
+      });
+  }
+  function pullMain() { var u = aiFeedUrl(); return loadFeed(u + (u.indexOf('?') < 0 ? '?' : '&') + 't=' + Date.now(), null, null); }
+  function pullSha(sha) {
+    var root = feedRepoRaw();
+    if (!root || !/^[0-9a-f]{40}$/.test(sha)) return pullMain();
+    if (sha === ai.sha) return Promise.resolve();
+    var base = root + sha + '/data/';
+    return loadFeed(base + 'flood-ai.json', base, sha, 0);
+  }
+  function pullAI() {
+    if (!feedRepoRaw()) return pullMain();
+    // tin nhắn cuối cùng trên kênh ntfy là mã commit mới nhất
+    return fetch('https://ntfy.sh/' + FEED_TOPIC + '/json?poll=1&since=6h', { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (t) {
+        var last = null;
+        t.split('\n').forEach(function (l) { try { var m = JSON.parse(l); if (m.event === 'message' && /^[0-9a-f]{40}$/.test((m.message || '').trim())) last = m.message.trim(); } catch (e) {} });
+        return last ? pullSha(last) : pullMain();
+      })
+      .catch(pullMain);
+  }
+  // nghe kênh ntfy: bộ quét vừa lưu xong là trang nhận ngay, không phải chờ
+  (function listen() {
+    if (!window.EventSource || window.NN_AI_FEED) return;
+    try {
+      var es = new EventSource('https://ntfy.sh/' + FEED_TOPIC + '/sse');
+      es.onmessage = function (ev) { try { var m = JSON.parse(ev.data); if (m.event === 'message') pullSha((m.message || '').trim()); } catch (e) {} };
+    } catch (e) {}
+  })();
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && Date.now() - (ai.at || 0) > 60000) pullAI(); });
   function applyAI() {
     var list = aiFloods();
     if (map.getSource('ai')) map.getSource('ai').setData({ type: 'FeatureCollection', features: list.map(function (d) {
@@ -3728,7 +3773,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     if (Date.now() / 1000 - (+rd.time || 0) > 45 * 60) return null;
     return rd;
   }
-  function radarUrl(rd) { return aiFeedUrl().replace(/flood-ai\.json.*$/, '') + rd.img + '?t=' + rd.time; }
+  function radarUrl(rd) { return feedBase() + rd.img + '?t=' + rd.time; }
   function updateRainLegend() {
     var rd = radarFeed(), on = !!(rd && $('lyr-radar').checked && map.getLayer && map.getLayer('radar'));
     var wet = rd && +rd.rain_px > 0;
@@ -3781,7 +3826,7 @@ if (typeof module !== 'undefined') module.exports = NN;
   var fcT = { on: false, key: null, n: 0, idx: 0, play: null, loading: null };
   var FC_COLORS = [[1, '#2B9BEE'], [2, '#38FA2F'], [3, '#F7F82F'], [5, '#F7B02F'], [10, '#F52E30'], [15, '#912E95']];
   function fcColor(v) { var c = 'rgba(11,42,85,.14)'; FC_COLORS.forEach(function (p) { if (v >= p[0]) c = p[1]; }); return v > 0 && v < 1 ? 'rgba(43,155,238,.45)' : c; }
-  function fcBase() { return aiFeedUrl().replace(/flood-ai\.json.*$/, ''); }
+  function fcBase() { return feedBase(); }
   function fcLoad(fc) {
     var sp = fc.sprite, key = fc.obs;
     if (!sp || !Array.isArray(fc.frames)) return Promise.reject(new Error('no sprite'));
