@@ -570,23 +570,6 @@ body { font-size: 14.5px; line-height: 1.5; }
 .credit-inline { display: none; font-size: 12px; color: rgba(255,255,255,.7); line-height: 1.5; padding-top: 4px; }
 .credit-inline b { color: #fff; font-family: var(--font-display); }
 
-/* Con trỏ: một nét bút lông thẳng, đổi màu theo vùng (lam trên bản đồ và giấy, vàng nghệ trên tấm lam, hồng khi chạm được) */
-@media (pointer: fine) {
-  :root {
-    --cur-lam: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M2.5 2.5 4.6 3.1 18.2 24.4c.4 1.4-.9 2.3-2 1.5Z' fill='%230476D6' stroke='%23fff' stroke-width='1.3' stroke-linejoin='round'/%3E%3C/svg%3E") 2 2, auto;
-    --cur-nghe: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M2.5 2.5 4.6 3.1 18.2 24.4c.4 1.4-.9 2.3-2 1.5Z' fill='%23FFD45C' stroke='%230B2A74' stroke-width='1.1' stroke-linejoin='round'/%3E%3C/svg%3E") 2 2, auto;
-    --cur-hong: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M2.5 2.5 4.6 3.1 18.2 24.4c.4 1.4-.9 2.3-2 1.5Z' fill='%23FF6FB0' stroke='%23fff' stroke-width='1.3' stroke-linejoin='round'/%3E%3C/svg%3E") 2 2, pointer;
-  }
-  body, .legend, .report-card, .maplibregl-popup, .credit-card { cursor: var(--cur-lam); }
-  .panel, .brand { cursor: var(--cur-nghe); }
-  .maplibregl-canvas-container.maplibregl-interactive, .maplibregl-canvas-container.maplibregl-interactive:active { cursor: var(--cur-lam); }
-  #map.hot .maplibregl-canvas-container.maplibregl-interactive { cursor: var(--cur-hong); }
-  button, a, summary, label.check, .rlabel, [data-ai], [data-spot], [data-est], .sheet-grip, .credit-btn { cursor: var(--cur-hong); }
-  button:disabled { cursor: not-allowed; }
-  input[type="text"], .text { cursor: text; }
-  input[type="range"], input[type="checkbox"] { cursor: var(--cur-hong); }
-}
-
 @media (max-width: 760px) {
   .brand { top: calc(10px + env(safe-area-inset-top, 0px)); left: 12px; right: 12px; padding: 9px 14px; border-radius: 16px; }
   .brand .mark { width: 92px; }
@@ -823,9 +806,103 @@ body.intro .brand, body.intro .panel, body.intro .legend, body.intro .fab, body.
 .pickbar button { background: rgba(11,42,85,.08); color: var(--ink); }
 .maplibregl-ctrl-group { background: var(--glass) !important; -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: var(--glass-shadow) !important; border-radius: 16px; }
 
-/* con trỏ: tấm kính giờ sáng nên dùng nét lam */
-@media (pointer: fine) { .panel { cursor: var(--cur-lam); } .brand { cursor: var(--cur-nghe); } }
 
+/* ======== Ẩn bảng để xem trọn bản đồ ======== */
+.zen-btn { position: absolute; z-index: 7; top: 82px; left: 428px; display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px 0 10px;
+  border: 0; border-radius: 999px; background: var(--glass); color: #0B2A55; font: 600 13px var(--font-body);
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: var(--glass-shadow);
+  transition: left .6s var(--ease), bottom .5s var(--ease), background-color .25s, opacity .4s; }
+.zen-btn:hover { background: var(--glass-strong); }
+.zen-btn svg { width: 18px; height: 18px; transition: transform .6s var(--ease); }
+.zen-btn span { max-width: 0; overflow: hidden; white-space: nowrap; opacity: 0; transition: max-width .45s var(--ease), opacity .3s; }
+.zen-btn:hover span, .zen-btn:focus-visible span, body.zen .zen-btn span { max-width: 90px; opacity: 1; }
+.zen-btn { padding-right: 10px; } .zen-btn:hover, body.zen .zen-btn { padding-right: 14px; }
+body.zen .zen-btn { left: 16px; }
+body.zen .zen-btn svg { transform: rotate(180deg); }
+.panel, .legend { transition: opacity .55s var(--ease), transform .7s var(--ease); }
+body.zen .panel { transform: translateX(calc(-100% - 40px)); opacity: 0; pointer-events: none; }
+body.zen .legend { transform: translateX(calc(100% + 40px)); opacity: 0; pointer-events: none; }
+.fab { transition: left .6s var(--ease), opacity .7s var(--ease), transform .8s var(--ease); }
+body.zen .fab { left: 16px; }
+body.intro .zen-btn { opacity: 0; }
+
+/* ======== Thanh thời gian dự báo mưa (giống bản đồ của Đài) ======== */
+.fcbar { position: absolute; z-index: 6; top: 14px; left: calc(416px + (100% - 416px) / 2); transform: translateX(-50%);
+  width: min(620px, calc(100% - 416px - 380px)); min-width: 420px; display: flex; gap: 14px; align-items: center; padding: 12px 18px 10px 12px;
+  border-radius: 26px; background: var(--glass); color: #0B2A55; -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow); transition: left .7s var(--ease), opacity .4s; }
+body.zen .fcbar { left: 50%; }
+.fc-play { flex: none; width: 46px; height: 46px; border-radius: 50%; border: 0; display: grid; place-items: center; background: var(--lam); color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 8px 20px rgba(4,118,214,.35); transition: transform .25s var(--ease); }
+.fc-play:hover { transform: scale(1.06); }
+.fc-play svg { width: 18px; height: 18px; }
+.fc-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.fc-head { display: flex; align-items: baseline; gap: 10px; font-size: 12px; color: rgba(11,42,85,.7); }
+.fc-head b { font: 700 15px var(--font-display); color: #0B2A55; font-variant-numeric: tabular-nums; }
+.fc-head .fc-what { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fc-x { border: 0; background: none; color: rgba(11,42,85,.55); font-size: 18px; line-height: 1; padding: 0 2px; }
+.fc-x:hover { color: #0B2A55; }
+.fc-scale { position: relative; height: 40px; }
+.fc-spark { position: absolute; left: 7px; right: 7px; top: 0; height: 20px; display: flex; align-items: flex-end; justify-content: space-between; }
+.fc-spark i { width: 6px; margin-left: -3px; margin-right: -3px; border-radius: 3px 3px 1px 1px; background: rgba(11,42,85,.14); min-height: 2px; transition: background-color .3s, transform .3s; }
+.fc-spark i.cur { transform: scaleX(1.5); }
+.fc-range { position: absolute; left: 0; right: 0; top: 16px; width: 100%; margin: 0; height: 16px; background: none; -webkit-appearance: none; appearance: none; }
+.fc-range::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: linear-gradient(90deg, var(--lam) var(--p, 0%), rgba(11,42,85,.14) var(--p, 0%)); }
+.fc-range::-moz-range-track { height: 4px; border-radius: 4px; background: rgba(11,42,85,.14); }
+.fc-range::-moz-range-progress { height: 4px; border-radius: 4px; background: var(--lam); }
+.fc-range::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -6px; border-radius: 50%; background: #fff; border: 0;
+  box-shadow: 0 0 0 4px var(--lam), 0 4px 10px rgba(3,40,100,.3); }
+.fc-range::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 0; box-shadow: 0 0 0 4px var(--lam), 0 4px 10px rgba(3,40,100,.3); }
+.fc-range:focus-visible { outline: none; }
+.fc-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px var(--lam), 0 0 0 8px rgba(4,118,214,.25); }
+.fc-labels { position: relative; height: 14px; margin: 0 7px; font-size: 10.5px; color: rgba(11,42,85,.6); font-variant-numeric: tabular-nums; }
+.fc-labels span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.fc-labels span.now { color: var(--lam); font-weight: 700; }
+
+/* ======== Con trỏ: một thanh thẳng đứng; chạm vào nút thì nở thành vòng kính ======== */
+html.has-cur, html.has-cur * { cursor: none !important; }
+.cur { position: fixed; inset: 0; pointer-events: none; z-index: 10000; opacity: 0; transition: opacity .25s; --c: var(--lam); }
+.cur.on { opacity: 1; }
+.cur > i { position: absolute; left: 0; top: 0; will-change: transform; }
+.cur-bar::before { content: ""; position: absolute; left: -1px; top: -14px; width: 2px; height: 28px; border-radius: 2px; background: var(--c);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.8), 0 1px 4px rgba(3,40,100,.25); transition: height .3s var(--ease), top .3s var(--ease), background-color .3s; }
+.cur-bar::after { content: ""; position: absolute; left: -4px; top: -14px; width: 8px; height: 28px; border-top: 2px solid var(--c); border-bottom: 2px solid var(--c);
+  border-radius: 1px; box-sizing: border-box; transition: opacity .25s, height .3s var(--ease), top .3s var(--ease), border-color .3s; }
+.cur-ring::before { content: ""; position: absolute; width: 42px; height: 42px; left: -21px; top: -21px; border-radius: 50%; box-sizing: border-box;
+  border: 1.5px solid var(--c); background: color-mix(in srgb, var(--c) 12%, rgba(255,255,255,.18));
+  -webkit-backdrop-filter: blur(2px) saturate(1.6); backdrop-filter: blur(2px) saturate(1.6);
+  transform: scale(.2); opacity: 0; transition: transform .45s var(--ease), opacity .3s, border-color .3s, background-color .3s; }
+.cur.hot .cur-ring::before, .cur.maphot .cur-ring::before { transform: scale(1); opacity: 1; }
+.cur.hot .cur-bar::before, .cur.maphot .cur-bar::before { height: 12px; top: -6px; }
+.cur.hot .cur-bar::after, .cur.maphot .cur-bar::after { opacity: 0; height: 12px; top: -6px; }
+.cur.down .cur-bar::before { height: 18px; top: -9px; }
+.cur.down .cur-bar::after { height: 18px; top: -9px; }
+.cur.down .cur-ring::before { transform: scale(.78); }
+.cur.txt .cur-bar::after { width: 7px; left: -3.5px; }
+.cur[data-z="panel"] { --c: #0B2A55; }
+.cur[data-z="brand"] { --c: var(--nghe); }
+.cur[data-z="fab"] { --c: #0B2A55; }
+.cur.maphot { --c: #F0428C; }
+
+@media (max-width: 760px) {
+  .zen-btn { top: auto; left: 12px; bottom: calc(var(--sheet-h, 400px) + 14px); height: 42px; padding: 0 12px 0 10px; }
+  .zen-btn span { display: none; }
+  body.zen .zen-btn { left: 12px; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+  body.zen .zen-btn span { display: inline; max-width: 90px; opacity: 1; }
+  body.zen .zen-btn svg { transform: rotate(90deg); }
+  .zen-btn svg { transform: rotate(-90deg); }
+  body.zen .panel { transform: translateY(105%); }
+  body.zen .legend { transform: translateY(-20px); }
+  body.zen .fab { left: auto; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+  .fcbar { top: auto; left: 12px; right: 12px; width: auto; min-width: 0; transform: none; bottom: calc(var(--sheet-h, 400px) + 66px); padding: 10px 14px 8px 10px; gap: 10px; border-radius: 22px; }
+  body.zen .fcbar { left: 12px; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+  .fc-play { width: 40px; height: 40px; }
+  .fc-head .fc-what { display: none; }
+  body.fc-on .legend .rain-lg { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .zen-btn, .panel, .legend, .fab, .fcbar { transition: none; }
+}
 @media (max-width: 760px) {
   .panel { border-radius: 28px 28px 0 0; }
   .tabs { margin: 4px 10px 0; }
@@ -907,6 +984,15 @@ body.intro .brand, body.intro .panel, body.intro .legend, body.intro .fab, body.
       <div class="cc-row"><span>Thực hiện</span><b>Nhóm Nhóm</b></div>
       <div class="cc-row"><span>Dữ liệu</span><div>Radar Đài KTTV khu vực Nam Bộ, Phòng CSGT Công an TP.HCM, camera giao thông TP.HCM, OpenStreetMap, Open-Meteo, TomTom</div></div>
       <div class="cc-row"><span>Đường dây nóng</span><b>0326 08 08 08</b></div>
+    </div>
+  </div>
+  <button class="zen-btn" id="zen-btn" aria-pressed="false" aria-label="Ẩn bảng để xem trọn bản đồ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Ẩn bảng</span></button>
+  <div class="fcbar" id="fcbar" hidden role="group" aria-label="Dự báo mưa 2 giờ tới">
+    <button class="fc-play" id="fc-play" aria-label="Phát"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path id="fc-play-ic" d="M8 5.5v13l11-6.5z"/></svg></button>
+    <div class="fc-main">
+      <div class="fc-head"><b id="fc-when">Bây giờ</b><span class="fc-what" id="fc-what"></span><button class="fc-x" id="fc-x" aria-label="Tắt dự báo">×</button></div>
+      <div class="fc-scale"><div class="fc-spark" id="fc-spark" aria-hidden="true"></div><input class="fc-range" id="fc-range" type="range" min="0" max="12" step="1" value="0" aria-label="Chọn thời điểm"></div>
+      <div class="fc-labels" id="fc-labels" aria-hidden="true"></div>
     </div>
   </div>
   <aside class="panel" id="panel">
@@ -2432,6 +2518,7 @@ if (typeof module !== 'undefined') module.exports = NN;
   // ---------- tab ----------
   var panel = $('panel');
   function setTab(t) {
+    if (document.body.classList.contains('zen')) setZen(false);
     state.tab = t;
     ['now', 'route', 'list'].forEach(function (k) {
       $('t-' + k).setAttribute('aria-selected', String(k === t));
@@ -3657,12 +3744,13 @@ if (typeof module !== 'undefined') module.exports = NN;
     var coords = rd.bounds, url = radarUrl(rd);
     if (!map.getSource('radar')) {
       map.addSource('radar', { type: 'image', url: url, coordinates: coords });
-      map.addLayer({ id: 'radar', type: 'raster', source: 'radar', paint: { 'raster-opacity': 0.62, 'raster-fade-duration': 300, 'raster-resampling': 'linear' }, layout: { visibility: $('lyr-radar').checked ? 'visible' : 'none' } }, 'spot-line');
+      map.addLayer({ id: 'radar', type: 'raster', source: 'radar', paint: { 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 10, 0.62, 13, 0.5, 16, 0.3], 'raster-fade-duration': 300, 'raster-resampling': 'linear' }, layout: { visibility: $('lyr-radar').checked ? 'visible' : 'none' } }, 'spot-line');
     } else if (radarShownAt !== rd.time) {
       map.getSource('radar').updateImage({ url: url, coordinates: coords });
     }
     radarShownAt = rd.time;
     map.setLayoutProperty('radar', 'visibility', $('lyr-radar').checked ? 'visible' : 'none');
+    if (fcT.on) fcShow(fcT.idx);
     updateRainLegend();
   }
   try { if (localStorage.getItem('nn-radar') === '0') $('lyr-radar').checked = false; } catch (e) {}
@@ -3688,29 +3776,136 @@ if (typeof module !== 'undefined') module.exports = NN;
     });
     return out;
   }
-  var fcShownAt = 0;
+  // Thanh thời gian: khung 0 là radar mới nhất, các khung sau là dự báo 10 phút một của Đài.
+  // Bộ quét gộp mọi khung vào một ảnh lưới (forecast.png); trang cắt ra từng khung, mỗi khung là một lớp ảnh, chuyển khung bằng cách đổi độ mờ.
+  var fcT = { on: false, key: null, n: 0, idx: 0, play: null, loading: null };
+  var FC_COLORS = [[1, '#2B9BEE'], [2, '#38FA2F'], [3, '#F7F82F'], [5, '#F7B02F'], [10, '#F52E30'], [15, '#912E95']];
+  function fcColor(v) { var c = 'rgba(11,42,85,.14)'; FC_COLORS.forEach(function (p) { if (v >= p[0]) c = p[1]; }); return v > 0 && v < 1 ? 'rgba(43,155,238,.45)' : c; }
+  function fcBase() { return aiFeedUrl().replace(/flood-ai\.json.*$/, ''); }
+  function fcLoad(fc) {
+    var sp = fc.sprite, key = fc.obs;
+    if (!sp || !Array.isArray(fc.frames)) return Promise.reject(new Error('no sprite'));
+    if (fcT.key === key && fcT.loading) return fcT.loading;
+    fcT.key = key;
+    fcT.loading = new Promise(function (res, rej) {
+      var img = new Image(); img.crossOrigin = 'anonymous';
+      img.onload = function () {
+        var urls = [], cv = document.createElement('canvas'); cv.width = cv.height = sp.size;
+        var g = cv.getContext('2d');
+        for (var i = 0; i < sp.n; i++) {
+          g.clearRect(0, 0, sp.size, sp.size);
+          g.drawImage(img, (i % sp.cols) * sp.size, Math.floor(i / sp.cols) * sp.size, sp.size, sp.size, 0, 0, sp.size, sp.size);
+          urls.push(cv.toDataURL('image/png'));
+        }
+        res(urls);
+      };
+      img.onerror = rej;
+      img.src = fcBase() + fc.img + '?t=' + key;
+    });
+    return fcT.loading;
+  }
+  function fcLayers(fc, urls) {
+    var before = map.getLayer('radar') ? 'radar' : 'spot-line';
+    for (var i = 0; i < 24; i++) {
+      var id = 'fc-' + i;
+      if (i < urls.length) {
+        if (!map.getSource(id)) {
+          map.addSource(id, { type: 'image', url: urls[i], coordinates: fc.bounds });
+          map.addLayer({ id: id, type: 'raster', source: id, paint: { 'raster-opacity': 0, 'raster-opacity-transition': { duration: 380, delay: 0 }, 'raster-fade-duration': 0, 'raster-resampling': 'linear' } }, before);
+        } else map.getSource(id).updateImage({ url: urls[i], coordinates: fc.bounds });
+        map.setLayoutProperty(id, 'visibility', 'visible');
+      } else if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
+    }
+    fcT.n = urls.length;
+  }
+  function fcStat(i) {
+    var fc = forecastFeed(), rd = radarFeed();
+    if (i === 0) {
+      if (!rd) return { t: fc ? fc.obs : 0, mm: 0, px: 0 };
+      var m = rd.mm10 || {};
+      return { t: rd.time, mm: m.max != null ? +m.max : (+rd.max_mmh || 0) / 6, px: m.px != null ? +m.px : +rd.rain_px || 0 };
+    }
+    var s = fc && fc.series && fc.series[i - 1];
+    return s ? { t: +s[0], mm: +s[1], px: +s[2] } : { t: 0, mm: 0, px: 0 };
+  }
+  function fcRenderBar() {
+    var fc = forecastFeed(); if (!fc) return;
+    var n = fcT.n, spark = '', labels = '';
+    for (var i = 0; i <= n; i++) {
+      var st = fcStat(i), h = st.px > 0 ? Math.max(3, Math.min(20, Math.sqrt(st.px / 400) * 20)) : 2;
+      spark += '<i style="height:' + h.toFixed(1) + 'px;background:' + (st.px > 0 ? fcColor(st.mm) : 'rgba(11,42,85,.14)') + '"></i>';
+      if (i % 3 === 0 || i === n) {
+        if (i === n && n % 3 && n % 3 < 2) continue;
+        labels += '<span' + (i === 0 ? ' class="now"' : '') + ' style="left:' + (i / n * 100).toFixed(2) + '%">' + (i === 0 ? 'Bây giờ' : hhmm(st.t * 1000)) + '</span>';
+      }
+    }
+    $('fc-spark').innerHTML = spark; $('fc-labels').innerHTML = labels;
+    $('fc-range').max = n;
+  }
+  function fcShow(i) {
+    var fc = forecastFeed(); if (!fc || !map.getLayer) return;
+    i = Math.max(0, Math.min(fcT.n, i)); fcT.idx = i;
+    for (var k = 0; k < fcT.n; k++) if (map.getLayer('fc-' + k)) map.setPaintProperty('fc-' + k, 'raster-opacity', k === i - 1 ? 0.66 : 0);
+    if (map.getLayer('radar')) map.setLayoutProperty('radar', 'visibility', i === 0 ? 'visible' : 'none');
+    var st = fcStat(i), r = $('fc-range');
+    r.value = i; r.style.setProperty('--p', (fcT.n ? i / fcT.n * 100 : 0) + '%');
+    [].forEach.call($('fc-spark').children, function (el, k) { el.classList.toggle('cur', k === i); });
+    $('fc-when').textContent = i === 0 ? 'Bây giờ' : hhmm(st.t * 1000);
+    var mins = i === 0 ? 0 : Math.round((st.t - fcStat(0).t) / 60);
+    $('fc-what').textContent = (i === 0 ? 'radar lúc ' + hhmm(st.t * 1000) : 'dự báo AI, ' + mins + ' phút nữa') + ' · ' +
+      (st.px >= 3 ? 'TP.HCM có mưa, mạnh nhất ~' + num(st.mm, st.mm < 1 ? 1 : 0) + ' mm/10 phút' : 'TP.HCM chưa mưa');
+  }
+  function fcPlayIcon(p) { $('fc-play-ic').setAttribute('d', p ? 'M7 5h3.6v14H7zM13.4 5H17v14h-3.6z' : 'M8 5.5v13l11-6.5z'); $('fc-play').setAttribute('aria-label', p ? 'Tạm dừng' : 'Phát'); }
+  function fcStop() { if (fcT.play) { clearTimeout(fcT.play); fcT.play = null; } fcPlayIcon(false); }
+  function fcPlay() {
+    fcStop(); fcPlayIcon(true);
+    if (fcT.idx >= fcT.n) fcShow(0);
+    (function step() {
+      fcT.play = setTimeout(function () {
+        if (fcT.idx >= fcT.n) fcShow(0); else fcShow(fcT.idx + 1);
+        step();
+      }, fcT.idx >= fcT.n - 1 ? 1700 : fcT.idx === 0 ? 1100 : 650);
+    })();
+  }
+  $('fc-play').onclick = function () { if (fcT.play) fcStop(); else fcPlay(); };
+  $('fc-range').oninput = function () { fcStop(); fcShow(+this.value); };
+  $('fc-x').onclick = function () { var c = $('lyr-fc'); c.checked = false; c.onchange.call(c); };
   function syncForecast() {
-    var fc = forecastFeed(), row = $('lyr-fc-row'), note = $('fc-note'), on = !!(fc && $('lyr-fc').checked);
+    var fc = forecastFeed(), row = $('lyr-fc-row'), note = $('fc-note'), on = !!(fc && $('lyr-fc').checked && fc.sprite);
     row.hidden = !fc; note.hidden = !fc;
     $('fc-lg').hidden = !on;
-    if (!fc || !map.getSource) { if (map.getLayer && map.getLayer('forecast')) map.setLayoutProperty('forecast', 'visibility', 'none'); return; }
-    note.textContent = fc.first ? 'Mưa có thể tới TP.HCM khoảng ' + hhmm(fc.first * 1000) + '.' : 'Từ giờ tới ' + hhmm(fc.to * 1000) + ' chưa thấy mưa trên TP.HCM.';
-    $('fc-src').textContent = 'Mô hình AI của Đài KTTV khu vực Nam Bộ, từ ảnh radar lúc ' + hhmm(fc.obs * 1000) + '. Màu là lượng mưa lớn nhất có thể có tới ' + hhmm(fc.to * 1000) + '.';
-    var url = aiFeedUrl().replace(/flood-ai\.json.*$/, '') + fc.img + '?t=' + fc.obs;
-    if (!map.getSource('forecast')) {
-      map.addSource('forecast', { type: 'image', url: url, coordinates: fc.bounds });
-      map.addLayer({ id: 'forecast', type: 'raster', source: 'forecast', paint: { 'raster-opacity': 0.5, 'raster-fade-duration': 300, 'raster-resampling': 'linear' }, layout: { visibility: on ? 'visible' : 'none' } }, map.getLayer('radar') ? 'radar' : 'spot-line');
-    } else if (fcShownAt !== fc.obs) {
-      map.getSource('forecast').updateImage({ url: url, coordinates: fc.bounds });
+    if (!on || !map.getLayer) {
+      var was = fcT.on; fcT.on = false; fcStop(); $('fcbar').hidden = true; document.body.classList.remove('fc-on');
+      for (var i = 0; i < 24; i++) if (map.getLayer && map.getLayer('fc-' + i)) map.setLayoutProperty('fc-' + i, 'visibility', 'none');
+      if (was && map.getLayer && map.getLayer('radar')) map.setLayoutProperty('radar', 'visibility', $('lyr-radar').checked ? 'visible' : 'none');
+      if (fc) note.textContent = fc.first ? 'Mưa có thể tới TP.HCM khoảng ' + hhmm(fc.first * 1000) + '.' : 'Từ giờ tới ' + hhmm(fc.to * 1000) + ' chưa thấy mưa trên TP.HCM.';
+      return;
     }
-    fcShownAt = fc.obs;
-    map.setLayoutProperty('forecast', 'visibility', on ? 'visible' : 'none');
+    note.textContent = fc.first ? 'Mưa có thể tới TP.HCM khoảng ' + hhmm(fc.first * 1000) + '. Kéo thanh thời gian ở trên bản đồ để xem.' : 'Từ giờ tới ' + hhmm(fc.to * 1000) + ' chưa thấy mưa trên TP.HCM.';
+    $('fc-src').textContent = 'Mô hình AI của Đài KTTV khu vực Nam Bộ, chạy từ ảnh radar lúc ' + hhmm(fc.obs * 1000) + '.';
+    var fresh = !fcT.on || fcT.key !== fc.obs;
+    fcT.on = true; $('fcbar').hidden = false; document.body.classList.add('fc-on');
+    if (!fresh) { fcRenderBar(); fcShow(fcT.idx); return; }
+    fcLoad(fc).then(function (urls) {
+      if (!fcT.on) return;
+      fcLayers(fc, urls); fcRenderBar(); fcShow(0);
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches) fcPlay();
+    }).catch(function () { $('fc-what').textContent = 'Chưa tải được ảnh dự báo.'; });
   }
   try { if (localStorage.getItem('nn-fc') === '1') $('lyr-fc').checked = true; } catch (e) {}
   $('lyr-fc').onchange = function () {
     try { localStorage.setItem('nn-fc', this.checked ? '1' : '0'); } catch (e) {}
     syncForecast();
   };
+  // ---------- ẩn bảng để xem trọn bản đồ ----------
+  function setZen(on) {
+    document.body.classList.toggle('zen', on);
+    var b = $('zen-btn'); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.setAttribute('aria-label', on ? 'Hiện lại bảng điều khiển' : 'Ẩn bảng để xem trọn bản đồ');
+    b.querySelector('span').textContent = on ? 'Hiện bảng' : 'Ẩn bảng';
+    if (on && popup && isPhone()) { /* giữ popup */ }
+  }
+  $('zen-btn').onclick = function () { setZen(!document.body.classList.contains('zen')); };
   setInterval(function () { if (!live.sim && live.rainRaw) computeEst(); }, 60000);
   var TT_DEFAULT = 'zD2s8qIPNAuDit6obPqwYhkqIM2WCZTB';
   function ttKey() { var d = window.NN_TT_KEY || TT_DEFAULT; try { return localStorage.getItem('nn-tomtom') || d; } catch (e) { return d; } }
@@ -3860,6 +4055,46 @@ if (typeof module !== 'undefined') module.exports = NN;
   });
 
   renderList();
+})();
+
+// ---------- con trỏ: thanh thẳng đứng, nở thành vòng kính khi chạm vào thứ bấm được ----------
+(function () {
+  if (!window.matchMedia || !matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  var root = document.documentElement, c = document.createElement('div');
+  c.className = 'cur'; c.setAttribute('aria-hidden', 'true'); c.innerHTML = '<i class="cur-ring"></i><i class="cur-bar"></i>';
+  document.body.appendChild(c); root.classList.add('has-cur');
+  var ring = c.firstChild, bar = c.lastChild, x = -200, y = -200, rx = x, ry = y, seen = false;
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var HOT = 'button:not(:disabled), a[href], summary, label.check, .rlabel, [data-ai], [data-spot], [data-est], [data-viewcam], input[type=range], input[type=checkbox], select, .sheet-grip, .maplibregl-ctrl button, .maplibregl-marker';
+  var TXT = 'input[type=text], input[type=search], input:not([type]), textarea, .text';
+  var mapEl = document.getElementById('map');
+  function zone(t) {
+    if (t.closest('.brand')) return 'brand';
+    if (t.closest('.panel')) return 'panel';
+    if (t.closest('.fab')) return 'fab';
+    return 'map';
+  }
+  document.addEventListener('mousemove', function (e) {
+    x = e.clientX; y = e.clientY;
+    if (!seen) { seen = true; rx = x; ry = y; c.classList.add('on'); }
+    var t = e.target && e.target.closest ? e.target : document.body;
+    var txt = !!t.closest(TXT), hot = !txt && !!t.closest(HOT);
+    c.dataset.z = zone(t);
+    c.classList.toggle('txt', txt);
+    c.classList.toggle('hot', hot);
+    c.classList.toggle('maphot', !hot && !txt && mapEl.classList.contains('hot') && !!t.closest('#map'));
+  }, { passive: true });
+  document.addEventListener('mousedown', function () { c.classList.add('down'); });
+  document.addEventListener('mouseup', function () { c.classList.remove('down'); });
+  document.addEventListener('mouseout', function (e) { if (!e.relatedTarget) { c.classList.remove('on'); seen = false; } });
+  window.addEventListener('blur', function () { c.classList.remove('on'); seen = false; });
+  (function loop() {
+    var k = reduce ? 1 : 0.22;
+    rx += (x - rx) * k; ry += (y - ry) * k;
+    bar.style.transform = 'translate3d(' + x + 'px,' + y + 'px,0)';
+    ring.style.transform = 'translate3d(' + rx.toFixed(2) + 'px,' + ry.toFixed(2) + 'px,0)';
+    requestAnimationFrame(loop);
+  })();
 })();
 </script>
 
