@@ -39,6 +39,7 @@ jobs:
           SCAN_ALL: ${{ inputs.scan_all }}
           DAILY_BUDGET_USD: ${{ vars.DAILY_BUDGET_USD || '1.5' }}
           DRY_SCAN_HOURS: ${{ vars.DRY_SCAN_HOURS || '3' }}
+          REPORT_TOPIC: ${{ vars.REPORT_TOPIC || 'ne-ngap-bao-ngap-hcm-k7q2' }}
         run: python scanner/scan.py
 
       - name: Lưu kết quả lên bản đồ
@@ -46,6 +47,7 @@ jobs:
           git config user.name "ne-ngap-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/flood-ai.json data/state.json
+          if [ -f data/radar.png ]; then git add data/radar.png; fi
           if git diff --cached --quiet; then echo "Không có gì mới."; exit 0; fi
           git commit -m "Cập nhật ngập từ camera"
           for i in 1 2 3; do git pull --rebase -X theirs && git push && exit 0; sleep 5; done
