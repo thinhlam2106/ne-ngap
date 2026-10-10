@@ -522,12 +522,12 @@ def mm10_grid(im, despeckle=True, open_k=0):
     from PIL import ImageFilter
     im = im.convert("RGBA")
     W, H = im.size
-    data = list(im.getdata())
+    data = list(im.get_flattened_data() if hasattr(im, "get_flattened_data") else im.getdata())
     g = [mm10_of(*p) for p in data]
     if open_k:
         m = Image.new("L", (W, H)); m.putdata([0 if v is None or v < 1 else 255 for v in g])
         m = m.filter(ImageFilter.MinFilter(open_k)).filter(ImageFilter.MaxFilter(open_k + 2))
-        keep = list(m.getdata())
+        keep = list(m.get_flattened_data() if hasattr(m, "get_flattened_data") else m.getdata())
         g = [v if v is None or v < 1 or keep[i] else 0.5 for i, v in enumerate(g)]
     if despeckle:                                       # bỏ điểm lẻ: cần ít nhất 3 ô lân cận cũng có mưa
         out = g[:]
