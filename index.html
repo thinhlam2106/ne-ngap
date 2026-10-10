@@ -1111,6 +1111,7 @@ html.has-cur, html.has-cur * { cursor: none !important; }
       <div class="cc-row"><span>Thực hiện</span><b>Nhóm Nhóm</b></div>
       <div class="cc-row"><span>Dữ liệu</span><div>Radar Đài KTTV khu vực Nam Bộ, Phòng CSGT Công an TP.HCM, camera giao thông TP.HCM, OpenStreetMap, Open-Meteo, TomTom</div></div>
       <div class="cc-row"><span>Đường dây nóng</span><b>0326 08 08 08</b></div>
+      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">10/10 · bản 11:15</span></div>
     </div>
   </div>
   <button class="zen-btn" id="zen-btn" aria-pressed="false" aria-label="Ẩn bảng để xem trọn bản đồ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Ẩn bảng</span></button>
@@ -1190,7 +1191,7 @@ html.has-cur, html.has-cur * { cursor: none !important; }
           <div><a class="src" href="https://giaothong.hochiminhcity.gov.vn/" target="_blank" rel="noopener">Xem camera giao thông trực tiếp của TP.HCM</a></div>
         </div>
       </details>
-      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap.</span></div>
+      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 10/10 · bản 11:15.</span></div>
     </section>
 
     <!-- Chỉ đường -->
@@ -1295,7 +1296,6 @@ html.has-cur, html.has-cur * { cursor: none !important; }
     <div class="nav-eta"><b id="nav-eta"></b><span id="nav-left"></span></div>
     <button class="nav-b" id="nav-recenter" hidden aria-label="Về vị trí của tôi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 2 4 20l8-4 8 4z"/></svg></button>
     <button class="nav-b" id="nav-voice" aria-pressed="true" aria-label="Tắt giọng nói"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path id="nav-voice-w" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg></button>
-    <button class="nav-demo" id="nav-demo" hidden>Chạy thử</button>
     <button class="nav-end" id="nav-end">Kết thúc</button>
   </div>
   <div class="report-card" id="report-card" role="dialog" aria-label="Báo điểm ngập" hidden>
@@ -2808,7 +2808,10 @@ if (typeof module !== 'undefined') module.exports = NN;
     sheetOpen();
   }
   $('t-now').onclick = function () { setTab('now'); };
-  $('t-route').onclick = function () { setTab('route'); };
+  $('t-route').onclick = function () {
+    setTab('route');
+    if (!state.A && navigator.permissions && navigator.permissions.query) navigator.permissions.query({ name: 'geolocation' }).then(function (p) { if (p.state === 'granted' && !state.A) useMyLocation(true); }).catch(function () {});
+  };
   $('t-list').onclick = function () { setTab('list'); };
   // thẻ báo ngập nhỏ
   function openReport() {
@@ -2897,16 +2900,21 @@ if (typeof module !== 'undefined') module.exports = NN;
     $('pick-b').setAttribute('aria-pressed', 'false');
     $('pickbar').hidden = true;
   }
-  $('gps-a').onclick = function () {
-    if (!navigator.geolocation) { toast('Trình duyệt này không lấy được vị trí. Hãy gõ địa chỉ hoặc chọn trên bản đồ.'); return; }
-    toast('Đang dò vị trí chính xác…', 10000);
-    preciseFix(10000, function (f) { $('toast').textContent = 'Đang dò vị trí… ±' + Math.round(f.acc) + ' m'; }).then(function (f) {
-      if (!inCity(f)) { toast('Vị trí của bạn nằm ngoài vùng bản đồ TP.HCM.'); return; }
-      setPoint('A', { lat: f.lat, lng: f.lng, label: 'Vị trí của bạn' }, true);
-      toast('Đã lấy vị trí, ' + accWord(f.acc) + (f.acc > 60 ? '. Kéo ghim "Đi" về đúng chỗ nếu cần.' : '.'), f.acc > 60 ? 6000 : 2500);
+  function useMyLocation(silent) {
+    if (!navigator.geolocation) { if (!silent) toast('Trình duyệt này không lấy được vị trí. Hãy gõ địa chỉ hoặc chọn trên bản đồ.'); return; }
+    if (!silent) toast('Đang dò vị trí…', 12000);
+    var set = function (f) {
+      if (!inCity(f)) { if (!silent) toast('Vị trí của bạn nằm ngoài vùng bản đồ TP.HCM.'); return false; }
+      setPoint('A', { lat: f.lat, lng: f.lng, label: 'Vị trí của bạn', mine: true, acc: f.acc }, !!state.B);
+      return true;
+    };
+    locBest(12000, 20, function (f) { if (!silent) $('toast').textContent = 'Đang dò vị trí… ±' + Math.round(f.acc) + ' m'; }).then(function (f) {
+      if (!set(f)) return;
+      if (!silent) toast('Đã lấy vị trí, ' + accWord(f.acc) + '.', 2500);
       if (!state.B) map.flyTo({ center: [f.lng, f.lat], zoom: 16.5 });
-    }, function (e) { toast(geoErr(e), 5000); });
-  };
+    }, function (e) { if (!silent) toast(geoErr(e), 6000); });
+  }
+  $('gps-a').onclick = function () { useMyLocation(false); };
   $('pick-a').onclick = function () { state.pick === 'A' ? stopPick() : startPick('A'); };
   $('pick-b').onclick = function () { state.pick === 'B' ? stopPick() : startPick('B'); };
   $('pick-cancel').onclick = function () { stopPick(); sheetOpen(); };
@@ -4391,12 +4399,12 @@ if (typeof module !== 'undefined') module.exports = NN;
   $('pl-cancel').onclick = function () { plForm(false); };
   bindSearch($('in-pl'), $('sg-pl'), function (it) { plDraft.pt = { lat: it.lat, lng: it.lng, label: it.label }; $('pl-save').disabled = false; });
   $('pl-gps').onclick = function () {
-    toast('Đang dò vị trí chính xác…', 10000);
-    preciseFix(10000).then(function (f) {
+    toast('Đang dò vị trí…', 12000);
+    locBest(12000, 20, function (f) { $('toast').textContent = 'Đang dò vị trí… ±' + Math.round(f.acc) + ' m'; }).then(function (f) {
       plDraft.pt = { lat: f.lat, lng: f.lng, label: NN.placeName(G, f.lat, f.lng) };
       $('in-pl').value = plDraft.pt.label; $('pl-save').disabled = false;
       toast('Đã lấy vị trí, ' + accWord(f.acc) + '.', 3000);
-    }, function (e) { toast(geoErr(e), 5000); });
+    }, function (e) { toast(geoErr(e), 6000); });
   };
   $('pl-save').onclick = function () {
     if (!plDraft.pt) return;
@@ -4465,85 +4473,105 @@ if (typeof module !== 'undefined') module.exports = NN;
 
 
   // =====================================================================
-  // Định vị chính xác: không lấy vị trí cũ trong bộ nhớ, đợi GPS hội tụ (độ sai ≤ 20 m) tối đa vài giây,
-  // lấy lần đo tốt nhất. Vị trí sai quá 100 m (chỉ dò theo wifi, trạm điện thoại) thì báo cho người dùng biết.
+  // Định vị như Google Maps: một luồng GPS dùng chung (độ chính xác cao, không dùng vị trí cũ), chấm xanh
+  // kèm vòng sai số luôn hiện, vị trí tự tinh dần khi GPS bắt thêm vệ tinh. Lần đo kém hẳn lần trước bị bỏ.
   // =====================================================================
-  function preciseFix(maxWait, onProgress) {
+  var LOC = { watch: null, fix: null, subs: [], denied: false };
+  function locStart() {
+    if (!navigator.geolocation) return false;
+    if (LOC.watch != null) return true;
+    LOC.watch = navigator.geolocation.watchPosition(function (p) {
+      var c = p.coords, f = { lat: c.latitude, lng: c.longitude, acc: c.accuracy || 999, speed: c.speed, heading: c.heading, t: Date.now() };
+      var prev = LOC.fix;
+      if (prev && f.t - prev.t < 8000 && f.acc > Math.max(prev.acc * 2, prev.acc + 40)) return;
+      LOC.fix = f; LOC.denied = false;
+      if (!nav.on) showMe(f);
+      LOC.subs.slice().forEach(function (fn) { fn(f); });
+    }, function (e) {
+      if (e.code !== 1) return;                     // hết giờ chờ (máy đứng yên): giữ vị trí cũ, chờ tiếp
+      LOC.denied = true; LOC.subs.slice().forEach(function (fn) { fn(null, e); }); locStop();
+    }, { enableHighAccuracy: true, maximumAge: 0, timeout: 60000 });
+    $('locate-btn').setAttribute('aria-pressed', 'true');
+    return true;
+  }
+  function locStop() {
+    if (LOC.watch != null) navigator.geolocation.clearWatch(LOC.watch);
+    LOC.watch = null; LOC.fix = null; hideMe();
+    $('locate-btn').setAttribute('aria-pressed', 'false');
+  }
+  function locOn(fn) { LOC.subs.push(fn); return function () { LOC.subs = LOC.subs.filter(function (x) { return x !== fn; }); }; }
+  // vị trí tốt nhất trong maxWait ms; xong sớm khi sai số ≤ goodAcc
+  function locBest(maxWait, goodAcc, onProgress) {
     return new Promise(function (res, rej) {
-      if (!navigator.geolocation) { rej(new Error('nogeo')); return; }
-      var best = null, done = false, id = null;
-      var finish = function (err) {
-        if (done) return; done = true; if (id != null) navigator.geolocation.clearWatch(id); clearTimeout(t);
-        if (best) res(best); else rej(err || new Error('timeout'));
-      };
-      var t = setTimeout(function () { finish(); }, maxWait || 10000);
-      id = navigator.geolocation.watchPosition(function (p) {
-        var f = { lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy || 999 };
-        if (!best || f.acc < best.acc) best = f;
+      if (!locStart()) { rej({ code: 2 }); return; }
+      var best = LOC.fix && Date.now() - LOC.fix.t < 5000 ? LOC.fix : null;
+      if (best && best.acc <= goodAcc) { res(best); return; }
+      var off, t = setTimeout(function () { off(); best ? res(best) : rej({ code: 3 }); }, maxWait);
+      off = locOn(function (f, e) {
+        if (!f) { off(); clearTimeout(t); rej(e); return; }
+        if (!best || f.acc <= best.acc || Date.now() - best.t > 6000) best = f;
         if (onProgress) onProgress(best);
-        if (best.acc <= 20) finish();
-      }, function (e) { if (e.code === 1) finish(e); }, { enableHighAccuracy: true, maximumAge: 0, timeout: (maxWait || 10000) + 5000 });
+        if (best.acc <= goodAcc) { off(); clearTimeout(t); res(best); }
+      });
     });
   }
   function accWord(acc) { return acc <= 20 ? 'chính xác tới ±' + Math.round(acc) + ' m' : acc <= 60 ? 'sai số khoảng ±' + Math.round(acc) + ' m' : 'chưa chính xác (±' + Math.round(acc) + ' m)'; }
   function geoErr(e) {
-    return e && e.code === 1 ? 'Bạn chưa cho phép dùng vị trí. Bật quyền vị trí cho trình duyệt (và "Vị trí chính xác") rồi thử lại.'
-      : 'Chưa bắt được GPS. Ra chỗ thoáng, bật "Vị trí chính xác" cho trình duyệt rồi thử lại.';
+    return e && e.code === 1 ? 'Bạn chưa cho phép dùng vị trí. Vào cài đặt trình duyệt, cho phép vị trí (chọn "Chính xác") rồi thử lại.'
+      : 'Chưa bắt được GPS. Bật định vị, ra chỗ thoáng rồi thử lại.';
   }
   function inCity(f) { return G && !(f.lat < G.bounds[1] || f.lat > G.bounds[3] || f.lng < G.bounds[0] || f.lng > G.bounds[2]); }
-  // vòng sai số quanh chấm vị trí
   function accCircle(lat, lng, acc) {
     var pts = [], k = Math.cos(lat * Math.PI / 180);
     for (var i = 0; i <= 48; i++) { var a = i / 48 * 2 * Math.PI; pts.push([lng + acc * Math.sin(a) / (111320 * k), lat + acc * Math.cos(a) / 110540]); }
     return { type: 'FeatureCollection', features: [{ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [pts] } }] };
   }
-  var loc = { watch: null, marker: null, last: null, centered: false };
+  var meStill = null;
   function showMe(f) {
+    if (!map || !map.getSource) return;
     if (!map.getSource('me-acc')) {
       map.addSource('me-acc', { type: 'geojson', data: accCircle(f.lat, f.lng, f.acc) });
       map.addLayer({ id: 'me-acc', type: 'fill', source: 'me-acc', paint: { 'fill-color': '#0476D6', 'fill-opacity': 0.12, 'fill-outline-color': 'rgba(4,118,214,.5)' } });
     } else map.getSource('me-acc').setData(accCircle(f.lat, f.lng, f.acc));
-    if (!loc.marker) { var el = document.createElement('div'); el.className = 'me-dot still'; el.innerHTML = '<i></i>'; loc.marker = new maplibregl.Marker({ element: el }).setLngLat([f.lng, f.lat]).addTo(map); }
-    else loc.marker.setLngLat([f.lng, f.lat]);
+    if (!meStill) { var el = document.createElement('div'); el.className = 'me-dot still'; el.innerHTML = '<i></i>'; meStill = new maplibregl.Marker({ element: el }).setLngLat([f.lng, f.lat]).addTo(map); }
+    else meStill.setLngLat([f.lng, f.lat]);
   }
-  function stopLocate(keepBtn) {
-    if (loc.watch != null) navigator.geolocation.clearWatch(loc.watch);
-    loc.watch = null; loc.centered = false;
-    if (loc.marker) { loc.marker.remove(); loc.marker = null; }
-    if (map.getSource && map.getSource('me-acc')) map.getSource('me-acc').setData({ type: 'FeatureCollection', features: [] });
-    $('locate-btn').setAttribute('aria-pressed', 'false');
+  function hideMe() {
+    if (meStill) { meStill.remove(); meStill = null; }
+    if (map && map.getSource && map.getSource('me-acc')) map.getSource('me-acc').setData({ type: 'FeatureCollection', features: [] });
   }
+  function stopLocate() {}
+  var locTold = 0;
   $('locate-btn').onclick = function () {
     if (!navigator.geolocation) { toast('Trình duyệt này không lấy được vị trí.'); return; }
-    if (loc.watch != null) {
-      if (loc.last) map.flyTo({ center: [loc.last.lng, loc.last.lat], zoom: Math.max(map.getZoom(), 17) });
-      return;
-    }
-    $('locate-btn').setAttribute('aria-pressed', 'true');
-    toast('Đang dò vị trí chính xác…', 4000);
-    loc.watch = navigator.geolocation.watchPosition(function (p) {
-      var f = { lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy || 999 };
-      if (loc.last && f.acc > loc.last.acc * 2 && Date.now() - loc.lastAt < 15000) return;   // bỏ lần đo kém hẳn lần trước
-      loc.last = f; loc.lastAt = Date.now();
-      showMe(f);
-      if (!loc.centered) { loc.centered = true; map.flyTo({ center: [f.lng, f.lat], zoom: f.acc <= 60 ? 17 : 15 }); }
-      if (!loc.toldAcc || (loc.toldAcc > 60 && f.acc <= 20)) { loc.toldAcc = f.acc; toast('Vị trí ' + accWord(f.acc) + (f.acc > 60 ? '. Bật "Vị trí chính xác" cho trình duyệt, ra chỗ thoáng để chính xác hơn.' : '.'), f.acc > 60 ? 6000 : 2500); }
-    }, function (e) { if (e.code === 1 || !loc.last) { toast(geoErr(e), 5000); if (e.code === 1) stopLocate(); } }, { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 });   // máy đứng yên lâu không có lần đo mới (hết giờ chờ) thì giữ vị trí cũ
+    if (LOC.fix) { map.flyTo({ center: [LOC.fix.lng, LOC.fix.lat], zoom: Math.max(map.getZoom(), 17) }); toast('Vị trí ' + accWord(LOC.fix.acc) + '.', 2500); return; }
+    toast('Đang dò vị trí…', 15000);
+    var flown = false;
+    locBest(15000, 15, function (f) {
+      if (!flown) { flown = true; map.flyTo({ center: [f.lng, f.lat], zoom: 16.5 }); }
+      $('toast').textContent = 'Đang dò vị trí… ±' + Math.round(f.acc) + ' m';
+    }).then(function (f) {
+      map.easeTo({ center: [f.lng, f.lat], zoom: Math.max(map.getZoom(), 17) });
+      toast('Vị trí ' + accWord(f.acc) + (f.acc > 60 ? '. Điện thoại đang ước lượng theo wifi. Bật "Vị trí chính xác" cho trình duyệt, ra chỗ thoáng, vị trí sẽ tự tinh dần.' : '.'), f.acc > 60 ? 7000 : 2500);
+    }, function (e) { toast(geoErr(e), 6000); });
   };
-  document.addEventListener('visibilitychange', function () { if (document.hidden && loc.watch != null && !(nav && nav.on)) stopLocate(); });
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && LOC.watch != null && !nav.on) { LOC.paused = true; locStop(); }
+    else if (!document.hidden && LOC.paused) { LOC.paused = false; locStart(); }
+  });
   // =====================================================================
   // Trú mưa
   // =====================================================================
   var shMarkers = [], shOrigin = null;
-  function closeShelter() { $('shelter-card').hidden = true; $('shelter-btn').setAttribute('aria-pressed', 'false'); shMarkers.forEach(function (m) { m.remove(); }); shMarkers = []; }
-  function showShelters(lat, lng, mine) {
+  function closeShelter() { if (shOff) { shOff(); shOff = null; } delete $('shelter-card').dataset.fitted; $('shelter-card').hidden = true; $('shelter-btn').setAttribute('aria-pressed', 'false'); shMarkers.forEach(function (m) { m.remove(); }); shMarkers = []; }
+  function showShelters(lat, lng, mine, acc) {
     shOrigin = { lat: lat, lng: lng, label: mine ? 'Vị trí của bạn' : NN.placeName(G, lat, lng) };
     var deep = floodsNow().filter(function (f) { return f.level >= 2; });
     var ok = function (x) { return !deep.some(function (f) { return NN.dist(x.lat, x.lng, f.lat, f.lng) < 120; }); };
     var list = NN.shelters(G, lat, lng, 700, 12).filter(ok).slice(0, 8);
     if (list.length < 3) list = NN.shelters(G, lat, lng, 1500, 12).filter(ok).slice(0, 8);
     shMarkers.forEach(function (m) { m.remove(); }); shMarkers = [];
-    $('sh-sub').textContent = list.length ? (mine ? 'Gần bạn' : 'Quanh tâm bản đồ') + ', xếp theo khoảng cách. Cây xăng có mái che rộng, hợp để tạt vào nhanh.' : 'Không tìm thấy chỗ trú trong vòng 1,5 km.';
+    $('sh-sub').textContent = list.length ? (mine ? 'Gần bạn' + (acc ? ' (vị trí ' + accWord(acc) + ')' : '') : 'Quanh tâm bản đồ') + ', xếp theo khoảng cách. Cây xăng có mái che rộng, hợp để tạt vào nhanh.' : 'Không tìm thấy chỗ trú trong vòng 1,5 km.';
     $('sh-list').innerHTML = list.map(function (x, i) {
       return '<div class="sh-item"><span class="n">' + (i + 1) + '</span><span class="t"><b>' + esc(x.name) + '</b><span>' + esc(x.kind.charAt(0).toUpperCase() + x.kind.slice(1)) + ' · ' + fmtKm(x.d) + ' · đi bộ ' + Math.max(1, Math.round(x.d / 75)) + ' phút</span></span><button data-sh="' + i + '">Đường đi</button></div>';
     }).join('');
@@ -4552,22 +4580,34 @@ if (typeof module !== 'undefined') module.exports = NN;
       var el = document.createElement('div'); el.className = 'sh-pin'; el.innerHTML = '<span>' + (i + 1) + '</span>'; el.title = x.name;
       shMarkers.push(new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([x.lng, x.lat]).addTo(map)); bb.extend([x.lng, x.lat]);
     });
-    if (mine) { var me = document.createElement('div'); me.className = 'me-dot'; me.innerHTML = '<i></i>'; shMarkers.push(new maplibregl.Marker({ element: me }).setLngLat([lng, lat]).addTo(map)); }
     $('shelter-card').hidden = false; $('shelter-btn').setAttribute('aria-pressed', 'true');
     $('shelter-card').dataset.list = JSON.stringify(list.map(function (x) { return [x.lat, x.lng, x.name]; }));
-    if (list.length) map.fitBounds(bb, { padding: isPhone() ? { top: 300, bottom: 140, left: 40, right: 40 } : { top: 80, bottom: 80, left: 800, right: 120 }, maxZoom: 16.5, duration: 700 });
+    var fit = list.length && !$('shelter-card').dataset.fitted; if (fit) $('shelter-card').dataset.fitted = '1';
+    if (fit) map.fitBounds(bb, { padding: isPhone() ? { top: 300, bottom: 140, left: 40, right: 40 } : { top: 80, bottom: 80, left: 800, right: 120 }, maxZoom: 16.5, duration: 700 });
     sheetTo('peek');
   }
+  var shOff = null;
   $('shelter-btn').onclick = function () {
     if (!G) return;
     if (!$('shelter-card').hidden) { closeShelter(); return; }
     if ($('report-card') && !$('report-card').hidden) closeReport();
-    var c = map.getCenter();
-    if (loc.last && Date.now() - loc.lastAt < 60000 && loc.last.acc <= 100 && inCity(loc.last)) { showShelters(loc.last.lat, loc.last.lng, true); return; }
-    toast('Đang tìm chỗ trú gần bạn…', 6000);
-    preciseFix(6000).then(function (f) {
-      if (f.acc > 300 || !inCity(f)) showShelters(c.lat, c.lng, false); else showShelters(f.lat, f.lng, true);
-    }, function () { showShelters(c.lat, c.lng, false); });
+    var c = map.getCenter(), shown = null;
+    $('sh-list').innerHTML = ''; $('sh-sub').textContent = 'Đang dò vị trí của bạn…';
+    $('shelter-card').hidden = false; $('shelter-btn').setAttribute('aria-pressed', 'true'); sheetTo('peek');
+    var render = function (f) { shown = f; showShelters(f.lat, f.lng, true, f.acc); };
+    locBest(12000, 30, function (f) { $('sh-sub').textContent = 'Đang dò vị trí của bạn… ±' + Math.round(f.acc) + ' m'; }).then(function (f) {
+      if (!inCity(f)) { toast('Vị trí của bạn nằm ngoài TP.HCM, đang tìm quanh tâm bản đồ.'); showShelters(c.lat, c.lng, false); return; }
+      render(f);
+      // vị trí tinh dần: dịch hơn 60 m, hoặc từ ước lượng sang GPS thật, thì xếp lại danh sách
+      if (shOff) shOff();
+      shOff = locOn(function (g) {
+        if (!g || $('shelter-card').hidden) { if (shOff) shOff(); shOff = null; return; }
+        if (NN.dist(g.lat, g.lng, shown.lat, shown.lng) > 60 || (shown.acc > 60 && g.acc <= 30)) render(g);
+      });
+    }, function (e) {
+      showShelters(c.lat, c.lng, false);
+      $('sh-sub').textContent = (e && e.code === 1 ? 'Bạn chưa cho phép dùng vị trí nên' : 'Chưa bắt được GPS nên') + ' đang tìm quanh tâm bản đồ.';
+    });
   };
   $('sh-close').onclick = closeShelter;
   $('sh-list').addEventListener('click', function (e) {
@@ -4617,78 +4657,75 @@ if (typeof module !== 'undefined') module.exports = NN;
   function navBanner(ic, big, line, then) {
     $('nav-ic').innerHTML = navIcon(ic); $('nav-dist').textContent = big; $('nav-street').textContent = line; $('nav-then').textContent = then || '';
   }
+  // la bàn: khi đứng yên, mũi tên xoay theo hướng điện thoại (như Google Maps)
+  function compassStart() {
+    var h = function (ev) {
+      var c = ev.webkitCompassHeading != null ? ev.webkitCompassHeading : (ev.absolute && ev.alpha != null ? (360 - ev.alpha) % 360 : null);
+      if (c != null && !isNaN(c)) nav.compass = c;
+    };
+    var add = function () { window.addEventListener('deviceorientationabsolute', h); window.addEventListener('deviceorientation', h); };
+    nav.compassOff = function () { window.removeEventListener('deviceorientationabsolute', h); window.removeEventListener('deviceorientation', h); };
+    try {
+      if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') DeviceOrientationEvent.requestPermission().then(function (st) { if (st === 'granted') add(); }).catch(function () {});
+      else add();
+    } catch (e) {}
+  }
+  var meAnim = 0;
+  function moveMe(to, rot) {
+    var from = meMarker.getLngLat(), t0 = performance.now();
+    cancelAnimationFrame(meAnim);
+    if (reduceMotion || Math.abs(from.lng - to[0]) + Math.abs(from.lat - to[1]) > 0.003) { meMarker.setLngLat(to); meMarker.setRotation(rot); return; }
+    var r0 = meMarker.getRotation(), dr = ((rot - r0 + 540) % 360) - 180;
+    (function step(now) {
+      var k = Math.min(1, (now - t0) / 850);
+      meMarker.setLngLat([from.lng + (to[0] - from.lng) * k, from.lat + (to[1] - from.lat) * k]); meMarker.setRotation(r0 + dr * k);
+      if (k < 1) meAnim = requestAnimationFrame(step);
+    })(t0);
+  }
   function navStart() {
     var res = state.result; if (!res || !G) return;
     var r = res.routes[state.sel]; if (!r) return;
     if (popup) popup.remove(); closeShelter(); if (!$('report-card').hidden) closeReport();
-    stopLocate(true);
-    nav = { on: true, voice: lsGet('nn-voice', true), follow: true, dest: state.B, start: state.A, vehicle: state.vehicle, warned: {}, lastRe: 0, demo: null, watch: null, wake: null,
-      good: false, acc: null, offCount: 0 };
+    nav = { on: true, t0: Date.now(), voice: lsGet('nn-voice', true), follow: true, dest: state.B, vehicle: state.vehicle, warned: {}, lastRe: 0, wake: null, good: false, acc: null, offCount: 0, compass: null };
+    compassStart();
     $('nav-voice').setAttribute('aria-pressed', String(nav.voice));
     navSetRoute(r);
-    document.body.classList.add('nav'); setZen(false);
-    $('nav-top').hidden = false; $('nav-bot').hidden = false; $('nav-demo').hidden = true;
+    document.body.classList.add('nav'); setZen(false); hideMe();
+    $('nav-top').hidden = false; $('nav-bot').hidden = false;
     if (navigator.wakeLock) navigator.wakeLock.request('screen').then(function (w) { nav.wake = w; }).catch(function () {});
     var el = document.createElement('div'); el.className = 'me-dot'; el.innerHTML = '<b></b><i></i>';
     meMarker = new maplibregl.Marker({ element: el, rotationAlignment: 'map', pitchAlignment: 'map' }).setLngLat(r.coords[0]);
     $('nav-eta').textContent = 'Tới lúc ' + hhmm(Date.now() + r.secs * 1000);
     $('nav-left').textContent = fmtMin(r.secs) + ' · ' + fmtKm(r.meters);
-    // Chờ GPS thật, không tự chạy. Chưa có vị trí đủ chính xác thì chưa đọc, chưa tính chặng.
-    navBanner('depart', 'Đang dò GPS…', 'Giữ máy ở chỗ thoáng, trang sẽ bắt đầu khi biết chính xác bạn đang ở đâu.');
-    if (!navigator.geolocation) { navNoGps('Máy này không lấy được vị trí.'); return; }
-    nav.watch = navigator.geolocation.watchPosition(navOnFix, function (e) {
-      if (!nav.on || nav.demo) return;
-      if (e.code === 1) navNoGps('Bạn chưa cho phép Né Ngập dùng vị trí. Bật quyền vị trí cho trình duyệt rồi bấm Bắt đầu đi lần nữa.');
-    }, { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 });
-    nav.slow = setTimeout(function () {
-      if (!nav.on || nav.good || nav.demo) return;
-      navBanner('depart', nav.acc ? 'GPS còn yếu (±' + Math.round(nav.acc) + ' m)' : 'Chưa có tín hiệu GPS',
-        'Bật "Vị trí chính xác" cho trình duyệt trong cài đặt điện thoại, ra chỗ thoáng, hoặc bấm Chạy thử để xem cách dẫn đường.');
-      $('nav-demo').hidden = false;
-    }, 20000);
+    if (!locStart()) { navBanner('depart', 'Không có vị trí', 'Trình duyệt này không lấy được vị trí.'); return; }
+    navBanner('depart', 'Đang tìm vị trí…', 'Đi theo ' + nav.man[0].name);
+    nav.off = locOn(navOnFix);
+    if (LOC.fix && Date.now() - LOC.fix.t < 10000) navOnFix(LOC.fix);
   }
-  function navNoGps(msg) {
-    navBanner('depart', 'Không có vị trí', msg);
-    $('nav-demo').hidden = false;
-  }
-  function navOnFix(q) {
-    if (!nav.on || nav.demo) return;
-    var lat = q.coords.latitude, lng = q.coords.longitude, acc = q.coords.accuracy || 999;
-    nav.acc = acc;
-    if (!nav.meOn) { nav.meOn = true; meMarker.addTo(map); }
+  function navOnFix(f, e) {
+    if (!nav.on) return;
+    if (!f) { navBanner('depart', 'Không có vị trí', geoErr(e)); return; }
+    nav.acc = f.acc;
+    if (!nav.meOn) { nav.meOn = true; meMarker.setLngLat([f.lng, f.lat]).addTo(map); }
     if (!nav.good) {
-      meMarker.setLngLat([lng, lat]);
-      if (acc > 50) { navBanner('depart', 'Đang dò GPS… ±' + Math.round(acc) + ' m', 'Chờ vị trí chính xác hơn để bắt đầu.'); if (nav.follow) map.easeTo({ center: [lng, lat], zoom: 16, duration: 600 }); return; }
-      nav.good = true; clearTimeout(nav.slow); $('nav-demo').hidden = true;
-      nav.pos = { lat: lat, lng: lng };
-      var loc0 = NN.locateOnRoute(G, nav.r, lat, lng, 0);
-      // đang ở chỗ khác điểm đi: tìm đường từ đúng chỗ đang đứng, như Google Maps
-      if (!loc0 || loc0.off > 40 || loc0.along > 80) navReroute('start');
+      if (f.acc > 250 || (f.acc > 100 && Date.now() - nav.t0 < 15000)) {   // chờ GPS tinh dần, tối đa 15 giây
+        navBanner('depart', 'Đang tìm vị trí… ±' + Math.round(f.acc) + ' m', 'Đi theo ' + nav.man[0].name);
+        meMarker.setLngLat([f.lng, f.lat]);
+        if (nav.follow) map.easeTo({ center: [f.lng, f.lat], zoom: 16, duration: 600 });
+        return;
+      }
+      nav.good = true; nav.pos = { lat: f.lat, lng: f.lng };
+      var loc0 = NN.locateOnRoute(G, nav.r, f.lat, f.lng, 0);
+      // không đứng ở điểm đi: tìm đường từ đúng chỗ đang đứng, như Google Maps
+      if (!loc0 || loc0.off > Math.max(40, f.acc) || loc0.along > 80) navReroute('start');
       var m1 = nav.man[1];
       speak('Bắt đầu. Đi theo ' + nav.man[0].name + (m1 && m1.type !== 'arrive' ? ', sau ' + sayDist(m1.at) + ' thì ' + (TURN_SAY[m1.type] || 'đi tiếp') + ' vào ' + m1.name : '') + '.');
       nav.said['1f'] = 1; if (m1 && m1.at <= 90) nav.said['1n'] = 1;
     }
-    if (acc > 50) return;                     // vị trí kém (trong hẻm, dưới mái che): giữ nguyên, không tính chặng
-    var h = q.coords.speed > 2 && q.coords.heading != null && !isNaN(q.coords.heading) ? q.coords.heading : null;
-    navFix(lat, lng, h, false, acc);
+    if (f.acc > 100) return;                 // đã đang dẫn đường mà lần đo này quá kém (trong nhà, hầm): giữ vị trí cũ
+    var moving = f.speed != null && f.speed > 1.5 && f.heading != null && !isNaN(f.heading);
+    navFix(f.lat, f.lng, moving ? f.heading : null, false, f.acc);
   }
-  $('nav-demo').onclick = function () {
-    if (!nav.on || nav.demo) return;
-    if (nav.watch != null) { navigator.geolocation.clearWatch(nav.watch); nav.watch = null; }
-    clearTimeout(nav.slow); this.hidden = true; nav.good = true;
-    if (!nav.meOn) { nav.meOn = true; meMarker.addTo(map); }
-    var tag = document.createElement('div'); tag.className = 'demo-tag'; tag.id = 'demo-tag'; tag.textContent = 'Chạy thử'; $('app').appendChild(tag);
-    var along = 0;
-    speak('Chạy thử chuyến đi. Đi theo ' + nav.man[0].name + '.');
-    nav.demo = setInterval(function () {
-      if (!nav.on) return;
-      along += nav.vehicle === 'walk' ? 6 : 14;
-      var pt = pointAt(nav.r, Math.min(along, nav.r.meters));
-      navFix(pt[1], pt[0], pt[2], true, 5);
-      if (along > nav.r.meters + 40) along = nav.r.meters;
-    }, 1000);
-    nav.demoReset = function () { along = 0; };
-  };
   function pointAt(r, along) {
     var c = r.cum, k = 0; while (k < c.length - 2 && c[k + 1] < along) k++;
     var a = r.coords[k], b = r.coords[Math.min(k + 1, r.coords.length - 1)], L = c[k + 1] - c[k] || 1, t = Math.max(0, Math.min(1, (along - c[k]) / L));
@@ -4707,9 +4744,10 @@ if (typeof module !== 'undefined') module.exports = NN;
     var m = nav.man[nav.idx], d = Math.max(0, m.at - nav.along), nx = nav.man[nav.idx + 1];
     var a = nav.r.coords[loc.k], b = nav.r.coords[Math.min(loc.k + 1, nav.r.coords.length - 1)];
     var brg = heading != null ? heading : NN.bearing(a[1], a[0], b[1], b[0]);
+    var rot = heading != null ? heading : nav.compass != null ? nav.compass : brg;
     // gần tuyến thì đặt chấm xanh đúng lên tuyến (đỡ nhảy lung tung theo sai số GPS)
     var show = loc.off < 25 ? [a[0] + (b[0] - a[0]) * loc.t, a[1] + (b[1] - a[1]) * loc.t] : [lng, lat];
-    meMarker.setLngLat(show); meMarker.setRotation(brg);
+    moveMe(show, rot);
     // khung chỉ dẫn
     $('nav-ic').innerHTML = navIcon(m.type);
     $('nav-dist').textContent = m.type === 'arrive' && d < 30 ? 'Tới nơi' : fmtKm(d);
@@ -4720,7 +4758,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     $('nav-left').textContent = fmtMin(secs) + ' · ' + fmtKm(left);
     // giọng nói: báo trước khoảng 300 m (xe) / 100 m (đi bộ), và ngay trước chỗ rẽ
     var far = nav.vehicle === 'walk' ? 100 : 300, near = nav.vehicle === 'walk' ? 25 : 60;
-    if ((acc || 0) > 40) { navFloodCheck(false); return; }   // GPS chưa đủ chính xác thì chưa đọc chỉ dẫn
+    if ((acc || 0) > 60) { navFloodCheck(false); followCam(show, brg); return; }   // GPS còn sai số lớn: chưa đọc chỉ dẫn
     if (m.type === 'arrive') {
       if (d < 30) { speak('Bạn đã tới nơi.'); navEnd(true); return; }
       if (d < far && !nav.said[nav.idx + 'f']) { nav.said[nav.idx + 'f'] = 1; speak('Còn ' + sayDist(d) + ' là tới nơi.'); }
@@ -4729,8 +4767,14 @@ if (typeof module !== 'undefined') module.exports = NN;
       if (d <= near && !nav.said[nav.idx + 'n']) { nav.said[nav.idx + 'n'] = nav.said[nav.idx + 'f'] = 1; speak(TURN_SAY[m.type].charAt(0).toUpperCase() + TURN_SAY[m.type].slice(1) + ' vào ' + m.name + '.'); }
     }
     navFloodCheck(false);
-    if (nav.follow) map.easeTo({ center: show, bearing: brg, pitch: 50, zoom: nav.vehicle === 'walk' ? 17.5 : 16.8, duration: 950, easing: function (t) { return t; },
-      padding: isPhone() ? { top: 160, bottom: 120, left: 0, right: 0 } : { top: 200, bottom: 90, left: 0, right: 0 } });
+    followCam(show, brg);
+  }
+  // camera như Google Maps: hướng đi lên trên, mũi tên ở khoảng 2/3 màn hình, nghiêng nhẹ
+  function followCam(show, brg) {
+    if (!nav.follow) return;
+    var H = map.getContainer().clientHeight;
+    map.easeTo({ center: show, bearing: brg, pitch: 55, zoom: nav.vehicle === 'walk' ? 17.6 : 17, duration: 900, easing: function (t) { return t; },
+      padding: { top: Math.round(H * 0.42), bottom: isPhone() ? 110 : 90, left: 0, right: 0 } });
   }
   // chỗ ngập phía trước trên tuyến đang đi
   function navFloodCheck(fresh) {
@@ -4778,15 +4822,16 @@ if (typeof module !== 'undefined') module.exports = NN;
   function navEnd(arrived) {
     if (!nav.on) return;
     nav.on = false;
-    if (nav.watch != null) navigator.geolocation.clearWatch(nav.watch);
-    if (nav.demo) clearInterval(nav.demo);
-    clearTimeout(nav.slow); $('nav-demo').hidden = true;
+    if (nav.off) nav.off();
+    if (nav.compassOff) nav.compassOff();
+    cancelAnimationFrame(meAnim);
     if (nav.wake) nav.wake.release().catch(function () {});
     if (meMarker) { meMarker.remove(); meMarker = null; }
     var tag = $('demo-tag'); if (tag) tag.remove();
     document.body.classList.remove('nav');
     $('nav-top').hidden = $('nav-bot').hidden = $('nav-alert').hidden = true;
-    map.easeTo({ pitch: 0, bearing: 0, duration: 600 });
+    map.easeTo({ pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 }, duration: 600 });
+    if (LOC.fix) showMe(LOC.fix);
     if (state.A && state.B) runRoute(false);
     if (arrived) toast('Bạn đã tới nơi.');
   }
@@ -4796,7 +4841,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     this.setAttribute('aria-label', nav.voice ? 'Tắt giọng nói' : 'Bật giọng nói');
     if (!nav.voice && window.speechSynthesis) speechSynthesis.cancel();
   };
-  $('nav-recenter').onclick = function () { nav.follow = true; this.hidden = true; if (nav.pos) map.easeTo({ center: [nav.pos.lng, nav.pos.lat], zoom: 16.8, pitch: 50, duration: 600 }); };
+  $('nav-recenter').onclick = function () { nav.follow = true; this.hidden = true; if (meMarker) { var p = meMarker.getLngLat(); followCam([p.lng, p.lat], map.getBearing()); } };
   mapLoaded.then(function () {
     map.on('dragstart', function (e) { if (nav.on && e.originalEvent) { nav.follow = false; $('nav-recenter').hidden = false; } });
   });
