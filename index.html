@@ -141,6 +141,7 @@ body.nav .loc-btn, body.intro .loc-btn { opacity: 0; pointer-events: none; }
   .pl-head .muted { display: none; }
 }
 
+.pz-raincv { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 /* ======== Màn hình chờ: đèn đỏ ngày mưa ngập, cả đoàn xe đứng chờ; tải xong đèn xanh, xe chạy hết sang phải ======== */
 .loading.poster .pz-scene { position: absolute; left: 0; right: 0; top: 7%; width: 100%; height: 54vh; transform: none; overflow: visible; }
 .tl-r { fill: #FF4B4B; transition: fill .2s; } .tl-r-glow { fill: #FF4B4B; opacity: .35; transition: opacity .2s; }
@@ -1129,10 +1130,10 @@ html.has-cur, html.has-cur * { cursor: none !important; }
 <div id="app">
   <div id="map" aria-label="Bản đồ ngập TP.HCM"></div>
   <div class="loading poster" id="loading">
+    <canvas class="pz-raincv" id="pz-raincv" aria-hidden="true"></canvas>
     <div class="pz-corner pz-tl">Bản đồ ngập<br>TP. Hồ Chí Minh<br><b>NÉ NGẬP</b><br>Cập nhật trực tiếp</div>
     <div class="pz-corner pz-tr">Đồ án Đổi mới<br>sáng tạo vì xã hội<br>Thực hiện ——— bởi<br><b class="nhom">NHÓM NHÓM</b></div>
     <svg class="pz-art pz-scene" id="pz-scene" viewBox="0 0 1000 380" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
-      <g class="pz-rain" stroke="var(--pz-w)" stroke-width="3.2" stroke-linecap="round" opacity=".75"><path d="M623 77l-6 18M768 24l-6 18M108 48l-6 18M708 29l-6 18M999 109l-6 18M36 44l-6 18M848 214l-6 18M103 123l-6 18M145 217l-6 18M81 63l-6 18M417 31l-6 18M772 25l-6 18M412 23l-6 18M232 148l-6 18M818 73l-6 18M201 157l-6 18M330 52l-6 18M344 190l-6 18M159 32l-6 18M82 105l-6 18M976 218l-6 18M603 238l-6 18M888 185l-6 18M573 127l-6 18M328 124l-6 18M127 153l-6 18M1035 253l-6 18M663 229l-6 18M549 37l-6 18M201 262l-6 18M816 84l-6 18M660 77l-6 18M961 215l-6 18M40 39l-6 18M602 174l-6 18M677 254l-6 18M894 35l-6 18M151 138l-6 18M930 33l-6 18M84 158l-6 18M872 145l-6 18M750 177l-6 18M6 236l-6 18M687 86l-6 18M199 252l-6 18M80 111l-6 18M548 66l-6 18M467 203l-6 18M760 254l-6 18M125 85l-6 18M879 205l-6 18M529 70l-6 18M841 142l-6 18M810 183l-6 18M739 118l-6 18M269 42l-6 18M320 77l-6 18M435 119l-6 18M-16 248l-6 18M333 134l-6 18M537 2l-6 18M258 214l-6 18M716 163l-6 18M217 263l-6 18M70 233l-6 18M763 203l-6 18M777 201l-6 18M172 246l-6 18M780 31l-6 18M350 34l-6 18M387 225l-6 18M292 56l-6 18M656 26l-6 18M169 0l-6 18M269 51l-6 18M704 13l-6 18M104 106l-6 18M730 76l-6 18M476 177l-6 18M705 242l-6 18M211 59l-6 18M959 238l-6 18M943 247l-6 18M598 43l-6 18M255 52l-6 18M661 135l-6 18M940 82l-6 18M1017 11l-6 18M380 270l-6 18M700 75l-6 18M15 270l-6 18M570 46l-6 18M494 265l-6 18M711 85l-6 18M688 114l-6 18M989 168l-6 18M416 99l-6 18M450 205l-6 18M424 102l-6 18M1020 252l-6 18M688 14l-6 18M17 143l-6 18M927 132l-6 18M356 176l-6 18M875 178l-6 18M706 41l-6 18M411 52l-6 18M424 240l-6 18M362 172l-6 18M378 247l-6 18M-37 245l-6 18M664 43l-6 18M205 198l-6 18M368 244l-6 18M325 222l-6 18M640 44l-6 18M770 237l-6 18M782 43l-6 18M285 87l-6 18M220 14l-6 18"/></g>
       <text class="pz-ao pz-ao1" x="120" y="70" font-size="34">ÀO</text>
       <text class="pz-ao pz-ao2" x="170" y="118" font-size="44">ÀO</text>
       <!-- đèn giao thông: đỏ trong lúc tải, xanh khi xong (không hiện số đếm vì không biết trước tải mất bao lâu) -->
@@ -1191,7 +1192,7 @@ html.has-cur, html.has-cur * { cursor: none !important; }
       <div class="cc-row"><span>Thực hiện</span><b>Nhóm Nhóm</b></div>
       <div class="cc-row"><span>Dữ liệu</span><div>Radar Đài KTTV khu vực Nam Bộ, Phòng CSGT Công an TP.HCM, camera giao thông TP.HCM, OpenStreetMap, Open-Meteo, TomTom</div></div>
       <div class="cc-row"><span>Đường dây nóng</span><b>0326 08 08 08</b></div>
-      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">10/10 · bản 19:40</span></div>
+      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">10/10 · bản 19:45</span></div>
     </div>
   </div>
   <button class="zen-btn" id="zen-btn" aria-pressed="false" aria-label="Ẩn bảng để xem trọn bản đồ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Ẩn bảng</span></button>
@@ -1271,7 +1272,7 @@ html.has-cur, html.has-cur * { cursor: none !important; }
           <div><a class="src" href="https://giaothong.hochiminhcity.gov.vn/" target="_blank" rel="noopener">Xem camera giao thông trực tiếp của TP.HCM</a></div>
         </div>
       </details>
-      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 10/10 · bản 19:40.</span></div>
+      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 10/10 · bản 19:45.</span></div>
     </section>
 
     <!-- Chỉ đường -->
@@ -5139,6 +5140,40 @@ if (typeof module !== 'undefined') module.exports = NN;
     ring.style.transform = 'translate3d(' + rx.toFixed(2) + 'px,' + ry.toFixed(2) + 'px,0)';
     requestAnimationFrame(loop);
   })();
+})();
+
+// ---------- mưa trên màn hình chờ: hạt mưa rơi liên tục, ra khỏi đáy thì quay lại từ trên, không giật ----------
+(function () {
+  var cv = document.getElementById('pz-raincv'), ld = document.getElementById('loading');
+  if (!cv || !cv.getContext) return;
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var g = cv.getContext('2d'), W = 0, H = 0, drops = [], last = performance.now();
+  function size() {
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = ld.clientWidth; H = ld.clientHeight; cv.width = W * dpr; cv.height = H * dpr; g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var n = Math.round(Math.min(260, W * H / 6500));
+    while (drops.length < n) drops.push(mk(true));
+    drops.length = n;
+  }
+  function mk(any) {
+    var v = 650 + Math.random() * 500;
+    return { x: Math.random() * (W + 120), y: any ? Math.random() * H : -30 - Math.random() * 60, v: v, l: 12 + v / 60, a: .3 + Math.random() * .45, w: 1.2 + Math.random() * 1.4 };
+  }
+  size(); window.addEventListener('resize', size);
+  g.lineCap = 'round';
+  (function frame(now) {
+    if (ld.hidden) return;
+    var dt = Math.min(.05, (now - last) / 1000); last = now;
+    g.clearRect(0, 0, W, H);
+    for (var i = 0; i < drops.length; i++) {
+      var d = drops[i];
+      d.y += d.v * dt; d.x -= d.v * dt * .16;          // gió thổi nhẹ, mưa xiên
+      if (d.y - d.l > H || d.x < -20) { drops[i] = d = mk(false); }
+      g.strokeStyle = 'rgba(255,255,255,' + d.a + ')'; g.lineWidth = d.w;
+      g.beginPath(); g.moveTo(d.x, d.y); g.lineTo(d.x + d.l * .16, d.y - d.l); g.stroke();
+    }
+    requestAnimationFrame(frame);
+  })(last);
 })();
 </script>
 
