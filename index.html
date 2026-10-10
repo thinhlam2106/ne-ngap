@@ -205,6 +205,7 @@ body.nav .loc-btn, body.intro .loc-btn { opacity: 0; pointer-events: none; }
   --lv2: #FF7A2E;
   --lv3: #EC3355;
   --lv4: #8E3CC2;
+  --metro: #0E9F8E; --metro-ink: #08695E;
   --ok: #1E9A5C;
   --warn-bg: #FFF4D6;
   --warn-ink: #7A4A00;
@@ -221,6 +222,7 @@ body.nav .loc-btn, body.intro .loc-btn { opacity: 0; pointer-events: none; }
     --water: #173E52; --water-line: #1F5068; --label: #C8D5D9; --label-halo: #101B20;
     --accent: #7FA6FF; --accent-ink: #0B2A74; --accent-soft: #1B2F66; --plain: #8D9CA2; --hot: #8DB0FF; --route: #6E9BFF; --route-case: #0B1A47; --route-alt: #3A4F7E; --jam-red: #F0554A; --jam-yellow: #F5B43A;
     --lv1: #F2C94C; --lv2: #F59A45; --lv3: #F2566B; --lv4: #BE83D6; --ok: #4CC488;
+    --metro: #2CC8B4; --metro-ink: #7FE6D7;
     --warn-bg: #3A2A14; --warn-ink: #F5C98A;
     --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 30px rgba(0, 0, 0, .45);
     color-scheme: dark;
@@ -232,6 +234,7 @@ body.nav .loc-btn, body.intro .loc-btn { opacity: 0; pointer-events: none; }
   --water: #173E52; --water-line: #1F5068; --label: #C8D5D9; --label-halo: #101B20;
   --accent: #7FA6FF; --accent-ink: #0B2A74; --accent-soft: #1B2F66; --plain: #8D9CA2; --hot: #8DB0FF; --route: #6E9BFF; --route-case: #0B1A47; --route-alt: #3A4F7E; --jam-red: #F0554A; --jam-yellow: #F5B43A;
   --lv1: #F2C94C; --lv2: #F59A45; --lv3: #F2566B; --lv4: #BE83D6; --ok: #4CC488;
+  --metro: #2CC8B4; --metro-ink: #7FE6D7;
   --warn-bg: #3A2A14; --warn-ink: #F5C98A;
   --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 30px rgba(0, 0, 0, .45);
   color-scheme: dark;
@@ -1125,6 +1128,29 @@ html.has-cur, html.has-cur * { cursor: none !important; }
   .panel, .legend, .credit-btn, .credit-card, .report-card, .maplibregl-popup-content, .toast, .pickbar { background: rgba(255,255,255,.96); }
   .brand { background: var(--lam); }
 }
+
+/* ======== Kính sáng luôn đi với chữ tối (kể cả khi máy để chế độ tối) ======== */
+.legend, .credit-btn, .credit-card, .report-card, .maplibregl-popup-content, .side-card, .nav-alert, .nav-bot {
+  --panel: rgba(255,255,255,.5); --panel-2: rgba(255,255,255,.42); --ink: #0B2A55; --ink-2: rgba(11,42,85,.74); --ink-3: rgba(11,42,85,.6);
+  --line: rgba(11,42,85,.12); --accent: var(--lam); --accent-ink: #fff; --accent-soft: rgba(4,118,214,.12);
+  --hot: var(--lam); --ok: #12804B; --warn-bg: rgba(255,212,92,.4); --warn-ink: #5E3D00; --label-halo: #FFFFFF;
+  --metro: #0E9F8E; --metro-ink: #08695E;
+  color: var(--ink);
+}
+.maplibregl-popup-content .m, .maplibregl-popup-content small { color: var(--ink-2); }
+/* ======== Metro số 1 ======== */
+.panel .rcard .swatch.metro, .panel .rcard.sel .swatch.metro { background: var(--metro); }
+.mlegs { list-style: none; margin: 6px 0 2px; padding: 0; display: flex; flex-direction: column; }
+.mlegs li { display: flex; gap: 10px; align-items: flex-start; padding: 5px 0; font-size: 13px; line-height: 1.35; position: relative; text-align: left; }
+.mlegs li:not(:last-child)::before { content: ""; position: absolute; left: 11px; top: 30px; bottom: -4px; width: 2px; border-radius: 1px; background: currentColor; opacity: .18; }
+.mlegs b { font-weight: 600; display: block; }
+.mlegs small { display: block; font-size: 12px; color: var(--ink-2); margin-top: 1px; }
+.ml-ic { width: 24px; height: 24px; border-radius: 8px; display: grid; place-items: center; flex: none; background: rgba(4,118,214,.12); color: var(--lam); }
+.ml-ic.train { background: var(--metro); color: #fff; }
+.ml-ic svg { width: 16px; height: 16px; }
+.legend .mt { width: 20px; height: 6px; border-radius: 3px; background: var(--metro); flex: none; display: grid; place-items: center; }
+.legend .mt i { width: 7px; height: 7px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1.6px var(--metro); }
+.seg4 button span { white-space: nowrap; }
 </style>
 
 <div id="app">
@@ -1149,7 +1175,7 @@ html.has-cur, html.has-cur * { cursor: none !important; }
         <g class="veh" style="--d:0.55s;--r:0.06s" transform="translate(0 298) scale(0.78)"><g class="rumble"><rect x="0" y="-122" width="236" height="106" rx="22" fill="#8BD43B"/><path d="M14 -110H226Q230 -110 230 -104V-70Q180 -78 150 -56H14Z" fill="#14202E"/><path d="M198 -112h22q10 0 12 10v40h-34z" fill="#14202E"/><rect x="0" y="-48" width="236" height="4" fill="#3DA7FF"/><circle cx="52" cy="-19" r="19" fill="#062E6B"/><circle cx="52" cy="-19" r="7.2" fill="#9FB3D1"/><circle cx="184" cy="-19" r="19" fill="#062E6B"/><circle cx="184" cy="-19" r="7.2" fill="#9FB3D1"/></g></g>
         <g class="veh" style="--d:0.41s;--r:0.08s" transform="translate(222 298) scale(0.78)"><g class="rumble"><rect x="0" y="-130" width="290" height="114" rx="16" fill="#0A3A9E"/><rect x="18" y="-112" width="38" height="36" rx="5" fill="#BFE3FF"/><rect x="62" y="-112" width="38" height="36" rx="5" fill="#BFE3FF"/><rect x="106" y="-112" width="38" height="36" rx="5" fill="#BFE3FF"/><rect x="150" y="-112" width="38" height="36" rx="5" fill="#BFE3FF"/><rect x="194" y="-112" width="38" height="36" rx="5" fill="#BFE3FF"/><path d="M248 -112h22q12 0 14 12v28h-36z" fill="#BFE3FF"/><rect x="0" y="-66" width="290" height="9" fill="#FFFFFF"/><rect x="236" y="-126" width="46" height="10" rx="3" fill="#FFD45C"/><circle cx="62" cy="-20" r="20" fill="#062E6B"/><circle cx="62" cy="-20" r="7.6" fill="#9FB3D1"/><circle cx="228" cy="-20" r="20" fill="#062E6B"/><circle cx="228" cy="-20" r="7.6" fill="#9FB3D1"/></g></g>
         <g class="veh" style="--d:0.24s;--r:0.13s" transform="translate(470 298) scale(0.78)"><g class="rumble"><rect x="0" y="-104" width="146" height="84" rx="4" fill="#F1F4F8"/><rect x="0" y="-104" width="146" height="84" rx="4" fill="none" stroke="#C9D3E2" stroke-width="3"/><path d="M150 -20V-80H182Q196 -80 200 -60L208 -48V-20Z" fill="#FFFFFF"/><path d="M160 -74H184L192 -54H160Z" fill="#062E6B" opacity=".8"/><rect x="0" y="-24" width="208" height="8" fill="#062E6B"/><circle cx="36" cy="-16" r="16" fill="#062E6B"/><circle cx="36" cy="-16" r="6.1" fill="#9FB3D1"/><circle cx="112" cy="-16" r="16" fill="#062E6B"/><circle cx="112" cy="-16" r="6.1" fill="#9FB3D1"/><circle cx="182" cy="-16" r="16" fill="#062E6B"/><circle cx="182" cy="-16" r="6.1" fill="#9FB3D1"/></g></g>
-        <g class="veh" style="--d:0.13s;--r:0.07s" transform="translate(660 298) scale(0.78)"><g class="rumble"><path d="M4 -16Q4 -34 22 -36L48 -40L74 -62H128Q140 -62 150 -44L164 -40Q172 -38 172 -28V-12H4Z" fill="#2FD3C9"/><path d="M80 -57H112V-43H64Z" fill="#062E6B" opacity=".8"/><path d="M116 -57H126Q133 -57 141 -43H116Z" fill="#062E6B" opacity=".8"/><rect x="96" y="-70" width="22" height="8" rx="3" fill="#FFFFFF"/><circle cx="167" cy="-30" r="3.5" fill="#FFE9A8"/><circle cx="42" cy="-14" r="14" fill="#062E6B"/><circle cx="42" cy="-14" r="5.3" fill="#9FB3D1"/><circle cx="138" cy="-14" r="14" fill="#062E6B"/><circle cx="138" cy="-14" r="5.3" fill="#9FB3D1"/></g></g>
+        <g class="veh" style="--d:0.13s;--r:0.07s" transform="translate(660 298) scale(0.78)"><g class="rumble"><path d="M6 -16V-46Q6 -62 24 -64H108Q116 -64 122 -58L142 -42L164 -38Q174 -36 174 -26V-16Z" fill="#2FD3C9"/><rect x="6" y="-26" width="168" height="10" rx="3" fill="#C9D3E2"/><path d="M22 -58H62V-45H16V-52Q16 -58 22 -58Z" fill="#062E6B" opacity=".8"/><path d="M68 -58H106Q112 -58 116 -54L128 -45H68Z" fill="#062E6B" opacity=".8"/><rect x="56" y="-72" width="24" height="8" rx="3" fill="#FFFFFF"/><path d="M160 -36H172V-30H162Z" fill="#FFE9A8"/><rect x="6" y="-44" width="5" height="9" rx="2" fill="#FF6B6B"/><circle cx="40" cy="-14" r="14" fill="#062E6B"/><circle cx="40" cy="-14" r="5.3" fill="#9FB3D1"/><circle cx="142" cy="-14" r="14" fill="#062E6B"/><circle cx="142" cy="-14" r="5.3" fill="#9FB3D1"/></g></g>
         <g class="veh" style="--d:0.07s;--r:0.03s" transform="translate(790 298) scale(0.78)"><g class="rumble"><circle cx="14" cy="-13" r="13" fill="#062E6B"/><circle cx="14" cy="-13" r="4.9" fill="#9FB3D1"/><circle cx="84" cy="-13" r="13" fill="#062E6B"/><circle cx="84" cy="-13" r="4.9" fill="#9FB3D1"/><path d="M6 -24Q10 -38 30 -40H58L66 -50H74L78 -40L70 -24Z" fill="#C8372D"/><rect x="20" y="-47" width="40" height="7" rx="3" fill="#062E6B"/><path d="M72 -60l12 46M66 -62l16-3" stroke="#062E6B" stroke-width="5" stroke-linecap="round"/><circle cx="82" cy="-56" r="4" fill="#FFE9A8"/><path d="M46 -80c-14 3-32 20-42 44h46z" fill="#A6E36B" opacity=".95"/><path d="M32 -78c10-6 22 0 24 14l2 30H30z" fill="#A6E36B"/><path d="M44 -66l26 6" stroke="#A6E36B" stroke-width="8" stroke-linecap="round"/><circle cx="44" cy="-88" r="11" fill="#E8453C"/><rect x="44" y="-92" width="13" height="7" rx="3.5" fill="#062E6B" opacity=".55"/></g></g>
       </g>
       <g><g class="pz-wave">
@@ -1158,7 +1184,7 @@ html.has-cur, html.has-cur * { cursor: none !important; }
       </g></g>
       <g class="pz-queue pz-front">
         <g class="veh" style="--d:0.56s;--r:0.01s" transform="translate(-20 340) scale(1)"><g class="rumble"><circle cx="14" cy="-13" r="13" fill="#062E6B"/><circle cx="14" cy="-13" r="4.9" fill="#9FB3D1"/><circle cx="84" cy="-13" r="13" fill="#062E6B"/><circle cx="84" cy="-13" r="4.9" fill="#9FB3D1"/><path d="M6 -24Q10 -38 30 -40H58L66 -50H74L78 -40L70 -24Z" fill="#1F2A44"/><rect x="20" y="-47" width="40" height="7" rx="3" fill="#062E6B"/><path d="M72 -60l12 46M66 -62l16-3" stroke="#062E6B" stroke-width="5" stroke-linecap="round"/><circle cx="82" cy="-56" r="4" fill="#FFE9A8"/><path d="M26 -80c-14 3-32 20-42 44h46z" fill="#A6E36B" opacity=".95"/><path d="M12 -78c10-6 22 0 24 14l2 30H10z" fill="#A6E36B"/><path d="M24 -66l18 4" stroke="#A6E36B" stroke-width="8" stroke-linecap="round"/><circle cx="24" cy="-88" r="11" fill="#FFFFFF"/><rect x="24" y="-92" width="13" height="7" rx="3.5" fill="#062E6B" opacity=".55"/><path d="M46 -80c-14 3-32 20-42 44h46z" fill="#A6E36B" opacity=".95"/><path d="M32 -78c10-6 22 0 24 14l2 30H30z" fill="#A6E36B"/><path d="M44 -66l26 6" stroke="#A6E36B" stroke-width="8" stroke-linecap="round"/><circle cx="44" cy="-88" r="11" fill="#FF8FC2"/><rect x="44" y="-92" width="13" height="7" rx="3.5" fill="#062E6B" opacity=".55"/></g></g>
-        <g class="veh" style="--d:0.47s;--r:0.04s" transform="translate(70 340) scale(1)"><g class="rumble"><path d="M4 -16Q4 -34 22 -36L48 -40L74 -62H128Q140 -62 150 -44L164 -40Q172 -38 172 -28V-12H4Z" fill="#2FD3C9"/><path d="M80 -57H112V-43H64Z" fill="#062E6B" opacity=".8"/><path d="M116 -57H126Q133 -57 141 -43H116Z" fill="#062E6B" opacity=".8"/><rect x="96" y="-70" width="22" height="8" rx="3" fill="#FFFFFF"/><circle cx="167" cy="-30" r="3.5" fill="#FFE9A8"/><circle cx="42" cy="-14" r="14" fill="#062E6B"/><circle cx="42" cy="-14" r="5.3" fill="#9FB3D1"/><circle cx="138" cy="-14" r="14" fill="#062E6B"/><circle cx="138" cy="-14" r="5.3" fill="#9FB3D1"/></g></g>
+        <g class="veh" style="--d:0.47s;--r:0.04s" transform="translate(70 340) scale(1)"><g class="rumble"><path d="M6 -16V-46Q6 -62 24 -64H108Q116 -64 122 -58L142 -42L164 -38Q174 -36 174 -26V-16Z" fill="#2FD3C9"/><rect x="6" y="-26" width="168" height="10" rx="3" fill="#C9D3E2"/><path d="M22 -58H62V-45H16V-52Q16 -58 22 -58Z" fill="#062E6B" opacity=".8"/><path d="M68 -58H106Q112 -58 116 -54L128 -45H68Z" fill="#062E6B" opacity=".8"/><rect x="56" y="-72" width="24" height="8" rx="3" fill="#FFFFFF"/><path d="M160 -36H172V-30H162Z" fill="#FFE9A8"/><rect x="6" y="-44" width="5" height="9" rx="2" fill="#FF6B6B"/><circle cx="40" cy="-14" r="14" fill="#062E6B"/><circle cx="40" cy="-14" r="5.3" fill="#9FB3D1"/><circle cx="142" cy="-14" r="14" fill="#062E6B"/><circle cx="142" cy="-14" r="5.3" fill="#9FB3D1"/></g></g>
         <g class="veh" style="--d:0.40s;--r:0.08s" transform="translate(250 340) scale(1)"><g class="rumble"><circle cx="16" cy="-12" r="12" fill="#062E6B"/><circle cx="16" cy="-12" r="4.6" fill="#9FB3D1"/><circle cx="78" cy="-12" r="12" fill="#062E6B"/><circle cx="78" cy="-12" r="4.6" fill="#9FB3D1"/><path d="M0 -24q0-24 26-26h28l4 26z" fill="#E9D9B5"/><path d="M56 -22q0-30 14-46l9 4q-8 18-6 42z" fill="#E9D9B5"/><rect x="24" y="-28" width="40" height="8" rx="3" fill="#062E6B"/><path d="M70 -66l12 52M64 -68l16-3" stroke="#062E6B" stroke-width="5" stroke-linecap="round"/><path d="M42 -80c-14 3-32 20-42 44h46z" fill="#FFD45C" opacity=".95"/><path d="M28 -78c10-6 22 0 24 14l2 30H26z" fill="#FFD45C"/><path d="M40 -66l26 6" stroke="#FFD45C" stroke-width="8" stroke-linecap="round"/><circle cx="40" cy="-88" r="11" fill="#E8453C"/><rect x="40" y="-92" width="13" height="7" rx="3.5" fill="#062E6B" opacity=".55"/></g></g>
         <g class="veh" style="--d:0.34s;--r:0.10s" transform="translate(338 340) scale(1)"><g class="rumble"><circle cx="14" cy="-14" r="14" fill="#062E6B"/><circle cx="14" cy="-14" r="5.3" fill="#9FB3D1"/><circle cx="84" cy="-14" r="14" fill="#062E6B"/><circle cx="84" cy="-14" r="5.3" fill="#9FB3D1"/><path d="M4 -28L20 -44L50 -46L62 -60L76 -56L80 -38L66 -26Z" fill="#E8453C"/><path d="M22 -42L52 -44" stroke="#FFFFFF" stroke-width="3" opacity=".7"/><path d="M70 -60l14 46M62 -62l16-4" stroke="#062E6B" stroke-width="5" stroke-linecap="round"/><path d="M48 -80c-14 3-32 20-42 44h46z" fill="#FFFFFF" opacity=".95"/><path d="M34 -78c10-6 22 0 24 14l2 30H32z" fill="#FFFFFF"/><path d="M46 -66l26 6" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/><circle cx="46" cy="-88" r="11" fill="#FF8FC2"/><rect x="46" y="-92" width="13" height="7" rx="3.5" fill="#062E6B" opacity=".55"/></g></g>
         <g class="veh" style="--d:0.29s;--r:0.00s" transform="translate(426 340) scale(1)"><g class="rumble"><circle cx="14" cy="-13" r="13" fill="#062E6B"/><circle cx="14" cy="-13" r="4.9" fill="#9FB3D1"/><circle cx="84" cy="-13" r="13" fill="#062E6B"/><circle cx="84" cy="-13" r="4.9" fill="#9FB3D1"/><path d="M6 -24Q10 -38 30 -40H58L66 -50H74L78 -40L70 -24Z" fill="#1F2A44"/><rect x="20" y="-47" width="40" height="7" rx="3" fill="#062E6B"/><path d="M72 -60l12 46M66 -62l16-3" stroke="#062E6B" stroke-width="5" stroke-linecap="round"/><circle cx="82" cy="-56" r="4" fill="#FFE9A8"/><rect x="12" y="-84" width="26" height="24" rx="4" fill="#FFB000"/><rect x="12" y="-76" width="26" height="4" fill="#062E6B" opacity=".35"/><path d="M46 -80c-14 3-32 20-42 44h46z" fill="#FF7A59" opacity=".95"/><path d="M32 -78c10-6 22 0 24 14l2 30H30z" fill="#FF7A59"/><path d="M44 -66l26 6" stroke="#FF7A59" stroke-width="8" stroke-linecap="round"/><circle cx="44" cy="-88" r="11" fill="#FFFFFF"/><rect x="44" y="-92" width="13" height="7" rx="3.5" fill="#062E6B" opacity=".55"/></g></g>
@@ -1192,7 +1218,7 @@ html.has-cur, html.has-cur * { cursor: none !important; }
       <div class="cc-row"><span>Thực hiện</span><b>Nhóm Nhóm</b></div>
       <div class="cc-row"><span>Dữ liệu</span><div>Radar Đài KTTV khu vực Nam Bộ, Phòng CSGT Công an TP.HCM, camera giao thông TP.HCM, OpenStreetMap, Open-Meteo, TomTom</div></div>
       <div class="cc-row"><span>Đường dây nóng</span><b>0326 08 08 08</b></div>
-      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">10/10 · bản 19:45</span></div>
+      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">10/10 · bản 20:05</span></div>
     </div>
   </div>
   <button class="zen-btn" id="zen-btn" aria-pressed="false" aria-label="Ẩn bảng để xem trọn bản đồ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Ẩn bảng</span></button>
@@ -1272,7 +1298,7 @@ html.has-cur, html.has-cur * { cursor: none !important; }
           <div><a class="src" href="https://giaothong.hochiminhcity.gov.vn/" target="_blank" rel="noopener">Xem camera giao thông trực tiếp của TP.HCM</a></div>
         </div>
       </details>
-      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 10/10 · bản 19:45.</span></div>
+      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 10/10 · bản 20:05.</span></div>
     </section>
 
     <!-- Chỉ đường -->
@@ -1305,14 +1331,14 @@ html.has-cur, html.has-cur * { cursor: none !important; }
         </button>
       </div>
       <div class="seg4" role="group" aria-label="Phương tiện">
-        <button data-veh="scooter" aria-pressed="false" title="Xe tay ga: gầm thấp, né cả chỗ ngập nửa bánh">
-          <svg viewBox="0 0 30 20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="15" r="3.6"/><circle cx="24" cy="15" r="3.6"/><path d="M6 15h12c0-4 2-6 5-6M23 9l-2-6h-3M9.6 15l1.4-5h7"/></svg><span>Tay ga</span></button>
-        <button data-veh="moto" aria-pressed="false" title="Xe số">
-          <svg viewBox="0 0 30 20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="14" r="4.3"/><circle cx="24" cy="14" r="4.3"/><path d="M6 14h9l4-7h4l1 7M15 14l-3-6H8M19 7l-2-3h-3"/></svg><span>Xe số</span></button>
+        <button data-veh="scooter" aria-pressed="false" title="Xe máy (tay ga hay xe số đều tính theo xe tay ga cho an toàn)">
+          <svg viewBox="0 0 30 20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="15" r="3.6"/><circle cx="24" cy="15" r="3.6"/><path d="M6 15h12c0-4 2-6 5-6M23 9l-2-6h-3M9.6 15l1.4-5h7"/></svg><span>Xe máy</span></button>
         <button data-veh="car" aria-pressed="false" title="Ô tô">
           <svg viewBox="0 0 30 20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><path d="M3 14v-3l3-5h14l5 5v3z"/><circle cx="9" cy="15" r="2.4" fill="currentColor"/><circle cx="21" cy="15" r="2.4" fill="currentColor"/></svg><span>Ô tô</span></button>
         <button data-veh="walk" aria-pressed="false" title="Đi bộ">
           <svg viewBox="0 0 30 20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="16" cy="2.8" r="1.8"/><path d="M15 6l-3 5 3 2-2 6M15 6l3 4 3 1M12 11l-3 2M15 13l3 6"/></svg><span>Đi bộ</span></button>
+        <button data-veh="metro" aria-pressed="false" title="Metro số 1 Bến Thành – Suối Tiên, kèm đoạn đi bộ ra ga">
+          <svg viewBox="0 0 30 20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="1.5" width="14" height="13" rx="3.5"/><path d="M8 8.5h14M11.5 18.5l1.5-4M18.5 18.5l-1.5-4"/><circle cx="11.6" cy="11.6" r=".9" fill="currentColor"/><circle cx="18.4" cy="11.6" r=".9" fill="currentColor"/></svg><span>Metro</span></button>
       </div>
       <label class="check"><input type="checkbox" id="avoid-hot"><span>Né cả các điểm hay ngập theo cảnh báo của CSGT</span></label>
       <button class="primary" id="go" disabled>Tìm đường</button>
@@ -1425,6 +1451,7 @@ html.has-cur, html.has-cur * { cursor: none !important; }
     <div class="lg"><span class="c" style="--c:var(--lv3)"></span>Ngang bô xe</div>
     <div class="lg"><span class="c" style="--c:var(--lv4)"></span>Lút yên xe</div>
     <div class="lg hide-sm"><span class="ic" id="lg-rain"></span>Điểm hay ngập</div>
+    <div class="lg"><span class="mt" aria-hidden="true"><i></i></span>Metro số 1</div>
     <span id="lg-tide" hidden></span>
   </div>
   <div class="pickbar" id="pickbar" hidden><span id="pick-text">Chạm vào bản đồ để chọn điểm</span><button id="pick-cancel">Huỷ</button></div>
@@ -1519,10 +1546,10 @@ var NN = (function () {
     car: [55, 42, 32, 28, 24, 18, 14, 8],
     walk: [0, 4.8, 4.8, 4.8, 4.8, 4.8, 4.8, 4.8]
   };
-  // Phương tiện: tay ga gầm thấp, xe số, ô tô, đi bộ. "bad" là mức ngập mà phương tiện đó không nên đi qua.
+  // Phương tiện: xe máy, ô tô, đi bộ (metro do trang ghép từ các chặng đi bộ). "bad" là mức ngập mà phương tiện đó không nên đi qua.
   var VEHICLES = {
-    scooter: { name: 'Xe tay ga', short: 'Tay ga', bad: 2, note: 'Xe tay ga gầm thấp, nước tới nửa bánh đã dễ vào lọc gió và chết máy.' },
-    moto: { name: 'Xe số', short: 'Xe số', bad: 2, note: 'Xe số chịu nước khá hơn tay ga nhưng ngang bô là chết máy.' },
+    // Xe máy gộp tay ga và xe số: tính theo xe tay ga (gầm thấp, lọc gió và bộ nồi thấp) để an toàn cho mọi loại xe.
+    scooter: { name: 'Xe máy', short: 'Xe máy', bad: 2, note: 'Nước tới nửa bánh là xe máy dễ vào nước, chết máy (xe tay ga còn dễ hơn xe số). Nên dắt bộ hoặc đi đường khác.' },
     car: { name: 'Ô tô', short: 'Ô tô', bad: 3, note: 'Ô tô con gầm thấp không nên đi khi nước quá nửa bánh xe.' },
     walk: { name: 'Đi bộ', short: 'Đi bộ', bad: 2, note: 'Đi bộ chỗ ngập dễ sụp hố ga, vướng vật nhọn, không lội khi nước quá đầu gối.' }
   };
@@ -1881,7 +1908,7 @@ var NN = (function () {
       r.delay = Math.max(0, r.secs - free);
     });
     list.sort(function (x, y) { return x.secs - y.secs; });
-    var bad = (VEHICLES[vehicle] || VEHICLES.moto).bad;
+    var bad = (VEHICLES[vehicle] || VEHICLES.scooter).bad;
     var rec = 0, ok = list.filter(function (r) { return r.worst < bad; });
     if (ok.length) rec = list.indexOf(ok[0]);
     else { var bw = 9; list.forEach(function (r, i) { if (r.worst < bw) { bw = r.worst; rec = i; } }); }
@@ -2527,7 +2554,7 @@ if (typeof module !== 'undefined') module.exports = NN;
 
   // ---------- trạng thái ----------
   var state = {
-    tab: 'route', vehicle: lsGet('nn-vehicle', 'moto'), avoidHot: false,
+    tab: 'route', vehicle: lsGet('nn-vehicle', 'scooter'), avoidHot: false,
     A: null, B: null, pick: null, result: null, sel: 0,
     draft: null, level: 0
   };
@@ -2717,6 +2744,13 @@ if (typeof module !== 'undefined') module.exports = NN;
       'road-alley': { 'line-color': tok('road'), 'line-width': W(0.1, 0.8, 5) },
       'spot-line': { 'line-color': tok('hot'), 'line-width': W(2, 5, 12), 'line-opacity': 0.5, 'line-dasharray': [1.2, 0.8] },
       'road-label': { 'text-color': tok('label'), 'text-halo-color': tok('label-halo'), 'text-halo-width': 1.6 },
+      'metro-case': { 'line-color': tok('label-halo'), 'line-width': W(3, 6, 11), 'line-opacity': 0.9 },
+      'metro-line': { 'line-color': tok('metro'), 'line-width': W(1.6, 3.4, 6.5) },
+      'metro-ride-case': { 'line-color': tok('route-case'), 'line-width': W(7, 11, 19) },
+      'metro-ride': { 'line-color': tok('metro'), 'line-width': W(4.5, 7.5, 13) },
+      'metro-dot': { 'circle-color': tok('label-halo'), 'circle-stroke-color': tok('metro'), 'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 10.5, 1.6, 15, 2.6],
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 10.5, ['+', 2.2, ['get', 'end']], 14, ['+', 5, ['get', 'end']], 17, ['+', 8, ['get', 'end']]] },
+      'metro-label': { 'text-color': tok('metro-ink'), 'text-halo-color': tok('label-halo'), 'text-halo-width': 1.8 },
       // t = 0: tuyến phụ, t = 1: tuyến đang chọn; t chạy mượt giữa 0 và 1 khi đổi tuyến
       'route-alt': {
         'line-color': ['interpolate', ['linear'], ['coalesce', ['feature-state', 't'], 0], 0, tok('route-alt'), 1, tok('route')],
@@ -2761,6 +2795,11 @@ if (typeof module !== 'undefined') module.exports = NN;
     map.addSource('spot-pts', { type: 'geojson', data: sg.pts });
     map.addSource('spot-lines', { type: 'geojson', data: sg.lines });
     addSpotImages();
+    map.addSource('metro', { type: 'geojson', data: { type: 'FeatureCollection', features: [{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: METRO.line.map(function (p) { return [p[0], p[1]]; }) } }] } });
+    map.addSource('metro-st', { type: 'geojson', data: { type: 'FeatureCollection', features: METRO.st.map(function (s, i) {
+      return { type: 'Feature', properties: { n: s[0], i: i, end: i === 0 || i === METRO.st.length - 1 ? 1 : 0 }, geometry: { type: 'Point', coordinates: [s[2], s[1]] } };
+    }) } });
+    map.addSource('metro-ride', { type: 'geojson', data: EMPTY });
     map.addSource('routes', { type: 'geojson', data: EMPTY, promoteId: 'i' });
     map.addSource('jam', { type: 'geojson', data: EMPTY });
     map.addSource('reports', { type: 'geojson', data: EMPTY });
@@ -2784,10 +2823,20 @@ if (typeof module !== 'undefined') module.exports = NN;
       { id: 'road-minor', type: 'line', source: 'roads', filter: minor, minzoom: 11.5, layout: { 'line-cap': 'round', 'line-join': 'round' } },
       { id: 'road-major-case', type: 'line', source: 'roads', filter: major, layout: { 'line-cap': 'round', 'line-join': 'round' } },
       { id: 'road-major', type: 'line', source: 'roads', filter: major, layout: { 'line-cap': 'round', 'line-join': 'round' } },
+      { id: 'metro-case', type: 'line', source: 'metro', layout: { 'line-cap': 'round', 'line-join': 'round' } },
+      { id: 'metro-line', type: 'line', source: 'metro', layout: { 'line-cap': 'round', 'line-join': 'round' } },
       { id: 'rain-heat', type: 'circle', source: 'rainheat' },
       { id: 'spot-line', type: 'line', source: 'spot-lines', layout: { 'line-cap': 'butt', 'line-join': 'round' } },
       { id: 'route-safe-case', type: 'line', source: 'routes', layout: { 'line-cap': 'round', 'line-join': 'round', 'line-sort-key': ['get', 'sel'] } },
       { id: 'route-alt', type: 'line', source: 'routes', layout: { 'line-cap': 'round', 'line-join': 'round', 'line-sort-key': ['get', 'sel'] } },
+      { id: 'metro-ride-case', type: 'line', source: 'metro-ride', layout: { 'line-cap': 'round', 'line-join': 'round' } },
+      { id: 'metro-ride', type: 'line', source: 'metro-ride', layout: { 'line-cap': 'round', 'line-join': 'round' } },
+      { id: 'metro-dot', type: 'circle', source: 'metro-st', minzoom: 10.5 },
+      {
+        id: 'metro-label', type: 'symbol', source: 'metro-st', minzoom: 11.8,
+        layout: { 'text-field': ['concat', 'Ga ', ['get', 'n']], 'text-font': ['noto-medium'], 'text-size': ['interpolate', ['linear'], ['zoom'], 11.8, 10.5, 15, 13], 'text-anchor': 'left', 'text-offset': [0.9, 0],
+          'text-variable-anchor': ['left', 'right', 'top', 'bottom'], 'text-radial-offset': 0.8, 'text-padding': 2, 'text-max-width': 9 }
+      },
       {
         id: 'road-label', type: 'symbol', source: 'roads',
         filter: ['all', ['!=', ['get', 'n'], ''], ['any', ['<=', ['get', 'c'], 2], ['all', ['<', ['get', 'c'], 5], ['>=', ['zoom'], 13.5]], ['>=', ['zoom'], 15.5]]],
@@ -3122,7 +3171,8 @@ if (typeof module !== 'undefined') module.exports = NN;
   bindOD('A'); bindOD('B');
 
   function setVehicle(v) {
-    if (!NN.VEHICLES[v]) v = 'scooter';
+    if (v === 'moto') v = 'scooter';                  // bản cũ có nút "Xe số", nay gộp vào "Xe máy"
+    if (v !== 'metro' && !NN.VEHICLES[v]) v = 'scooter';
     state.vehicle = v; lsSet('nn-vehicle', v);
     document.querySelectorAll('.seg4 [data-veh]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.veh === v)); });
     if (state.result && !(typeof nav !== 'undefined' && nav.on)) runRoute(false);
@@ -3137,6 +3187,7 @@ if (typeof module !== 'undefined') module.exports = NN;
   function clearRoute() {
     state.result = null; $('route-out').innerHTML = '';
     if (map.getSource('routes')) map.getSource('routes').setData(EMPTY);
+    metroRideShow(null);
     routeLabels.forEach(function (m) { m.remove(); }); routeLabels = []; labelsFor = null;
   }
   var lastFloodKey = '';
@@ -3147,6 +3198,7 @@ if (typeof module !== 'undefined') module.exports = NN;
   }
   // điểm đặt nhãn thời gian: đoạn riêng của tuyến này, không trùng tuyến khác
   function labelPoint(r, others) {
+    if (r.labelAt) return r.labelAt;
     var shared = new Set(); others.forEach(function (o) { o.segs.forEach(function (s) { shared.add(s); }); });
     var own = r.segs.filter(function (s) { return !shared.has(s); });
     var pick = own.length ? own[Math.floor(own.length / 2)] : r.segs[Math.floor(r.segs.length / 2)];
@@ -3203,10 +3255,96 @@ if (typeof module !== 'undefined') module.exports = NN;
     state.sel = i; drawRoutes(false);
     $('route-out').querySelectorAll('.rcard').forEach(function (c) { c.classList.toggle('sel', +c.dataset.r === i); c.setAttribute('aria-pressed', +c.dataset.r === i ? 'true' : 'false'); });
   }
+
+  // ---------- Metro số 1 (Bến Thành – Suối Tiên) ----------
+  // Đường ray lấy từ dữ liệu bản đồ OpenStreetMap; toạ độ 14 ga đã đối chiếu, nằm cách đường ray dưới 35 m.
+  // line: [kinh độ, vĩ độ, mét tính từ ga Bến Thành]; st: [tên, vĩ độ, kinh độ, mét từ Bến Thành]
+  var METRO = { line: [[106.697785,10.770917,0],[106.70189,10.775201,653],[106.703205,10.776308,841],[106.71159,10.785386,2201],[106.712351,10.786294,2331],[106.7127,10.786932,2411],[106.712812,10.787295,2453],[106.713311,10.789803,2736],[106.71344,10.790673,2833],[106.713536,10.793171,3110],[106.71359,10.793571,3154],[106.713831,10.794314,3241],[106.714266,10.794978,3328],[106.714658,10.795373,3389],[106.717302,10.797428,3757],[106.717576,10.797602,3793],[106.717946,10.797776,3837],[106.718354,10.797892,3884],[106.723858,10.798651,4491],[106.725327,10.798899,4654],[106.745031,10.802603,6846],[106.746431,10.80294,7004],[106.74833,10.803293,7215],[106.74921,10.803546,7315],[106.751221,10.80441,7555],[106.751871,10.804827,7640],[106.752402,10.805269,7716],[106.753276,10.806218,7857],[106.754027,10.806834,7964],[106.754499,10.807287,8036],[106.75488,10.807857,8112],[106.755588,10.8091,8269],[106.755974,10.810022,8380],[106.756296,10.811387,8535],[106.757814,10.819796,9479],[106.758029,10.820766,9589],[106.758367,10.822031,9734],[106.758748,10.823126,9862],[106.759107,10.824001,9966],[106.75989,10.825529,10156],[106.771971,10.846947,12868],[106.772465,10.84779,12976],[106.773226,10.848864,13121],[106.774074,10.849807,13260],[106.77476,10.85045,13364],[106.775571,10.851088,13477],[106.776724,10.851831,13627],[106.793724,10.861825,15789],[106.802478,10.867046,16907],[106.803584,10.86782,17055],[106.804946,10.868968,17251],[106.806132,10.870238,17442],[106.80677,10.871034,17554],[106.810176,10.875648,18186],[106.810402,10.875875,18221],[106.810745,10.876117,18267],[106.811898,10.876697,18408],[106.812349,10.87705,18471],[106.812553,10.877276,18505],[106.813765,10.879025,18739],[106.815466,10.88128,19050]],
+    st: [["Bến Thành",10.770814,106.697489,0],["Nhà hát Thành phố",10.776088,106.702577,773],["Ba Son",10.781546,106.707905,1616],["Văn Thánh",10.796082,106.715492,3510],["Tân Cảng",10.798644,106.723258,4426],["Thảo Điền",10.800507,106.733665,5583],["An Phú",10.802241,106.74226,6541],["Rạch Chiếc",10.80848,106.755181,8188],["Phước Long",10.821368,106.758109,9656],["Bình Thái",10.836375,106.765704,11513],["Thủ Đức",10.846418,106.771621,12798],["Khu Công nghệ cao",10.858838,106.788329,15114],["Đại học Quốc gia",10.866283,106.801179,16742],["Bến xe Suối Tiên",10.879566,106.814013,18803]] };
+  var METRO_WAIT = 420;          // chờ tàu (7–12 phút một chuyến) và đi từ cổng lên sân ga: khoảng 7 phút
+  function metroRideSecs(i, j) { return Math.abs(METRO.st[j][3] - METRO.st[i][3]) / 10.5 + 30; }   // ~38 km/h tính cả lúc dừng ga
+  function metroDir(i, j) { return j > i ? 'Bến xe Suối Tiên' : 'Bến Thành'; }
+  function metroSlice(i, j) {        // đoạn ray giữa hai ga, theo thứ tự đi
+    var c0 = Math.min(METRO.st[i][3], METRO.st[j][3]), c1 = Math.max(METRO.st[i][3], METRO.st[j][3]), L = METRO.line, out = [];
+    function at(c) { for (var k = 0; k < L.length - 1; k++) if (L[k + 1][2] >= c) { var t = (c - L[k][2]) / Math.max(1, L[k + 1][2] - L[k][2]); return [L[k][0] + (L[k + 1][0] - L[k][0]) * t, L[k][1] + (L[k + 1][1] - L[k][1]) * t]; } return [L[L.length - 1][0], L[L.length - 1][1]]; }
+    out.push(at(c0)); L.forEach(function (p) { if (p[2] > c0 && p[2] < c1) out.push([p[0], p[1]]); }); out.push(at(c1));
+    return j > i ? out : out.reverse();
+  }
+  function metroStPt(i) { return { lat: METRO.st[i][1], lng: METRO.st[i][2], label: 'Ga ' + METRO.st[i][0] }; }
+  function metroOpen(d) { var h = (d || new Date()).getHours(); return h >= 5 && h < 22; }
+  // đi bộ ra ga → đi tàu → đi bộ tới nơi. Trả về kết quả giống NN.plan để vẽ và dẫn đường như các phương tiện khác.
+  function metroPlan(A, B, floods) {
+    var walk = NN.plan(G, A, B, 'walk', floods, state.avoidHot, null);
+    var near = function (p) { return METRO.st.map(function (s, i) { return { i: i, d: NN.dist(p.lat, p.lng, s[1], s[2]) }; }).sort(function (x, y) { return x.d - y.d; }).slice(0, 3); };
+    var na = near(A), nb = near(B), cands = [];
+    na.forEach(function (a) { nb.forEach(function (b) {
+      if (a.i === b.i) return;
+      cands.push({ a: a.i, b: b.i, est: (a.d + b.d) * 1.3 / 1.33 + METRO_WAIT + metroRideSecs(a.i, b.i) });
+    }); });
+    cands.sort(function (x, y) { return x.est - y.est; });
+    var best = null;
+    cands.slice(0, 3).forEach(function (c) {
+      var l1 = NN.dist(A.lat, A.lng, METRO.st[c.a][1], METRO.st[c.a][2]) < 40 ? null : NN.plan(G, A, metroStPt(c.a), 'walk', floods, state.avoidHot, null);
+      var l2 = NN.dist(B.lat, B.lng, METRO.st[c.b][1], METRO.st[c.b][2]) < 40 ? null : NN.plan(G, metroStPt(c.b), B, 'walk', floods, state.avoidHot, null);
+      if ((l1 && l1.error && l1.error !== 'same') || (l2 && l2.error && l2.error !== 'same')) return;
+      var w1 = l1 && !l1.error ? l1.routes[l1.rec] : null, w2 = l2 && !l2.error ? l2.routes[l2.rec] : null;
+      var ride = metroSlice(c.a, c.b), rideM = Math.abs(METRO.st[c.b][3] - METRO.st[c.a][3]);
+      var r = { metro: true, a: c.a, b: c.b, w1: w1, w2: w2, ride: ride, rideM: rideM, rideSecs: metroRideSecs(c.a, c.b),
+        secs: (w1 ? w1.secs : 0) + METRO_WAIT + metroRideSecs(c.a, c.b) + (w2 ? w2.secs : 0),
+        meters: (w1 ? w1.meters : 0) + rideM + (w2 ? w2.meters : 0),
+        coords: (w1 ? w1.coords : [ride[0]]).concat(ride, w2 ? w2.coords : [ride[ride.length - 1]]),
+        segs: (w1 ? w1.segs : []).concat(w2 ? w2.segs : []),
+        floods: (w1 ? w1.floods : []).concat(w2 ? w2.floods : []),
+        spots: (w1 ? w1.spots : []).concat(w2 ? w2.spots : []),
+        labelAt: ride[Math.floor(ride.length / 2)] };
+      r.worst = r.floods.reduce(function (m, x) { return Math.max(m, x.level); }, 0);
+      if (!best || r.secs < best.secs) best = r;
+    });
+    var walkR = walk.error ? null : walk.routes[walk.rec];
+    if (!best) {
+      if (walk.error) return walk;
+      walk.metroNote = 'Không tìm được đường đi bộ ra ga metro. Đây là đường đi bộ.'; return walk;
+    }
+    var walkA = NN.dist(A.lat, A.lng, METRO.st[best.a][1], METRO.st[best.a][2]), walkB = NN.dist(B.lat, B.lng, METRO.st[best.b][1], METRO.st[best.b][2]);
+    if (walkR && walkR.secs <= best.secs) {
+      walk.metroNote = 'Hai điểm gần nhau hoặc xa tuyến metro, đi bộ thẳng (' + fmtMin(walkR.secs) + ') nhanh hơn đi metro (' + fmtMin(best.secs) + ').';
+      return walk;
+    }
+    return { routes: [best], rec: 0, metro: true, far: Math.max(walkA, walkB) > 2500, walkAlt: walkR };
+  }
+  function metroLegHTML(ic, main, sub) {
+    return '<li><span class="ml-ic ' + ic + '">' + (ic === 'walk'
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="3.6" r="1.8"/><path d="M12 7.5 9 13l3 2.5-2 6M12 7.5l3.5 4 3 1M9 13l-3 2M12 15.5l3 6"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="14" rx="3.5"/><path d="M5 10h14M8.5 21.5l2-5M15.5 21.5l-2-5"/></svg>') +
+      '</span><span><b>' + main + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span></li>';
+  }
+  function renderMetro(res) {
+    var r = res.routes[0], A = METRO.st[r.a], Bs = METRO.st[r.b], n = Math.abs(r.b - r.a), h = '';
+    h += '<button class="rcard sel" data-r="0" aria-pressed="true"><div class="rhead"><div class="rname"><span class="swatch metro"></span>Metro số 1: ga ' + esc(A[0]) + ' → ga ' + esc(Bs[0]) + '</div>' +
+      '<div class="rmeta">' + fmtMin(r.secs) + ' <small>· ' + fmtKm(r.meters) + '</small></div></div><ol class="mlegs">';
+    h += r.w1 ? metroLegHTML('walk', 'Đi bộ ' + fmtKm(r.w1.meters) + ' tới ga ' + esc(A[0]), fmtMin(r.w1.secs)) : metroLegHTML('walk', 'Vào ga ' + esc(A[0]), '');
+    h += metroLegHTML('train', 'Lên tàu hướng ' + metroDir(r.a, r.b) + ', đi ' + n + ' ga, xuống ga ' + esc(Bs[0]), 'Chờ tàu khoảng 5–10 phút · ngồi tàu ' + fmtMin(r.rideSecs));
+    h += r.w2 ? metroLegHTML('walk', 'Đi bộ ' + fmtKm(r.w2.meters) + ' tới nơi', fmtMin(r.w2.secs)) : metroLegHTML('walk', 'Ra ga là tới nơi', '');
+    h += '</ol>';
+    if (r.floods.length) h += '<div class="rnote">Đoạn đi bộ qua ' + r.floods.length + ' chỗ ngập:</div><ul class="flist">' + r.floods.slice(0, 4).map(floodRow).join('') + '</ul>';
+    else h += '<div class="rnote good">Đoạn đi bộ không qua chỗ đang ngập. Tàu chạy dưới hầm và trên cao nên không bị ngập.</div>';
+    if (r.worst >= 2) h += '<div class="xtra"><div><div class="warn"><b>' + esc(LEVELS[r.worst].name) + '.</b> ' + esc(NN.VEHICLES.walk.note) + '</div></div></div>';
+    h += '</button>';
+    if (!metroOpen()) h += '<div class="warn">Giờ này metro đã ngừng. Tàu chạy khoảng 5:00–22:00, 7–12 phút một chuyến.</div>';
+    if (res.far) h += '<div class="warn">Ga gần nhất còn khá xa để đi bộ. Có thể đi xe ôm hoặc xe máy ra ga (ga có chỗ gửi xe).</div>';
+    h += '<div class="route-acts"><button class="primary" id="nav-go"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 4 20l8-4 8 4z"/></svg>' + (r.w1 ? 'Đi bộ ra ga' : 'Bắt đầu đi') + '</button>' +
+      '<button class="ghost" id="share-route"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"/></svg>Chia sẻ</button></div>';
+    h += '<div class="muted">Metro chạy khoảng 5:00–22:00. Thời gian ước tính đã gồm chờ tàu.' + (res.walkAlt ? ' Đi bộ thẳng mất ' + fmtMin(res.walkAlt.secs) + '.' : '') + '</div>';
+    $('route-out').innerHTML = h;
+  }
+  function metroRideShow(r) {
+    var src = map.getSource('metro-ride'); if (!src) return;
+    src.setData(r && r.metro ? { type: 'FeatureCollection', features: [{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: r.ride } }] } : EMPTY);
+  }
   function runRoute(fit) {
     if (typeof nav !== 'undefined' && nav.on) { lastFloodKey = floodKey(); navFloodCheck(true); return; }   // đang dẫn đường: tự xử lý đổi tuyến
     if (!G || !state.A || !state.B) return;
-    var res = NN.plan(G, state.A, state.B, state.vehicle, floodsNow(), state.avoidHot, null);
+    var res = state.vehicle === 'metro' ? metroPlan(state.A, state.B, floodsNow()) : NN.plan(G, state.A, state.B, state.vehicle, floodsNow(), state.avoidHot, null);
     var out = $('route-out');
     if (res.error) {
       clearRoute();
@@ -3232,7 +3370,10 @@ if (typeof module !== 'undefined') module.exports = NN;
   }
   function renderRoute() {
     var res = state.result, out = $('route-out'); if (!res) return;
-    var VV = NN.VEHICLES[state.vehicle] || NN.VEHICLES.scooter, veh = VV.name.toLowerCase(), h = '';
+    metroRideShow(res.routes[0]);
+    if (res.metro) { renderMetro(res); return; }
+    var VV = NN.VEHICLES[state.vehicle === 'metro' ? 'walk' : state.vehicle] || NN.VEHICLES.scooter, veh = VV.name.toLowerCase(), h = '';
+    if (res.metroNote) h += '<div class="warn">' + esc(res.metroNote) + '</div>';
     var estIds = {}; (live ? live.est : []).forEach(function (e) { estIds[e.spot.id] = 1; });
     res.routes.forEach(function (r, i) {
       var tags = [];
@@ -4731,7 +4872,8 @@ if (typeof module !== 'undefined') module.exports = NN;
       'slight-left': '<path d="M30 40V26L16 12M16 24V12h12"/>',
       'slight-right': '<path d="M18 40V26l14-14M32 24V12H20"/>',
       uturn: '<path d="M16 40V18a8 8 0 0 1 16 0v14M24 26l8 8 8-8"/>',
-      arrive: '<path d="M24 42s11-9.7 11-19a11 11 0 1 0-22 0c0 9.3 11 19 11 19z"/><circle cx="24" cy="23" r="4"/>'
+      arrive: '<path d="M24 42s11-9.7 11-19a11 11 0 1 0-22 0c0 9.3 11 19 11 19z"/><circle cx="24" cy="23" r="4"/>',
+      metro: '<rect x="11" y="5" width="26" height="27" rx="7"/><path d="M11 19h26M17 43l4-10M31 43l-4-10"/>'
     }[t] || '';
     return '<svg viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round">' + p + '</svg>';
   }
@@ -4784,28 +4926,50 @@ if (typeof module !== 'undefined') module.exports = NN;
     var res = state.result; if (!res || !G) return;
     var r = res.routes[state.sel]; if (!r) return;
     if (popup) popup.remove(); closeShelter(); if (!$('report-card').hidden) closeReport();
-    nav = { on: true, t0: Date.now(), mine: !!(state.A && state.A.mine), startPt: state.A, voice: lsGet('nn-voice', true), follow: true, dest: state.B, vehicle: state.vehicle, warned: {}, lastRe: 0, wake: null, good: false, acc: null, offCount: 0, compass: null };
+    var mt = r.metro ? r : null;
+    nav = { on: true, t0: Date.now(), mine: !!(state.A && state.A.mine), startPt: state.A, voice: lsGet('nn-voice', true), follow: true, dest: mt ? metroStPt(mt.a) : state.B,
+      vehicle: state.vehicle === 'metro' ? 'walk' : state.vehicle, warned: {}, lastRe: 0, wake: null, good: false, acc: null, offCount: 0, compass: null, metro: mt, metroStage: 1 };
     compassStart();
     $('nav-voice').setAttribute('aria-pressed', String(nav.voice));
-    navSetRoute(r);
+    if (mt && !mt.w1) { metroBoard(true); r = nav.r; if (!r) return; }
+    else navSetRoute(mt ? mt.w1 : r);
+    if (mt) metroRideShow(mt);
     document.body.classList.add('nav'); setZen(false); hideMe();
     $('nav-top').hidden = false; $('nav-bot').hidden = false;
     if (navigator.wakeLock) navigator.wakeLock.request('screen').then(function (w) { nav.wake = w; }).catch(function () {});
     var el = document.createElement('div'); el.className = 'me-dot'; el.innerHTML = '<b></b><i></i>';
+    if (mt) r = nav.r;
     meMarker = new maplibregl.Marker({ element: el, rotationAlignment: 'map', pitchAlignment: 'map' }).setLngLat(r.coords[0]);
     $('nav-eta').textContent = 'Tới lúc ' + hhmm(Date.now() + r.secs * 1000);
     $('nav-left').textContent = fmtMin(r.secs) + ' · ' + fmtKm(r.meters);
     if (!locStart()) { navBanner('depart', 'Không có vị trí', 'Trình duyệt này không lấy được vị trí.'); return; }
-    navBanner('depart', 'Đang tìm vị trí…', 'Đi theo ' + nav.man[0].name);
+    if (mt) $('nav-eta').textContent = 'Tới lúc ' + hhmm(Date.now() + mt.secs * 1000);
+    navBanner('depart', 'Đang tìm vị trí…', nav.metroStage === 2 ? 'Lên tàu hướng ' + metroDir(mt.a, mt.b) : 'Đi theo ' + nav.man[0].name);
     nav.joined = nav.mine;
     nav.off = locOn(navOnFix);
     if (LOC.fix && Date.now() - LOC.fix.t < 10000) navOnFix(LOC.fix);
+  }
+
+  // tới ga lên tàu: chuyển sang chặng đi bộ từ ga xuống (chưa chạy chỉ dẫn cho tới khi bạn ra khỏi ga xuống)
+  function metroBoard(atStart) {
+    var mt = nav.metro, Bs = METRO.st[mt.b], n = Math.abs(mt.b - mt.a);
+    nav.metroStage = 2;
+    var say = (atStart ? '' : 'Đã tới ga ' + METRO.st[mt.a][0] + '. ') + 'Lên tàu hướng ' + metroDir(mt.a, mt.b) + ', đi ' + n + ' ga, xuống ở ga ' + Bs[0] + '.';
+    if (!mt.w2) { toast(say + ' Ra khỏi ga là tới nơi.', 8000); if (atStart) { nav.on = false; return; } speak(say + ' Ra khỏi ga là tới nơi.'); navEnd(false); return; }
+    speak(say);
+    nav.mine = false; nav.joined = false; nav.preFit = false; nav.startPt = metroStPt(mt.b); nav.dest = state.B;
+    navSetRoute(mt.w2);
+    var rest = METRO_WAIT + mt.rideSecs + mt.w2.secs;
+    $('nav-eta').textContent = 'Tới lúc ' + hhmm(Date.now() + rest * 1000);
+    $('nav-left').textContent = fmtMin(rest) + ' · ' + fmtKm(mt.rideM + mt.w2.meters);
+    if (!atStart && nav.pos) navPreStart(nav.pos);
   }
   // chưa tới tuyến: hiện khoảng cách tới điểm đi, không chạy chỉ dẫn, không đổi tuyến
   function navPreStart(f) {
     nav.pos = { lat: f.lat, lng: f.lng };
     var s0 = nav.r.coords[0], dd = NN.dist(f.lat, f.lng, s0[1], s0[0]);
-    navBanner('depart', 'Cách điểm đi ' + fmtKm(dd), 'Hãy tới ' + ((nav.startPt && nav.startPt.label) || 'điểm đi') + ' để bắt đầu', 'Chỉ dẫn sẽ chạy khi bạn tới tuyến đường');
+    if (nav.metro && nav.metroStage === 2) navBanner('metro', 'Ngồi tàu tới ga ' + METRO.st[nav.metro.b][0], 'Hướng ' + metroDir(nav.metro.a, nav.metro.b) + ' · đi ' + Math.abs(nav.metro.b - nav.metro.a) + ' ga', 'Còn ' + fmtKm(dd) + ' · ra khỏi ga sẽ chỉ đường tiếp');
+    else navBanner('depart', 'Cách điểm đi ' + fmtKm(dd), 'Hãy tới ' + ((nav.startPt && nav.startPt.label) || 'điểm đi') + ' để bắt đầu', 'Chỉ dẫn sẽ chạy khi bạn tới tuyến đường');
     $('nav-alert').hidden = true;
     moveMe([f.lng, f.lat], nav.compass != null ? nav.compass : NN.bearing(f.lat, f.lng, s0[1], s0[0]));
     if (!nav.preFit) {
@@ -4832,7 +4996,7 @@ if (typeof module !== 'undefined') module.exports = NN;
         // tuyến từ một điểm khác (không phải "Vị trí của bạn") mà bạn chưa ở đó: vẫn mở hành trình, giữ nguyên tuyến,
         // chờ bạn tới tuyến rồi mới chạy chỉ dẫn
         var dd = NN.dist(f.lat, f.lng, nav.r.coords[0][1], nav.r.coords[0][0]);
-        speak('Bạn đang cách điểm đi ' + sayDist(dd) + '. Khi bạn tới đó, Né Ngập sẽ bắt đầu chỉ đường.');
+        if (!(nav.metro && nav.metroStage === 2)) speak('Bạn đang cách điểm đi ' + sayDist(dd) + '. Khi bạn tới đó, Né Ngập sẽ bắt đầu chỉ đường.');
         navPreStart(f); return;
       }
       nav.joined = true;
@@ -4881,16 +5045,17 @@ if (typeof module !== 'undefined') module.exports = NN;
     $('nav-ic').innerHTML = navIcon(m.type);
     $('nav-dist').textContent = m.type === 'arrive' && d < 30 ? 'Tới nơi' : fmtKm(d);
     $('nav-street').textContent = navLine(m);
-    $('nav-then').textContent = nx && m.type !== 'arrive' && m.len < 250 ? 'Rồi ' + (nx.type === 'arrive' ? 'tới nơi' : navLine(nx).toLowerCase()) : '';
+    $('nav-then').textContent = nx && m.type !== 'arrive' && m.len < 250 ? 'Rồi ' + (nx.type === 'arrive' ? 'tới nơi' : navLine(nx).charAt(0).toLowerCase() + navLine(nx).slice(1)) : '';
     var left = Math.max(0, nav.r.meters - nav.along), secs = nav.r.secs * left / Math.max(1, nav.r.meters);
+    if (nav.metro && nav.metroStage === 1) { secs += METRO_WAIT + nav.metro.rideSecs + (nav.metro.w2 ? nav.metro.w2.secs : 0); left += nav.metro.rideM + (nav.metro.w2 ? nav.metro.w2.meters : 0); }
     $('nav-eta').textContent = 'Tới lúc ' + hhmm(Date.now() + secs * 1000);
     $('nav-left').textContent = fmtMin(secs) + ' · ' + fmtKm(left);
     // giọng nói: báo trước khoảng 300 m (xe) / 100 m (đi bộ), và ngay trước chỗ rẽ
     var far = nav.vehicle === 'walk' ? 100 : 300, near = nav.vehicle === 'walk' ? 25 : 60;
     if ((acc || 0) > 60) { navFloodCheck(false); followCam(show, brg); return; }   // GPS còn sai số lớn: chưa đọc chỉ dẫn
     if (m.type === 'arrive') {
-      if (d < 30) { speak('Bạn đã tới nơi.'); navEnd(true); return; }
-      if (d < far && !nav.said[nav.idx + 'f']) { nav.said[nav.idx + 'f'] = 1; speak('Còn ' + sayDist(d) + ' là tới nơi.'); }
+      if (d < 30) { if (nav.metro && nav.metroStage === 1) { metroBoard(false); return; } speak('Bạn đã tới nơi.'); navEnd(true); return; }
+      if (d < far && !nav.said[nav.idx + 'f']) { nav.said[nav.idx + 'f'] = 1; speak('Còn ' + sayDist(d) + (nav.metro && nav.metroStage === 1 ? ' là tới ga ' + METRO.st[nav.metro.a][0] + '.' : ' là tới nơi.')); }
     } else if (m.type !== 'straight') {
       if (d <= far && d > near * 2 && !nav.said[nav.idx + 'f']) { nav.said[nav.idx + 'f'] = 1; speak('Còn ' + sayDist(d) + ', ' + TURN_SAY[m.type] + ' vào ' + m.name + '.'); }
       if (d <= near && !nav.said[nav.idx + 'n']) { nav.said[nav.idx + 'n'] = nav.said[nav.idx + 'f'] = 1; speak(TURN_SAY[m.type].charAt(0).toUpperCase() + TURN_SAY[m.type].slice(1) + ' vào ' + m.name + '.'); }
@@ -4961,6 +5126,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     $('nav-top').hidden = $('nav-bot').hidden = $('nav-alert').hidden = true;
     map.easeTo({ pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 }, duration: 600 });
     if (LOC.fix) showMe(LOC.fix);
+    metroRideShow(null);
     if (state.A && state.B) runRoute(false);
     if (arrived) toast('Bạn đã tới nơi.');
   }
