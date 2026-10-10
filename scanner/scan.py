@@ -76,12 +76,12 @@ PROMPT = """You are checking snapshots from Ho Chi Minh City traffic cameras for
 Each image is preceded by its camera number. For EVERY camera, report:
 - usable: false if the image is black, frozen, a "no signal"/placeholder graphic, or too dark/blurry to see the road surface. Otherwise true.
 - level (integer 0-4), judged by water depth on the roadway, using vehicles, wheels, curbs and people's legs as a ruler:
-  0 = no standing water. A wet, shiny or reflective road after rain is still 0. Small puddles at the edge that do not cover a travel lane are 0.
-  1 = shallow water covering part of a travel lane, below ankle height, under about 10 cm.
+  0 = no standing water. A wet, shiny or reflective road is still 0, even if it has streaks, patches or "pools" of reflected light. At night, reflections of headlights and street lights on wet asphalt are NOT water depth and must be rated 0. Tire tracks, splash marks and small puddles at the edge or in a pothole are 0.
+  1 = a continuous sheet of standing water covering most of the width of at least one travel lane, with visible depth: water rising around shoes or tire treads, wakes or spray behind moving vehicles, or curbs/lane markings disappearing under water. Below ankle height, under about 10 cm.
   2 = water around half a motorbike wheel, about 15-25 cm.
   3 = water up to a motorbike's exhaust or engine, about 30-40 cm.
   4 = water at a motorbike seat or higher, over 50 cm.
-  Only give level 1 or more if you can actually see a water surface on the road (ripples, wakes or spray from moving vehicles, submerged curbs or wheels). When unsure between two levels, choose the lower one.
+  Only give level 1 or more if you can actually see a water surface with depth on the road (wakes or spray from moving vehicles, submerged curbs, lane markings or wheels). If the only evidence is shine or reflection, the level is 0. When unsure between two levels, choose the lower one, and set confidence below 0.6 whenever you are not sure.
 - confidence: 0 to 1, how sure you are of the level.
 - raining: true only if rain is visibly falling right now: rain streaks (especially under street lights), droplets on the lens, splashes or rings on puddles, or most riders in raincoats or under umbrellas on a wet road. A dry road, or a wet road with no sign of falling rain, is false.
 - note: at most 15 words in Vietnamese describing what you see (e.g. "Nước ngập nửa bánh xe máy, xe đi chậm").
@@ -338,6 +338,107 @@ def radar():
         log("Không đọc được radar:", repr(e)[:120])
         return None
 
+# ---------------------------------------------------------------- radar Đài KTTV khu vực Nam Bộ (trạm Nhà Bè)
+# Ảnh PNG vuông, tâm là trạm ra đa Nhà Bè, bao trọn vòng quét bán kính 300 km.
+# Căn theo bản đồ nghiệp vụ của Đài (kttvnb.info): tâm ~10,684°B 106,735°Đ.
+KTTV_LIST = "https://kttvnb.info/kttvnb-admin/map/mapajax/radar/list/REAL/2"
+KTTV_FILE = "https://kttvnb.info/kttvnb-admin/public/products/"
+KTTV_REF = "https://kttvnb.info/kttvnb-admin/index.php?view=radar&city=NAM_BO"
+KTTV_CENTER = (10.684, 106.735)
+KTTV_RANGE_KM = 300.0
+RADAR_PNG = DATA / "radar.png"
+
+
+def kttv_bounds():
+    la, lo = KTTV_CENTER
+    dlat = KTTV_RANGE_KM / 111.32
+    dlon = KTTV_RANGE_KM / (111.32 * math.cos(math.radians(la)))
+    return (la - dlat, la + dlat, lo - dlon, lo + dlon)          # nam, bắc, tây, đông
+
+
+def kttv_dbz(r, g, b):
+    """Quy màu trên ảnh của Đài ra dBZ (thang xanh xám → xanh dương → xanh lá → vàng → cam → đỏ, tối đa ~60)."""
+    mx, mn = max(r, g, b), min(r, g, b)
+    sat = mx - mn
+    if sat < 60:
+        return None
+    if mx == r: h = (60 * (g - b) / sat) % 360
+    elif mx == g: h = 60 * (b - r) / sat + 120
+    else: h = 60 * (r - g) / sat + 240
+    if h >= 290: return 60                       # tím, hồng: rất mạnh
+    if h >= 195: return 18 if sat < 120 else 24  # xanh xám / xanh dương: mưa nhỏ
+    if h >= 150: return 30                       # xanh ngọc
+    if h >= 95: return 36                        # xanh lá
+    if h >= 66: return 41                        # vàng chanh
+    if h >= 48: return 45                        # vàng
+    if h >= 22: return 49                        # cam
+    return 54                                    # đỏ
+
+
+def kttv_radar():
+    """Ảnh radar mới nhất của Đài: lọc nhiễu, lưu data/radar.png (nền trong suốt), trả về số liệu mưa trên TP.HCM."""
+    from PIL import ImageFilter
+    if MOCK:
+        return None
+    try:
+        h = {"User-Agent": UA, "Referer": KTTV_REF, "X-Requested-With": "XMLHttpRequest", "Accept": "application/json, text/javascript, */*"}
+        j = requests.get(KTTV_LIST, headers=h, timeout=20).json()
+        files = [f for f in (j.get("files") or []) if isinstance(f, str) and f.endswith(".png")]
+        if not files:
+            raise ValueError("danh sách ảnh trống")
+        f = files[-1]
+        y, mth, d, hm = f.split("/")[-4:]
+        hh, mm = hm[:-4].split("_")
+        t = int(dt.datetime(int(y), int(mth), int(d), int(hh), int(mm), tzinfo=dt.timezone.utc).timestamp())
+        r = requests.get(KTTV_FILE + f, headers={"User-Agent": UA, "Referer": KTTV_REF}, timeout=25)
+        r.raise_for_status()
+        im = Image.open(io.BytesIO(r.content)).convert("RGB")
+        W, H = im.size
+        px = im.load()
+        # mặt nạ điểm có màu (bỏ nền xám và vệt xám nhạt)
+        mask = Image.new("L", (W, H), 0); mp = mask.load()
+        for yy in range(H):
+            for xx in range(W):
+                rr, gg, bb = px[xx, yy]
+                if max(rr, gg, bb) - min(rr, gg, bb) >= 60:
+                    mp[xx, yy] = 255
+        k = max(3, round(W / 130) | 1)               # ~5 điểm ảnh với ảnh 660
+        opened = mask.filter(ImageFilter.MinFilter(k)).filter(ImageFilter.MaxFilter(k + 2))
+        op = opened.load()
+        out = Image.new("RGBA", (W, H), (0, 0, 0, 0)); o = out.load()
+        S, N, Wl, E = kttv_bounds()
+        la0, la1, lo0, lo1 = RADAR_BBOX
+        cx, cy, rc = W / 2, H / 2, 0.045 * W         # bỏ vòng nhiễu sát trạm
+        cells, max_dbz, heavy, rainy = [], 0, 0, 0
+        for yy in range(H):
+            lat = N - (yy + 0.5) / H * (N - S)
+            for xx in range(W):
+                if not (mp[xx, yy] and op[xx, yy]):
+                    continue
+                if (xx - cx) ** 2 + (yy - cy) ** 2 < rc * rc:
+                    continue
+                rr, gg, bb = px[xx, yy]
+                o[xx, yy] = (rr, gg, bb, 230)
+                lng = Wl + (xx + 0.5) / W * (E - Wl)
+                if la0 <= lat <= la1 and lo0 <= lng <= lo1:
+                    dbz = kttv_dbz(rr, gg, bb)
+                    if dbz is None:
+                        continue
+                    rainy += 1; max_dbz = max(max_dbz, dbz)
+                    if dbz >= 30: heavy += 1
+                    if (xx + yy) % 2 == 0:
+                        cells.append([round(lat, 3), round(lng, 3), dbz_to_mmh(dbz)])
+        out.resize((W // 2, H // 2), Image.LANCZOS).save(RADAR_PNG, optimize=True)   # nửa kích thước cho kho gọn (~1,8 km/điểm ảnh)
+        cells.sort(key=lambda c: -c[2])
+        # mỗi điểm ảnh ~0,9 km; quy về ô ~1,2 km cho cùng ngưỡng với RainViewer
+        scale = (2 * KTTV_RANGE_KM / W) ** 2 / 1.44
+        return {"src": "kttvnb", "time": t, "file": f, "img": "radar.png", "bounds": [[round(Wl, 4), round(N, 4)], [round(E, 4), round(N, 4)], [round(E, 4), round(S, 4)], [round(Wl, 4), round(S, 4)]],
+                "max_dbz": max_dbz, "max_mmh": dbz_to_mmh(max_dbz) if max_dbz else 0,
+                "heavy_px": round(heavy * scale), "rain_px": round(rainy * scale), "cells": cells[:400]}
+    except Exception as e:
+        log("Không lấy được radar của Đài KTTV Nam Bộ:", repr(e)[:140])
+        return None
+
 
 # ---------------------------------------------------------------- báo cáo của người đi đường
 def fetch_reports(state, ts):
@@ -374,6 +475,17 @@ def fetch_reports(state, ts):
             rid = str(x["id"])[:40]
             if not rid.replace("-", "").isalnum() or rid in known:
                 continue
+            if x.get("kind") == "dispute":
+                # người dùng bấm "Không ngập" trên một điểm AI báo
+                at = int(m.get("time") or ts)
+                tgt = str(x.get("cam") or "")[:40] or ("rp:" + str(x.get("rid") or "")[:40])
+                if ts - at <= 60 * 60 and len(tgt) > 3:
+                    dis = state.setdefault("disputes", {}).setdefault(tgt, [])
+                    dev = str(x.get("dev", ""))[:40] or rid
+                    if all(d[1] != dev for d in dis):
+                        dis.append([at, dev])
+                    known[rid] = {"id": rid, "kind": "dispute", "at": at, "status": "dispute", "lat": 0, "lng": 0}
+                continue
             lat, lng, level = float(x["lat"]), float(x["lng"]), int(x["level"])
             if not (10.3 <= lat <= 11.2 and 106.3 <= lng <= 107.1) or level not in (1, 2, 3, 4):
                 continue
@@ -403,17 +515,24 @@ def cams_near(cams, lat, lng, radius):
     return out[:VERIFY_MAX_CAMS]
 
 
+def disputed(state, key, ts):
+    """Số người khác nhau bấm "Không ngập" cho camera / báo cáo này trong 60 phút qua."""
+    return len([d for d in state.get("disputes", {}).get(key, []) if ts - d[0] <= 60 * 60])
+
+
 def verify_reports(state, cams, fresh, ts, wet_recent):
     """Cập nhật trạng thái báo cáo theo kết quả AI vừa xem (fresh: cam_id -> kết quả lượt này)."""
     reps = state.get("reports", {})
     for r in reps.values():
+        if r.get("kind") == "dispute":
+            continue
         st = r["status"]
         if st in ("checking", "confirmed"):
             near = [(d, c) for d, c in cams_near(cams, r["lat"], r["lng"], VERIFY_RADIUS_M)]
             if not near and st == "checking":
                 r["status"] = "no_camera"; continue
             seen = [(d, c, fresh[c["id"]]) for d, c in near if c["id"] in fresh and fresh[c["id"]]["usable"]]
-            wet = [x for x in seen if x[2]["level"] >= 1 and x[2]["conf"] >= 0.6]
+            wet = [x for x in seen if x[2]["level"] >= 1 and x[2]["conf"] >= (0.85 if disputed(state, x[1]["id"], ts) else 0.6)]
             if wet:
                 d, c, res = min(wet, key=lambda x: x[0])
                 if st == "checking":
@@ -433,7 +552,8 @@ def verify_reports(state, cams, fresh, ts, wet_recent):
             if r["status"] == "confirmed" and ts - r.get("last_pos", ts) > REPORT_KEEP:
                 r["status"] = "expired"
     # chỗ không có camera: nhiều máy khác nhau cùng báo, lúc trời vừa mưa hoặc triều cao
-    pool = [r for r in reps.values() if r["status"] in ("no_camera", "unverifiable", "crowd") and ts - r["at"] <= 60 * 60]
+    pool = [r for r in reps.values() if r["status"] in ("no_camera", "unverifiable", "crowd") and ts - r["at"] <= 60 * 60
+            and disputed(state, "rp:" + r["id"], ts) < 2]
     for r in pool:
         group = [o for o in pool if abs(o["at"] - r["at"]) <= 45 * 60
                  and dist_m(r["lat"], r["lng"], o["lat"], o["lng"]) <= CROWD_RADIUS_M]
@@ -571,19 +691,25 @@ def mock_classify(batch):
 
 
 # ---------------------------------------------------------------- tổng hợp
-def decide(cam_state, ts):
-    """Từ lịch sử quét của một camera, quyết định có công bố ngập không."""
+def decide(cam_state, ts, wet=True, strict=False):
+    """Từ lịch sử quét của một camera, quyết định có công bố ngập không.
+
+    Công bố khi: AI rất chắc (từ 0,85), hoặc thấy ngập ở 2 lần xem liên tiếp và cả hai lần đều khá chắc
+    (mắt cá chân cần từ 0,7; nửa bánh trở lên cần từ 0,6). Nếu 3 giờ qua không mưa và triều không cao
+    (wet=False) thì mọi mức đều cần độ chắc từ 0,85, vì trời khô mà thấy "ngập" thường là ảnh phản chiếu.
+    """
     hist = [h for h in cam_state.get("hist", []) if ts - h[0] <= EXPIRE_AFTER]
     if not hist:
         return None
     t, level, conf, note = hist[-1]
-    if level < 1 or conf < 0.55:
+    need = 0.85 if (not wet or strict) else (0.7 if level == 1 else 0.6)
+    if level < 1 or conf < min(need, 0.6):
         return None
     prev = [h for h in hist[:-1] if t - h[0] <= CONFIRM_WINDOW]
-    prev_flood = prev and prev[-1][1] >= 1 and prev[-1][2] >= 0.5
+    prev_ok = prev and prev[-1][1] >= 1 and prev[-1][2] >= (0.85 if (not wet or strict) else (0.7 if prev[-1][1] == 1 else 0.6))
     if conf >= 0.85:
         shown = level
-    elif prev_flood:
+    elif conf >= need and prev_ok:
         shown = min(level, prev[-1][1] + 1)    # không nhảy quá 1 mức giữa hai lần quét
     else:
         return {"level": level, "conf": conf, "note": note, "confirmed": False, "seen": t}
@@ -617,10 +743,10 @@ def main():
                     tide_cams.add(c["id"])
 
     w = weather()
-    rd = radar()
+    rd = kttv_radar() or radar()                  # ưu tiên radar của Đài KTTV Nam Bộ, dự phòng RainViewer
     if rd:
         w["radar"] = rd
-        log(f"Radar lúc {iso(rd['time'])}: mưa ở {rd['rain_px']} ô ~1,2 km, mạnh nhất {rd['max_mmh']} mm/giờ")
+        log(f"Radar ({rd.get('src', 'rainviewer')}) lúc {iso(rd['time'])}: mưa ở {rd['rain_px']} ô ~1,2 km trên TP.HCM, mạnh nhất {rd['max_mmh']} mm/giờ")
     new_reports = fetch_reports(state, ts)
     if new_reports:
         log(f"Nhận {len(new_reports)} báo cáo mới của người đi đường")
@@ -668,8 +794,8 @@ def main():
         state["last_dry_scan"] = ts
     else:
         mode, targets = "idle", []
-    # camera cần xem để kiểm chứng báo cáo của người đi đường
-    verify = set()
+    # camera cần xem để kiểm chứng báo cáo của người đi đường, và camera vừa bị báo "Không ngập"
+    verify = {k for k in state.get("disputes", {}) if not k.startswith("rp:") and disputed(state, k, ts)}
     for r in state.get("reports", {}).values():
         if r["status"] in ("checking", "confirmed"):
             for _, c in cams_near(cams, r["lat"], r["lng"], VERIFY_RADIUS_M):
@@ -791,16 +917,21 @@ def main():
         state["last_full_scan"] = 0
         log(f"Camera thấy đang mưa ở {seen_rain}/{len(seen_ok)} chỗ: lượt sau sẽ xem toàn bộ camera")
 
+    # dọn phản hồi "Không ngập" cũ hơn 1 giờ
+    state["disputes"] = {k: [d for d in v if ts - d[0] <= 60 * 60] for k, v in state.get("disputes", {}).items()}
+    state["disputes"] = {k: v for k, v in state["disputes"].items() if v}
+
     # 3. kiểm chứng báo cáo của người đi đường
     verify_reports(state, cams, fresh, ts, ts - state.get("last_wet", 0) <= 3 * 3600)
 
     # 4. tổng hợp kết quả
+    wet_ctx = ts - state.get("last_rain", 0) <= 3 * 3600 or tide_high
     by_id = {c["id"]: c for c in cams}
     reps = state.get("reports", {})
     backed = {r["cam"] for r in reps.values() if r["status"] == "confirmed" and r.get("last_pos") == ts}
     detections = []
     for cid, cs in state["cams"].items():
-        d = decide(cs, ts)
+        d = decide(cs, ts, wet_ctx, strict=disputed(state, cid, ts) > 0)
         if not d or cid not in by_id:
             continue
         if cid in backed and not d["confirmed"]:
@@ -839,6 +970,7 @@ def main():
         "spend_today_usd": state["spend"].get(today, 0.0), "budget_usd": budget,
         "detections": detections,
         # camera AI vừa xem lượt này và thấy đường khô: bản đồ dùng để bỏ ước tính ngập ở gần đó
+        "disputed": sorted(k for k in state.get("disputes", {}) if disputed(state, k, ts)),
         "raining_cams": sorted(cid for cid, r in fresh.items() if r["usable"] and r.get("rain")),
         "dry": sorted(cid for cid, r in fresh.items() if r["usable"] and r["level"] == 0 and r["conf"] >= 0.6),
         "reports": [{k: r[k] for k in ("id", "status", "cam_name", "cam_dist", "level_cam", "crowd", "at") if k in r}
