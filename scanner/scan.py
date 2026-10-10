@@ -472,35 +472,63 @@ FORECAST_PNG = DATA / "forecast.png"
 FORECAST_MIN = 120                                     # xem trước 2 giờ
 
 
+def _hue(r, g, b):
+    mx, mn = max(r, g, b), min(r, g, b)
+    sat = mx - mn
+    if sat == 0:
+        return None, 0
+    if mx == r: h = (60 * (g - b) / sat) % 360
+    elif mx == g: h = 60 * (b - r) / sat + 120
+    else: h = 60 * (r - g) / sat + 240
+    return h, sat
+
+
+# Thang màu đi theo sắc độ: xanh dương (~206°) -> xanh lá -> vàng -> cam -> đỏ (0°) -> tím (~298°).
+# Đo theo sắc độ thay vì so đúng màu, vì ảnh "Dự báo AI" dùng màu tươi hơn chú giải (vd. xanh lá 0,248,15).
+_MM10_HUE = sorted(((_hue(*c)[0] + (360 if _hue(*c)[0] < 240 else 0)) * -1, v) for v, c in MM10_LUT)   # quy về trục tăng dần
+
+
 def mm10_of(r, g, b, a=255):
-    """Màu -> mm/10 phút. Dưới 1 mm (màu xanh nhạt, bán trong suốt) trả 0.5; nền, chữ, viền trả None."""
+    """Màu -> mm/10 phút. Rìa mờ, bán trong suốt, xanh nhạt (dưới 1 mm) trả 0.5; nền, chữ, viền xám trả None."""
     if a < 40:
         return None
     key = (r >> 2, g >> 2, b >> 2, a >= 160)
     if key in _MM10_CACHE:
         return _MM10_CACHE[key]
-    mx, mn = max(r, g, b), min(r, g, b)
+    h, sat = _hue(r, g, b)
     val = None
-    if mx - mn >= 50:
-        best, bd = None, 1e9
-        for v, (R, G, B) in MM10_LUT:
-            e = (r - R) ** 2 + (g - G) ** 2 + (b - B) ** 2
-            if e < bd:
-                best, bd = v, e
-        if bd <= 2500 and a >= 160:
-            val = best
-        elif b >= r and b >= g - 20:                    # xanh nhạt: mưa dưới 1 mm/10 phút
-            val = 0.5
+    if h is not None and sat >= 50:
+        if a < 160 or max(r, g, b) < 120 or sat < 100:
+            val = 0.5                                   # rìa mờ của vùng mưa (ảnh dự báo phủ nền đen): mưa rất nhỏ
+        else:
+            x = -(h + (360 if h < 240 else 0))          # cùng trục với _MM10_HUE
+            pts = _MM10_HUE
+            if x <= pts[0][0]:
+                val = pts[0][1]
+            elif x >= pts[-1][0]:
+                val = pts[-1][1]
+            else:
+                for (x0, v0), (x1, v1) in zip(pts, pts[1:]):
+                    if x0 <= x <= x1:
+                        val = round((v0 + (v1 - v0) * (x - x0) / (x1 - x0 or 1)) * 2) / 2
+                        break
     _MM10_CACHE[key] = val
     return val
 
 
-def mm10_grid(im, despeckle=True):
-    """Ảnh của Đài (vuông, cùng khung với radar) -> (lưới giá trị mm/10p theo hàng, W, H)."""
+def mm10_grid(im, despeckle=True, open_k=0):
+    """Ảnh của Đài (vuông, cùng khung với radar) -> (lưới giá trị mm/10p theo hàng, W, H).
+    open_k: bỏ các vệt mảnh hơn open_k điểm ảnh (vòng nhiễu quanh trạm); vùng mưa thật thì rộng, không bị ảnh hưởng."""
+    from PIL import ImageFilter
     im = im.convert("RGBA")
     W, H = im.size
     data = list(im.getdata())
     g = [mm10_of(*p) for p in data]
+    if open_k:
+        m = Image.new("L", (W, H)); m.putdata([0 if v is None or v < 1 else 255 for v in g])
+        m = m.filter(ImageFilter.MinFilter(open_k)).filter(ImageFilter.MaxFilter(open_k + 2))
+        keep = list(m.getdata())
+        g = [v if v is None or v < 1 or keep[i] else 0.5 for i, v in enumerate(g)]
     if despeckle:                                       # bỏ điểm lẻ: cần ít nhất 3 ô lân cận cũng có mưa
         out = g[:]
         for i, v in enumerate(g):
@@ -562,8 +590,16 @@ def kttv_radar(http):
         # lượng mưa đo được (mm trong 10 phút) cùng thời điểm: số chính thức của Đài, thay cho quy đổi gần đúng từ màu dBZ
         mg = mm = None
         try:
-            mf = KTTV_MM_DIR + f.split("/", 1)[1]
-            g, mw, mh = mm10_grid(Image.open(io.BytesIO(http.get(KTTV_FILE + mf))))
+            mb = None
+            for cand in files[::-1][:3]:                 # ảnh mm/10 phút đôi khi ra chậm hơn ảnh radar: lùi tối đa 2 ảnh
+                mf = KTTV_MM_DIR + cand.split("/", 1)[1]
+                try:
+                    mb = http.get(KTTV_FILE + mf); break
+                except Exception as e1:
+                    log(f"Chưa có ảnh {mf}: {repr(e1)[:90]}")
+            if mb is None:
+                raise ValueError("Đài chưa có ảnh mm/10 phút cho 30 phút gần nhất")
+            g, mw, mh = mm10_grid(Image.open(io.BytesIO(mb)), open_k=5)
             mx, n, mcells = mm10_hcm(g, mw, mh)
             mg = (g, mw, mh)
             mm = {"file": mf, "size": [mw, mh], "max": mx, "px": n, "cells": [c for c in mcells if c[2] >= 1][:300]}
@@ -660,10 +696,10 @@ def kttv_forecast(http, obs_t):
             return None
         comp, W, H, series, union = None, 0, 0, [], {}
         for t, f in frames:
-            im = Image.open(io.BytesIO(http.get(KTTV_FILE + f.split("?")[0])))
+            im = Image.open(io.BytesIO(http.get(KTTV_FILE + f.split("?")[0]))).convert("RGBA")
             if im.width > 400:                          # nửa kích thước cho nhanh (~1,8 km/điểm ảnh)
-                im = im.convert("RGBA").resize((im.width // 2, im.height // 2), Image.NEAREST)
-            g, W, H = mm10_grid(im)
+                im = im.resize((im.width // 2, im.height // 2), Image.NEAREST)
+            g, W, H = mm10_grid(im, open_k=3)
             comp = g if comp is None else [a if b is None or (a is not None and a >= b) else b for a, b in zip(comp, g)]
             mx, n, cells = mm10_hcm(g, W, H)
             series.append([t, mx, n])
