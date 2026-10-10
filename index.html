@@ -289,6 +289,9 @@ button { cursor: pointer; }
 .rain-words span { position: absolute; text-align: center; font-weight: 600; white-space: nowrap; }
 .rain-ticks span { position: absolute; transform: translateX(-50%); font-variant-numeric: tabular-nums; }
 .rain-src { font-size: 10.5px; color: var(--ink-3); line-height: 1.3; }
+/* Dự báo mưa 2 giờ tới: thang mm/10 phút của Đài KTTV Nam Bộ (1 → 15, tuyến tính) */
+.fc-bar { height: 10px; border-radius: 3px; background: linear-gradient(90deg, #2B9BEE 0%, #38FA2F 7.1%, #F7F82F 14.3%, #F7B02F 28.6%, #F52E30 64.3%, #912E95 100%); }
+.legend:has(#fc-lg:not([hidden])) { max-width: 260px; min-width: 232px; }
 
 /* Camera */
 .cam { margin: 0; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
@@ -944,6 +947,8 @@ body.intro .brand, body.intro .panel, body.intro .legend, body.intro .fab, body.
         <input type="checkbox" id="lyr-rain" checked hidden>
         <label class="check" id="lyr-radar-row" hidden><input type="checkbox" id="lyr-radar" checked><span>Vùng đang mưa (radar Đài KTTV Nam Bộ)</span></label>
         <div class="muted" id="radar-note" hidden style="margin:-4px 0 0 28px"></div>
+        <label class="check" id="lyr-fc-row" hidden><input type="checkbox" id="lyr-fc"><span>Dự báo mưa 2 giờ tới (AI của Đài KTTV Nam Bộ)</span></label>
+        <div class="muted" id="fc-note" hidden style="margin:-4px 0 0 28px"></div>
         <label class="check" id="lyr-tt-row" hidden><input type="checkbox" id="lyr-tt"><span>Kẹt xe trực tiếp (TomTom)</span></label>
         <div class="muted" id="tt-lg" hidden style="margin:-4px 0 0 28px"><span style="color:#5BD08A">■</span> thông thoáng <span style="color:#FFB13D;margin-left:8px">■</span> chậm <span style="color:#FF5A4E;margin-left:8px">■</span> kẹt</div>
       </div>
@@ -1065,6 +1070,12 @@ body.intro .brand, body.intro .panel, body.intro .legend, body.intro .fab, body.
       <div class="rain-bar" aria-hidden="true"></div>
       <div class="rain-ticks"><span style="left:16%">1</span><span style="left:34%">3</span><span style="left:48%">8</span><span style="left:66%">25</span><span style="left:90%">70</span></div>
       <div class="rain-src" id="rain-src"></div>
+    </div>
+    <div class="rain-lg" id="fc-lg" hidden>
+      <div class="ttl">Dự báo mưa 2 giờ tới <span class="unit">mm/10 phút</span></div>
+      <div class="fc-bar" aria-hidden="true"></div>
+      <div class="rain-ticks"><span style="left:2%">1</span><span style="left:14.3%">3</span><span style="left:28.6%">5</span><span style="left:64.3%">10</span><span style="left:97%">15</span></div>
+      <div class="rain-src" id="fc-src"></div>
     </div>
     <div class="ttl">Mức ngập</div>
     <div class="lg"><span class="aic" style="--c:var(--lv2)"></span>Camera thấy ngập</div>
@@ -3551,17 +3562,24 @@ if (typeof module !== 'undefined') module.exports = NN;
     if (rdOk) maxNow = +rd.max_mmh || 0;
     dot.className = 'now-dot' + (est.length ? ' flood' : maxNow >= 0.3 || camRain.length >= 2 ? ' rain' : '');
     var nAi = aiFloods().length;
+    var fc = live.sim ? null : forecastFeed(), fcWhere = fc && fc.first ? fcAreas(fc, fc.first) : [];
+    var fcPeak = fc && fc.peak ? +fc.peak[1] : 0;
     if (nAi && !live.sim) { title.textContent = 'Camera thấy ' + nAi + ' chỗ đang ngập' + (est.length ? ', thêm ' + est.length + ' điểm có nguy cơ' : ''); dot.className = 'now-dot flood'; }
     else if (est.length) title.textContent = pre + est.length + ' điểm có nguy cơ đang ngập';
     else if (camRain.length >= 2) title.textContent = 'Camera thấy đang mưa ở ' + uniq(camRain).slice(0, 2).join(', ') + ', chưa thấy ngập';
     else if (maxNow >= 0.3) title.textContent = pre + 'Đang ' + rainWord(maxNow) + (rdOk && rWet.length ? ' ở ' + uniq(rWet).slice(0, 2).join(', ') : '') + ', chưa thấy ngập';
+    else if (fc && fc.first) { title.textContent = 'Có thể mưa khoảng ' + hhmm(fc.first * 1000) + (fcWhere.length ? ' ở ' + uniq(fcWhere).slice(0, 2).join(', ') : ''); dot.className = 'now-dot rain'; }
     else if (live.tide && live.tide.now >= NN.TIDE_STEPS[0]) title.textContent = pre + 'Không mưa, triều đang lên cao';
     else title.textContent = pre + 'Không mưa, chưa có dấu hiệu ngập';
     var parts = [];
     if (camRain.length) parts.push('Camera lúc ' + hhmm(ai.feed.updated_ts * 1000) + ' thấy đang mưa ở ' + uniq(camRain).join(', ') + '.');
     if (rdOk) { if (rWet.length) parts.push('Radar lúc ' + hhmm(rd.time * 1000) + ' thấy mưa ở ' + uniq(rWet).join(', ') + '.'); }
     else if (wet.length) parts.push('Mưa vừa trở lên ở ' + uniq(wet).join(', ') + ' (theo mô hình dự báo).');
-    if (!live.sim && soon.length) parts.push('Dự báo một giờ tới có thể mưa to ở ' + uniq(soon).join(', ') + '.');
+    if (fc) {
+      if (fc.first) parts.push('Dự báo AI của Đài KTTV Nam Bộ: mưa có thể tới ' + (fcWhere.length ? uniq(fcWhere).join(', ') + ' ' : 'TP.HCM ') + 'khoảng ' + hhmm(fc.first * 1000) +
+        (fcPeak >= 1 ? ', mạnh nhất khoảng ' + num(fcPeak) + ' mm trong 10 phút' + (fcPeak >= 3 ? ' (mưa to)' : '') : '') + '. Bật lớp "Dự báo mưa 2 giờ tới" để xem vùng mưa.');
+      else parts.push('Dự báo AI của Đài KTTV Nam Bộ: tới ' + hhmm(fc.to * 1000) + ' chưa thấy mưa trên TP.HCM.');
+    } else if (!live.sim && soon.length) parts.push('Dự báo một giờ tới có thể mưa to ở ' + uniq(soon).join(', ') + '.');
     if (!live.sim && live.tide && live.tide.now >= NN.TIDE_STEPS[0])
       parts.push('Triều đang cao. AI đang xem camera ở ' + tideSpots() + ' điểm ven sông hay ngập do triều.');
     if (live.sim) parts.push('Số liệu giả lập, không phải thời tiết thật. Cơn mưa đặt ở tâm bản đồ.');
@@ -3628,7 +3646,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     var rd = radarFeed(), on = !!(rd && $('lyr-radar').checked && map.getLayer && map.getLayer('radar'));
     var wet = rd && +rd.rain_px > 0;
     $('rain-lg').hidden = !((on && wet) || live.sim);
-    $('rain-src').textContent = live.sim ? 'Mưa mô phỏng.' : rd ? 'Radar Nhà Bè, Đài KTTV khu vực Nam Bộ, lúc ' + hhmm(rd.time * 1000) + '. Số mm/giờ là quy đổi gần đúng.' : '';
+    $('rain-src').textContent = live.sim ? 'Mưa mô phỏng.' : rd ? 'Radar Nhà Bè, Đài KTTV khu vực Nam Bộ, lúc ' + hhmm(rd.time * 1000) + (rd.mm10 && +rd.mm10.max >= 1 ? '. Cường độ lấy từ lượng mưa 10 phút Đài đo được.' : '. Số mm/giờ là quy đổi gần đúng.') : '';
   }
   var radarShownAt = 0;
   function syncRadar() {
@@ -3653,7 +3671,46 @@ if (typeof module !== 'undefined') module.exports = NN;
     syncRadar();
   };
   function radarState() { return { confirmed: !!radarFeed() }; }
-  function radarAuto() { mapLoaded.then(syncRadar); }
+  function radarAuto() { mapLoaded.then(function () { syncRadar(); syncForecast(); }); }
+  // ---------- dự báo AI (ConvLSTM) của Đài KTTV Nam Bộ: vùng có thể mưa trong 2 giờ tới ----------
+  function forecastFeed() {
+    var fc = ai.feed && ai.feed.weather && ai.feed.weather.forecast, now = Date.now() / 1000;
+    if (!fc || fc.src !== 'kttvnb-ml' || !Array.isArray(fc.bounds) || !fc.img) return null;
+    if (now - (+fc.obs || 0) > 60 * 60 || (+fc.to || 0) < now) return null;
+    return fc;
+  }
+  function fcAreas(fc, t) {
+    var out = [];
+    (fc.cells || []).forEach(function (c) {
+      if (t != null && +c[3] !== t) return;
+      var d = G && NN.areaLabel(G, +c[0], +c[1]); if (!d) return;
+      d = d.split(' · ').pop().replace(' cũ', ''); if (out.indexOf(d) < 0) out.push(d);
+    });
+    return out;
+  }
+  var fcShownAt = 0;
+  function syncForecast() {
+    var fc = forecastFeed(), row = $('lyr-fc-row'), note = $('fc-note'), on = !!(fc && $('lyr-fc').checked);
+    row.hidden = !fc; note.hidden = !fc;
+    $('fc-lg').hidden = !on;
+    if (!fc || !map.getSource) { if (map.getLayer && map.getLayer('forecast')) map.setLayoutProperty('forecast', 'visibility', 'none'); return; }
+    note.textContent = fc.first ? 'Mưa có thể tới TP.HCM khoảng ' + hhmm(fc.first * 1000) + '.' : 'Từ giờ tới ' + hhmm(fc.to * 1000) + ' chưa thấy mưa trên TP.HCM.';
+    $('fc-src').textContent = 'Mô hình AI của Đài KTTV khu vực Nam Bộ, từ ảnh radar lúc ' + hhmm(fc.obs * 1000) + '. Màu là lượng mưa lớn nhất có thể có tới ' + hhmm(fc.to * 1000) + '.';
+    var url = aiFeedUrl().replace(/flood-ai\.json.*$/, '') + fc.img + '?t=' + fc.obs;
+    if (!map.getSource('forecast')) {
+      map.addSource('forecast', { type: 'image', url: url, coordinates: fc.bounds });
+      map.addLayer({ id: 'forecast', type: 'raster', source: 'forecast', paint: { 'raster-opacity': 0.5, 'raster-fade-duration': 300, 'raster-resampling': 'linear' }, layout: { visibility: on ? 'visible' : 'none' } }, map.getLayer('radar') ? 'radar' : 'spot-line');
+    } else if (fcShownAt !== fc.obs) {
+      map.getSource('forecast').updateImage({ url: url, coordinates: fc.bounds });
+    }
+    fcShownAt = fc.obs;
+    map.setLayoutProperty('forecast', 'visibility', on ? 'visible' : 'none');
+  }
+  try { if (localStorage.getItem('nn-fc') === '1') $('lyr-fc').checked = true; } catch (e) {}
+  $('lyr-fc').onchange = function () {
+    try { localStorage.setItem('nn-fc', this.checked ? '1' : '0'); } catch (e) {}
+    syncForecast();
+  };
   setInterval(function () { if (!live.sim && live.rainRaw) computeEst(); }, 60000);
   var TT_DEFAULT = 'zD2s8qIPNAuDit6obPqwYhkqIM2WCZTB';
   function ttKey() { var d = window.NN_TT_KEY || TT_DEFAULT; try { return localStorage.getItem('nn-tomtom') || d; } catch (e) { return d; } }
