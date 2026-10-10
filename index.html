@@ -988,20 +988,20 @@ body.zen .fcbar { left: 50%; }
 .fc-labels span.now { color: var(--lam); font-weight: 700; }
 
 /* ======== Màn hình chờ: poster minh hoạ (vàng, đỏ, lam) ======== */
-.loading.poster { --pz-y: #FFE41C; --pz-r: #F2261C; --pz-b: #1446F5; background: var(--pz-y) !important; color: var(--pz-r); display: block; overflow: hidden;
+.loading.poster { --pz-y: #0476D6; --pz-r: #FFD45C; --pz-b: #062E6B; --pz-w: #FFFFFF; background: var(--pz-y) !important; color: var(--pz-r); display: block; overflow: hidden;
   -webkit-backdrop-filter: none !important; backdrop-filter: none !important; transition: transform .85s cubic-bezier(.7,0,.25,1), opacity .5s .5s; }
 .loading.poster::before, .loading.poster::after { display: none !important; }
-.loading.poster div { display: block; background: none; box-shadow: none; padding: 0; gap: 0; color: var(--pz-r); align-items: initial; }
+.loading.poster div { display: block; background: none; box-shadow: none; padding: 0; gap: 0; color: var(--pz-w); align-items: initial; }
 .loading.poster .pz-sub { display: flex; flex-direction: row; justify-content: space-between; align-items: flex-end; padding: 0 .1em; }
-.pz-corner { position: absolute; top: 22px; font: 600 13px/1.3 var(--font-body); letter-spacing: .01em; color: var(--pz-r); }
-.pz-corner b { font-weight: 800; }
+.pz-corner { position: absolute; top: 22px; font: 600 13px/1.3 var(--font-body); letter-spacing: .01em; color: var(--pz-w); }
+.pz-corner b { font-weight: 800; color: var(--pz-r); }
 .pz-corner .nhom { font-size: 14px; letter-spacing: .04em; color: var(--pz-r); }
 .pz-tl { left: 26px; } .pz-tr { right: 26px; text-align: right; }
 .pz-art { position: absolute; left: 50%; top: 8%; width: min(560px, 88vw, 70vh); height: auto; transform: translateX(-50%); overflow: visible; }
 .loading.poster .pz-title { position: absolute; left: 50%; bottom: 6.5%; transform: translateX(-50%); width: max-content; text-align: center; }
-.loading.poster .pz-title .wordmark { font-size: clamp(66px, 15.5vw, 210px); line-height: .92; color: var(--pz-r); letter-spacing: .02em; padding: 0; }
+.loading.poster .pz-title .wordmark { font-size: clamp(66px, 15.5vw, 210px); line-height: .92; color: var(--pz-w); letter-spacing: .02em; padding: 0; }
 .pz-sub { display: flex; justify-content: space-between; font-family: "Vina Vit Lon", var(--font-display); font-size: clamp(20px, 3.2vw, 38px); color: var(--pz-r); margin-bottom: 6px; }
-.pz-msg { position: absolute; left: 0; right: 0; bottom: 2.2%; text-align: center; font: 600 12.5px var(--font-body); color: var(--pz-r); opacity: .85; }
+.pz-msg { position: absolute; left: 0; right: 0; bottom: 2.2%; text-align: center; font: 600 12.5px var(--font-body); color: var(--pz-w); opacity: .8; }
 .pz-ao { font-family: "Vina Vit Lon", var(--font-display); fill: var(--pz-r); }
 .pz-rain { animation: pz-roi .42s linear infinite; }
 @keyframes pz-roi { from { transform: translate(4px, -24px); } to { transform: translate(-2px, 0); } }
@@ -1012,20 +1012,21 @@ body.zen .fcbar { left: 50%; }
 .pz-cape { transform-origin: 212px 150px; animation: pz-bay .3s ease-in-out infinite alternate; }
 @keyframes pz-bay { to { transform: rotate(-4deg); } }
 @keyframes pz-nay { from { opacity: 1; transform: scale(1) rotate(12deg); } to { opacity: 1; transform: translateY(6px) scale(1) rotate(12deg); } }
-/* xe lao vào bất chợt: im lặng một nhịp, rồi vụt ngang khung, phanh lại, nước bắn tung */
-.pz-ride { transform: translateX(-640px); animation: pz-vao .62s cubic-bezier(.15,.9,.25,1.25) .9s forwards; }
-@keyframes pz-vao { 0% { transform: translateX(-640px) skewX(-14deg); } 72% { transform: translateX(22px) skewX(6deg); } 100% { transform: translateX(0) skewX(0); } }
-.pz-speed { opacity: 0; animation: pz-vet .9s ease-out .9s forwards; }
-@keyframes pz-vet { 0% { opacity: 0; transform: translateX(40px); } 15% { opacity: 1; } 100% { opacity: 0; transform: translateX(-60px); } }
-.pz-burst circle { opacity: 0; transform-box: fill-box; transform-origin: center; animation: pz-ban .7s cubic-bezier(.2,.8,.3,1) 1.4s forwards; }
-.pz-burst circle:nth-child(2n) { animation-delay: 1.45s; } .pz-burst circle:nth-child(3n) { animation-delay: 1.5s; }
-@keyframes pz-ban { 0% { opacity: 0; transform: translate(0, 12px) scale(.2); } 40% { opacity: 1; } 100% { opacity: 1; transform: translate(0, 0) scale(1); } }
-.pz-ao { opacity: 0; transform-box: fill-box; transform-origin: center; }
-.pz-ao1 { animation: pz-bung .45s cubic-bezier(.2,1.6,.4,1) 1.5s forwards, pz-nay 1.1s ease-in-out 2s infinite alternate; }
-.pz-ao2 { animation: pz-bung .45s cubic-bezier(.2,1.6,.4,1) 1.62s forwards, pz-nay 1.1s ease-in-out 2.1s infinite alternate; }
+/* lúc tải: chỉ có cơn mưa. Tải xong: một người chạy xe vụt ngang từ trái sang phải rồi đi luôn, sau đó lộ bản đồ */
+.pz-ride { transform: translateX(-660px); }
+.loading.poster.go .pz-ride { animation: pz-qua 1.5s cubic-bezier(.42,0,.58,1) forwards; }
+@keyframes pz-qua { 0% { transform: translateX(-660px) skewX(-10deg); } 45% { transform: translateX(-40px) skewX(-4deg); } 100% { transform: translateX(680px) skewX(-12deg); } }
+.pz-speed { opacity: 0; }
+.loading.poster.go .pz-speed { animation: pz-vet .18s linear infinite alternate; }
+@keyframes pz-vet { from { opacity: .95; transform: translateX(0); } to { opacity: .6; transform: translateX(-14px); } }
+.pz-burst circle { opacity: 0; transform-box: fill-box; transform-origin: center; }
+.loading.poster.go .pz-burst circle { animation: pz-ban .3s ease-out infinite alternate; }
+.loading.poster.go .pz-burst circle:nth-child(2n) { animation-delay: .1s; } .loading.poster.go .pz-burst circle:nth-child(3n) { animation-delay: .2s; }
+@keyframes pz-ban { from { opacity: .3; transform: translateY(8px) scale(.5); } to { opacity: 1; transform: translateY(-4px) scale(1); } }
+.pz-ao { transform-box: fill-box; transform-origin: center; opacity: 0; }
+.pz-ao1 { animation: pz-bung .45s cubic-bezier(.2,1.6,.4,1) .35s forwards, pz-nay 1.1s ease-in-out .8s infinite alternate; }
+.pz-ao2 { animation: pz-bung .45s cubic-bezier(.2,1.6,.4,1) .5s forwards, pz-nay 1.1s ease-in-out 1s infinite alternate; }
 @keyframes pz-bung { from { opacity: 0; transform: scale(.2) rotate(12deg); } to { opacity: 1; transform: scale(1) rotate(12deg); } }
-.loading.poster.go .pz-ride { animation: pz-ra .8s cubic-bezier(.6,0,.85,.35) forwards; }
-@keyframes pz-ra { from { transform: translateX(0); } to { transform: translateX(660px) skewX(-12deg); } }
 .loading.poster.lift { transform: translateY(-104%); }
 .loading.poster.lift.gone { opacity: 0; }
 @media (max-width: 760px) {
@@ -1040,7 +1041,7 @@ body.zen .fcbar { left: 50%; }
 }
 @media (prefers-reduced-motion: reduce) {
   .pz-rain, .pz-wave, .pz-bob, .pz-cape, .pz-ao1, .pz-ao2, .pz-ride, .pz-speed, .pz-burst circle { animation: none; }
-  .pz-ride { transform: none; } .pz-ao, .pz-burst circle { opacity: 1; } .pz-speed { opacity: 0; }
+  .pz-ride { transform: translateX(-660px); } .pz-ao { opacity: 1; } .pz-speed { opacity: 0; }
   .loading.poster { transition: opacity .4s; } .loading.poster.lift { transform: none; opacity: 0; }
 }
 
@@ -1108,11 +1109,11 @@ html.has-cur, html.has-cur * { cursor: none !important; }
     <div class="pz-corner pz-tl">Bản đồ ngập<br>TP. Hồ Chí Minh<br><b>NÉ NGẬP</b><br>Cập nhật trực tiếp</div>
     <div class="pz-corner pz-tr">Đồ án Đổi mới<br>sáng tạo vì xã hội<br>Thực hiện ——— bởi<br><b class="nhom">NHÓM NHÓM</b></div>
     <svg class="pz-art" viewBox="0 0 420 320" aria-hidden="true">
-      <g class="pz-cloud" fill="var(--pz-b)">
+      <g class="pz-cloud" fill="var(--pz-w)">
         <circle cx="150" cy="70" r="34"/><circle cx="200" cy="52" r="46"/><circle cx="252" cy="66" r="36"/><circle cx="290" cy="82" r="24"/>
         <rect x="116" y="70" width="198" height="36" rx="18"/>
       </g>
-      <g class="pz-rain" stroke="var(--pz-b)" stroke-width="5" stroke-linecap="round">
+      <g class="pz-rain" stroke="var(--pz-w)" stroke-width="5" stroke-linecap="round" opacity=".9">
         <path d="M136 120l-6 18M168 132l-6 18M200 118l-6 18M232 130l-6 18M264 120l-6 18M292 134l-6 18M150 160l-6 18M184 170l-6 18M216 158l-6 18M250 170l-6 18M280 160l-6 18M122 150l-6 18"/>
       </g>
       <text class="pz-ao pz-ao1" x="306" y="40" font-size="28">ÀO</text>
@@ -1137,10 +1138,9 @@ html.has-cur, html.has-cur * { cursor: none !important; }
           <rect x="192" y="128" width="24" height="10" rx="5" fill="var(--pz-y)"/>
         </g>
       </g>
-      <defs><clipPath id="pz-pool"><rect x="30" y="200" width="360" height="118" rx="44"/></clipPath></defs>
-      <g clip-path="url(#pz-pool)"><g class="pz-wave">
-        <path d="M-60 262q15-12 30 0t30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0V330H-60z" fill="var(--pz-b)"/>
-        <path d="M-60 280q15-10 30 0t30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0" fill="none" stroke="var(--pz-y)" stroke-width="3"/>
+      <g><g class="pz-wave">
+        <path d="M-1000 262q15-12 30 0t30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0V330H-1000z" fill="var(--pz-b)"/>
+        <path d="M-1000 280q15-10 30 0t30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0 30 0" fill="none" stroke="var(--pz-w)" stroke-width="3" opacity=".55"/>
       </g></g>
     </svg>
     <div class="pz-title"><div class="pz-sub"><span>Bản</span><span>đồ</span></div><div class="wordmark"><span>NÉ</span> <span>NGẬP</span></div></div>
@@ -1166,7 +1166,7 @@ html.has-cur, html.has-cur * { cursor: none !important; }
       <div class="cc-row"><span>Thực hiện</span><b>Nhóm Nhóm</b></div>
       <div class="cc-row"><span>Dữ liệu</span><div>Radar Đài KTTV khu vực Nam Bộ, Phòng CSGT Công an TP.HCM, camera giao thông TP.HCM, OpenStreetMap, Open-Meteo, TomTom</div></div>
       <div class="cc-row"><span>Đường dây nóng</span><b>0326 08 08 08</b></div>
-      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">10/10 · bản 19:10</span></div>
+      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">10/10 · bản 19:20</span></div>
     </div>
   </div>
   <button class="zen-btn" id="zen-btn" aria-pressed="false" aria-label="Ẩn bảng để xem trọn bản đồ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Ẩn bảng</span></button>
@@ -1246,7 +1246,7 @@ html.has-cur, html.has-cur * { cursor: none !important; }
           <div><a class="src" href="https://giaothong.hochiminhcity.gov.vn/" target="_blank" rel="noopener">Xem camera giao thông trực tiếp của TP.HCM</a></div>
         </div>
       </details>
-      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 10/10 · bản 19:10.</span></div>
+      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 10/10 · bản 19:20.</span></div>
     </section>
 
     <!-- Chỉ đường -->
@@ -5031,8 +5031,6 @@ if (typeof module !== 'undefined') module.exports = NN;
 
   // ---------- màn mở: mưa rơi trên tấm kính rồi tạnh ----------
   document.body.classList.add('intro');
-  var pzStart = null, pzRide = document.querySelector('.pz-ride');
-  if (pzRide) pzRide.addEventListener('animationstart', function () { if (pzStart == null) pzStart = performance.now(); });
   // Màn hình chờ dạng poster: tải xong thì xe chạy ra khỏi khung, poster kéo lên để lộ bản đồ. Chạm để bỏ qua.
   function introRain() {
     var ld = $('loading');
@@ -5046,13 +5044,9 @@ if (typeof module !== 'undefined') module.exports = NN;
     ld.addEventListener('pointerdown', lift, { once: true });
     $('load-msg').textContent = 'Sẵn sàng';
     if (reduce) { lift(); return; }
-    // đợi xe kịp lao vào, đứng một nhịp rồi mới chạy đi (tính từ lúc xe bắt đầu lao vào, tối đa 4 giây)
-    var leave = function () { if (lift.done || leave.done) return; leave.done = true; ld.classList.add('go'); setTimeout(lift, 650); };
-    var wait = function () {
-      if (pzStart == null) { setTimeout(wait, 150); return; }
-      setTimeout(leave, Math.max(0, pzStart + 1500 - performance.now()));
-    };
-    wait(); setTimeout(leave, 4000);
+    // bản đồ đã xong: người chạy xe vụt ngang khung rồi đi luôn, xe khuất thì poster kéo lên
+    ld.classList.add('go');
+    setTimeout(lift, 1350);
   }
 
   // ghi công nhóm
