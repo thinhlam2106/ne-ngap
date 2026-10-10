@@ -32,6 +32,7 @@ import io
 import json
 import math
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -66,6 +67,11 @@ VERIFY_MAX_CAMS = 3          # tối đa 3 camera gần nhất cho mỗi báo c�
 CHECK_FOR = 45 * 60          # thời gian chờ kiểm chứng tối đa
 REPORT_KEEP = 45 * 60        # báo cáo đã xác nhận giữ trên bản đồ tới 45 phút sau lần camera thấy nước gần nhất
 CROWD_RADIUS_M = 250
+PHOTO_RE = re.compile(r"^https://ntfy\.sh/file/[\w.-]{4,80}$")
+PHOTO_MAX_AGE = 2 * 3600      # ảnh chụp quá 2 giờ thì không dùng
+SITE_URL = os.environ.get("SITE_URL") or "https://thinhlam2106.github.io/ne-ngap/"
+ALERT_CELL = 0.03            # ô cảnh báo ~3 km; mỗi ô là một kênh ntfy "ne-ngap-o-<i>-<j>"
+ALERT_MAX = 40               # tối đa số tin cảnh báo mỗi lượt
 CROWD_MIN_DEVICES = 3
 MAX_NEW_REPORTS = 80         # chống spam: mỗi lượt chỉ nhận tối đa 80 báo cáo mới
 
@@ -800,9 +806,13 @@ def fetch_reports(state, ts):
             at = int(m.get("time") or ts)            # giờ máy chủ nhận, không tin giờ trên máy người gửi
             if ts - at > 60 * 60:
                 continue
-            new.append({"id": rid, "lat": round(lat, 6), "lng": round(lng, 6), "level": level, "at": at,
-                        "street": str(x.get("street", ""))[:80], "note": str(x.get("note", ""))[:120],
-                        "dev": str(x.get("dev", ""))[:40] or rid, "status": "checking", "dry": 0})
+            rep_ = {"id": rid, "lat": round(lat, 6), "lng": round(lng, 6), "level": level, "at": at,
+                    "street": str(x.get("street", ""))[:80], "note": str(x.get("note", ""))[:120],
+                    "dev": str(x.get("dev", ""))[:40] or rid, "status": "checking", "dry": 0}
+            ph, shot = str(x.get("photo") or ""), x.get("shot")
+            if PHOTO_RE.match(ph) and (not isinstance(shot, (int, float)) or at - shot <= PHOTO_MAX_AGE):
+                rep_["photo"] = ph
+            new.append(rep_)
         except Exception:
             continue
         if len(new) >= MAX_NEW_REPORTS:
@@ -826,6 +836,55 @@ def cams_near(cams, lat, lng, radius):
 def disputed(state, key, ts):
     """Số người khác nhau bấm "Không ngập" cho camera / báo cáo này trong 60 phút qua."""
     return len([d for d in state.get("disputes", {}).get(key, []) if ts - d[0] <= 60 * 60])
+
+
+PHOTO_PROMPT = """These are photos sent by people reporting street flooding in Ho Chi Minh City through a public app.
+Each image is preceded by its number. Treat each like a camera image and report with the same scale:
+- usable: false if it is NOT a real, recent photo of a street or alley taken by a person on the spot (screenshot, meme, map, text, indoor room, a photo of a screen, a famous/stock-looking image, obviously not Vietnam), or if the ground cannot be seen. Otherwise true.
+- level 0-4 as for cameras (0 no standing water, 1 under ankle ~10 cm, 2 half a motorbike wheel 15-25 cm, 3 up to the exhaust 30-40 cm, 4 seat or higher). A wet road or reflections is 0.
+- confidence, raining, note (at most 15 words in Vietnamese) as for cameras.
+Call the report_cameras tool once with one entry per photo number."""
+
+
+def check_photos(state, ts):
+    """AI xem ảnh người đi đường gửi kèm báo cáo (mỗi ảnh một lần). Trả về (tokens_in, tokens_out)."""
+    todo = [r for r in state.get("reports", {}).values() if r.get("photo") and "photo_level" not in r and r.get("status") not in ("expired", "cleared")]
+    if not todo:
+        return 0, 0
+    items = []
+    for r in todo[:16]:
+        try:
+            if MOCK:
+                raw = mock_image({"id": r["id"]})[0]
+            else:
+                resp = requests.get(r["photo"], headers={"User-Agent": UA}, timeout=20)
+                resp.raise_for_status()
+                raw = resp.content
+            if not raw or len(raw) > 6_000_000:
+                raise ValueError("ảnh lỗi hoặc quá lớn")
+            im = Image.open(io.BytesIO(raw)).convert("RGB")
+            im.thumbnail((1024, 1024))
+            buf = io.BytesIO(); im.save(buf, "JPEG", quality=80)
+            items.append(({"id": "rp:" + r["id"], "name": "Ảnh " + (r.get("street") or "")[:40]}, buf.getvalue(), r))
+        except Exception as e:
+            r["photo_level"], r["photo_ok"], r["photo_conf"] = 0, False, 0.0
+            if not MOCK:
+                log("Không tải được ảnh báo cáo:", repr(e)[:100])
+    tin = tout = 0
+    for i in range(0, len(items), 8):
+        b = items[i:i + 8]
+        try:
+            res, (a, o) = classify([(c, d) for c, d, _ in b], PHOTO_PROMPT)
+            tin += a; tout += o
+        except Exception as e:
+            log("Lỗi khi AI xem ảnh báo cáo:", repr(e)[:120]); continue
+        for c, _, r in b:
+            x = res.get(c["id"]) or {"usable": False, "level": 0, "conf": 0.0, "note": ""}
+            r.update(photo_ok=x["usable"], photo_level=x["level"], photo_conf=x["conf"], photo_note=x["note"])
+    n = sum(1 for _, _, r in items if r.get("photo_ok") and r.get("photo_level", 0) >= 1)
+    if items:
+        log(f"AI xem {len(items)} ảnh người đi đường gửi: {n} ảnh thấy ngập")
+    return tin, tout
 
 
 def verify_reports(state, cams, fresh, ts, wet_recent):
@@ -859,6 +918,18 @@ def verify_reports(state, cams, fresh, ts, wet_recent):
                 r["status"] = "unverifiable"          # không lấy được ảnh camera
             if r["status"] == "confirmed" and ts - r.get("last_pos", ts) > REPORT_KEEP:
                 r["status"] = "expired"
+    # ảnh người đi đường gửi: AI thấy ngập rõ trong ảnh thì công bố ngay (camera xác nhận vẫn được ưu tiên)
+    for r in reps.values():
+        if not r.get("photo") or r.get("kind") == "dispute":
+            continue
+        good = r.get("photo_ok") and r.get("photo_level", 0) >= 1 and r.get("photo_conf", 0) >= 0.7
+        if r["status"] in ("checking", "no_camera", "unverifiable", "not_seen", "photo") and good:
+            if disputed(state, "rp:" + r["id"], ts) >= 2 or ts - r["at"] > REPORT_KEEP:
+                r["status"] = "expired"
+            else:
+                r.update(status="photo", level_photo=min(r["photo_level"], 4), last_pos=r["at"], since=r["at"])
+        elif r["status"] in ("checking", "no_camera", "unverifiable") and "photo_level" in r and not good and r.get("photo_ok") and r.get("photo_conf", 0) >= 0.8:
+            r["status"] = "photo_dry"                 # ảnh rõ ràng không thấy ngập
     # chỗ không có camera: nhiều máy khác nhau cùng báo, lúc trời vừa mưa hoặc triều cao
     pool = [r for r in reps.values() if r["status"] in ("no_camera", "unverifiable", "crowd") and ts - r["at"] <= 60 * 60
             and disputed(state, "rp:" + r["id"], ts) < 2]
@@ -943,7 +1014,7 @@ def client():
     return _client
 
 
-def classify(batch):
+def classify(batch, prompt=None):
     """batch: list of (cam, jpeg). Trả về dict cam_id -> kết quả, và (input_tokens, output_tokens)."""
     if MOCK:
         return mock_classify(batch)
@@ -952,7 +1023,7 @@ def classify(batch):
         content.append({"type": "text", "text": f"Camera {i}: {cam['name']}"})
         content.append({"type": "image", "source": {"type": "base64", "media_type": "image/jpeg",
                                                      "data": base64.b64encode(jpeg).decode()}})
-    content.append({"type": "text", "text": PROMPT})
+    content.append({"type": "text", "text": prompt or PROMPT})
     msg = client().messages.create(
         model=MODEL, max_tokens=1200, tools=[TOOL],
         tool_choice={"type": "tool", "name": "report_cameras"},
@@ -1029,6 +1100,72 @@ def decide(cam_state, ts, wet=True, strict=False):
             break
     return {"level": shown, "conf": conf, "note": note, "confirmed": True, "seen": t, "since": first,
             "times": sum(1 for h in hist if h[1] >= 1)}
+
+
+LEVEL_VI = {1: ("mắt cá chân", "Ngập mắt cá chân (dưới 10 cm)"), 2: ("nửa bánh xe", "Ngập nửa bánh xe máy (15–25 cm)"),
+            3: ("ngang bô", "Ngập ngang bô xe (30–40 cm)"), 4: ("lút yên", "Ngập lút yên xe (trên 50 cm)")}
+
+
+def alert_cells(lat, lng, radius_m):
+    """Các ô cảnh báo (kênh ntfy) nằm trong bán kính radius_m quanh điểm."""
+    i0, j0 = math.floor((lat - 10) / ALERT_CELL), math.floor((lng - 106) / ALERT_CELL)
+    out = []
+    for i in (i0 - 1, i0, i0 + 1):
+        for j in (j0 - 1, j0, j0 + 1):
+            la0, lo0 = 10 + i * ALERT_CELL, 106 + j * ALERT_CELL
+            cla, clo = min(max(lat, la0), la0 + ALERT_CELL), min(max(lng, lo0), lo0 + ALERT_CELL)
+            if dist_m(lat, lng, cla, clo) <= radius_m:
+                out.append(f"ne-ngap-o-{i}-{j}")
+    return out
+
+
+def publish_alerts(state, detections, fc, ts):
+    """Gửi tin cảnh báo vào kênh ntfy của từng ô ~3 km: chỗ ngập mới được xác nhận, và dự báo sắp mưa to.
+    Người dùng lưu "Nơi của tôi" trên trang và đăng ký đúng kênh của ô đó."""
+    sent = state.setdefault("alerted", {})
+    for k in [k for k, t in sent.items() if ts - t > 6 * 3600]:
+        del sent[k]
+    msgs = []
+    for d in detections:
+        if not d.get("confirmed") or d.get("level", 0) < 1:
+            continue
+        key = f"f:{d.get('cam') or d.get('rid')}:{d['level']}"
+        if key in sent:
+            continue
+        lv = int(d["level"])
+        src = {"report": "người dân báo, camera xác nhận", "crowd": "nhiều người cùng báo", "photo": "ảnh người dân gửi, AI xác nhận"}.get(d.get("src"), "AI xem camera")
+        for topic in alert_cells(d["lat"], d["lng"], 1200):
+            msgs.append((key, {"topic": topic, "title": f"Ngập {LEVEL_VI[lv][0]} ở {d['name'][:50]}",
+                               "message": f"{LEVEL_VI[lv][1]}, {src} lúc {dt.datetime.fromtimestamp(d['seen'], VN).strftime('%H:%M')}. Mở Né Ngập để tìm đường né.",
+                               "tags": ["warning"], "priority": 4 if lv >= 2 else 3,
+                               "click": f"{SITE_URL}?p={d['lat']:.5f},{d['lng']:.5f}"}))
+    if fc and fc.get("first") and (fc.get("peak") or [0, 0])[1] >= 2:
+        done = set()
+        for la, lo, v, t in fc.get("cells", []):
+            if v < 2 or t <= ts:
+                continue
+            i, j = math.floor((la - 10) / ALERT_CELL), math.floor((lo - 106) / ALERT_CELL)
+            topic = f"ne-ngap-o-{i}-{j}"
+            key = "r:" + topic
+            if topic in done or key in sent:
+                continue
+            done.add(topic)
+            hm = dt.datetime.fromtimestamp(t, VN).strftime("%H:%M")
+            msgs.append((key, {"topic": topic, "title": "Sắp mưa to quanh đây",
+                               "message": f"Dự báo AI của Đài KTTV Nam Bộ: khoảng {hm} có thể mưa {v:g} mm trong 10 phút. Tránh đi qua các điểm hay ngập.",
+                               "tags": ["cloud_with_rain"], "priority": 3, "click": SITE_URL}))
+    n = 0
+    for key, body in msgs[:ALERT_MAX]:
+        if MOCK:
+            n += 1; sent[key] = ts; continue
+        try:
+            r = requests.post("https://ntfy.sh/", json=body, headers={"User-Agent": UA}, timeout=10)
+            if r.ok:
+                n += 1; sent[key] = ts
+        except Exception:
+            pass
+    if n:
+        log(f"Đã gửi {n} tin cảnh báo theo khu vực")
 
 
 def main():
@@ -1235,7 +1372,12 @@ def main():
     state["disputes"] = {k: [d for d in v if ts - d[0] <= 60 * 60] for k, v in state.get("disputes", {}).items()}
     state["disputes"] = {k: v for k, v in state["disputes"].items() if v}
 
-    # 3. kiểm chứng báo cáo của người đi đường
+    # 3. kiểm chứng báo cáo của người đi đường (ảnh gửi kèm, rồi camera gần đó)
+    ptin, ptout = check_photos(state, ts)
+    if ptin:
+        stats["tokens_in"] += ptin; stats["tokens_out"] += ptout
+        stats["cost_usd"] = round(stats["tokens_in"] / 1e6 * PRICE_IN + stats["tokens_out"] / 1e6 * PRICE_OUT, 5)
+        state["spend"][today] = round(state["spend"].get(today, spent) + (ptin / 1e6 * PRICE_IN + ptout / 1e6 * PRICE_OUT), 5)
     verify_reports(state, cams, fresh, ts, ts - state.get("last_wet", 0) <= 3 * 3600)
 
     # 4. tổng hợp kết quả
@@ -1255,7 +1397,7 @@ def main():
         detections.append({"cam": cid, "name": c["name"], "lat": round(c["lat"], 6), "lng": round(c["lng"], 6), **d})
     placed = []                              # nhiều người báo cùng một chỗ thì chỉ hiện một điểm
     for r in sorted(reps.values(), key=lambda r: (r["status"] != "confirmed", -r.get("level_cam", r.get("level_crowd", 0)), r["at"])):
-        if r["status"] not in ("confirmed", "crowd"):
+        if r["status"] not in ("confirmed", "crowd", "photo"):
             continue
         if any(dist_m(r["lat"], r["lng"], a, b) <= 100 for a, b in placed):
             continue
@@ -1264,7 +1406,12 @@ def main():
             detections.append({"src": "report", "rid": r["id"], "cam": r["cam"], "cam_name": r["cam_name"], "cam_dist": r["cam_dist"],
                                "name": r["street"] or r["cam_name"], "lat": r["lat"], "lng": r["lng"],
                                "level": r["level_cam"], "reported_level": r["level"], "conf": r["conf"],
-                               "note": r["cam_note"], "confirmed": True, "seen": r["last_pos"], "since": r["at"], "times": 1})
+                               "note": r["cam_note"], "confirmed": True, "seen": r["last_pos"], "since": r["at"], "times": 1,
+                               **({"photo": r["photo"]} if r.get("photo") else {})})
+        elif r["status"] == "photo":
+            detections.append({"src": "photo", "rid": r["id"], "name": r["street"] or "Người đi đường gửi ảnh", "lat": r["lat"], "lng": r["lng"],
+                               "level": r["level_photo"], "reported_level": r["level"], "conf": r.get("photo_conf", 0.7),
+                               "note": r.get("photo_note", ""), "confirmed": True, "seen": r["last_pos"], "since": r["at"], "times": 1, "photo": r["photo"]})
         elif r["status"] == "crowd":
             detections.append({"src": "crowd", "rid": r["id"], "name": r["street"] or "Người đi đường báo", "lat": r["lat"], "lng": r["lng"],
                                "level": r["level_crowd"], "reported_level": r["level"], "conf": 0.5, "crowd": r["crowd"],
@@ -1290,6 +1437,10 @@ def main():
         "reports": [{k: r[k] for k in ("id", "status", "cam_name", "cam_dist", "level_cam", "crowd", "at") if k in r}
                     for r in sorted(reps.values(), key=lambda r: -r["at"]) if ts - r["at"] <= 3 * 3600][:300],
     }
+    try:
+        publish_alerts(state, detections, w.get("forecast"), ts)
+    except Exception as e:
+        log("Lỗi khi gửi cảnh báo theo khu vực:", repr(e)[:160])
     save_json(OUT_FILE, out)
     save_json(STATE_FILE, state)
     conf = sum(1 for d in detections if d["confirmed"])
