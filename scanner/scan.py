@@ -375,14 +375,181 @@ def kttv_dbz(r, g, b):
     return 54                                    # đỏ
 
 
-def kttv_radar():
+class KttvHttp:
+    """Tải dữ liệu của Đài. Trang của Đài nằm sau Cloudflare, có lúc chặn máy chủ GitHub, nên thử lần lượt:
+    requests thường -> curl_cffi (giả dấu vân tay TLS của Chrome) -> Chrome thật (Playwright) mở trang rồi fetch ngay trong trang.
+    Cách nào chạy được thì dùng tiếp cách đó cho cả lượt."""
+
+    def __init__(self):
+        self.mode, self.why, self._pw, self._br, self._page = None, [], None, None, None
+
+    @staticmethod
+    def _check(body, status, ctype, want_json, extra=""):
+        if status != 200:
+            snip = body[:160].decode("utf-8", "replace").replace("\n", " ") if body else ""
+            raise ValueError(f"HTTP {status} {ctype} {extra} {snip}".strip())
+        if want_json:
+            return json.loads(body)
+        if not body.startswith(b"\x89PNG"):
+            raise ValueError(f"không phải ảnh PNG ({ctype}) {body[:80]!r}")
+        return body
+
+    def _requests(self, url, want_json):
+        h = {"User-Agent": UA, "Referer": KTTV_REF, "Accept-Language": "vi-VN,vi;q=0.9,en;q=0.8",
+             "Accept": "application/json, text/javascript, */*; q=0.01" if want_json else "image/avif,image/webp,image/png,*/*;q=0.8"}
+        if want_json:
+            h["X-Requested-With"] = "XMLHttpRequest"
+        r = requests.get(url, headers=h, timeout=25)
+        cf = r.headers.get("cf-mitigated") or r.headers.get("server", "")
+        return self._check(r.content, r.status_code, r.headers.get("content-type", ""), want_json, cf)
+
+    def _cffi(self, url, want_json):
+        from curl_cffi import requests as cr
+        h = {"Referer": KTTV_REF, "Accept-Language": "vi-VN,vi;q=0.9"}
+        if want_json:
+            h["X-Requested-With"] = "XMLHttpRequest"
+        r = cr.get(url, headers=h, impersonate="chrome", timeout=25)
+        return self._check(r.content, r.status_code, r.headers.get("content-type", ""), want_json, r.headers.get("cf-mitigated", ""))
+
+    def _browser(self, url, want_json):
+        if self._page is None:
+            from playwright.sync_api import sync_playwright
+            self._pw = sync_playwright().start()
+            try:
+                self._br = self._pw.chromium.launch(channel="chrome", headless=True, args=["--disable-blink-features=AutomationControlled"])
+            except Exception:
+                self._br = self._pw.chromium.launch(headless=True, args=["--disable-blink-features=AutomationControlled"])
+            ctx = self._br.new_context(locale="vi-VN", timezone_id="Asia/Ho_Chi_Minh", viewport={"width": 1280, "height": 800})
+            self._page = ctx.new_page()
+            self._page.goto(KTTV_REF, wait_until="domcontentloaded", timeout=45000)
+            for _ in range(12):                        # chờ Cloudflare cho qua (nếu có màn hình kiểm tra)
+                if "kttvnb" in (self._page.title() or "").lower() or self._page.query_selector("#map, .leaflet-container"):
+                    break
+                self._page.wait_for_timeout(1500)
+        st, ct, b64 = self._page.evaluate("""async ([u, j]) => {
+            const r = await fetch(u, {headers: j ? {'X-Requested-With': 'XMLHttpRequest'} : {}, credentials: 'include'});
+            const a = new Uint8Array(await r.arrayBuffer()); let s = '';
+            for (let i = 0; i < a.length; i += 0x8000) s += String.fromCharCode.apply(null, a.subarray(i, i + 0x8000));
+            return [r.status, r.headers.get('content-type') || '', btoa(s)];
+        }""", [url, want_json])
+        return self._check(base64.b64decode(b64), st, ct, want_json)
+
+    def get(self, url, want_json=False):
+        modes = [self.mode] if self.mode else ["requests", "cffi", "browser"]
+        last = None
+        for m in modes:
+            try:
+                out = getattr(self, "_" + m)(url, want_json)
+                if self.mode is None and m != "requests":
+                    log(f"Đài KTTV Nam Bộ: tải được bằng {m}")
+                self.mode = m
+                return out
+            except Exception as e:
+                last = f"{m}: {repr(e)[:220]}"
+                self.why.append(last)
+        raise RuntimeError(" | ".join(self.why[-3:]) if not self.mode else last)
+
+    def close(self):
+        try:
+            if self._br: self._br.close()
+            if self._pw: self._pw.stop()
+        except Exception:
+            pass
+
+
+# Thang màu "mm/10 phút" của Đài (dùng cho cả lớp "Nhà Bè (mm/10p)" và "Dự báo AI"), lấy từ chú giải trên bản đồ của Đài:
+# 1 xanh dương -> 2 xanh lá -> 3 vàng -> 5 cam -> 10 đỏ -> 15 tím, tuyến tính.
+MM10_LUT = [(1.0, (43, 155, 238)), (1.5, (43, 201, 145)), (2.0, (56, 250, 47)), (2.5, (149, 250, 47)), (3.0, (247, 248, 47)),
+            (3.5, (247, 231, 47)), (4.0, (247, 213, 47)), (4.5, (247, 195, 47)), (5.0, (247, 176, 47)), (5.5, (247, 164, 47)),
+            (6.0, (247, 151, 47)), (6.5, (247, 138, 47)), (7.0, (247, 124, 47)), (7.5, (247, 112, 47)), (8.0, (247, 98, 47)),
+            (8.5, (247, 85, 47)), (9.0, (247, 72, 47)), (9.5, (247, 59, 47)), (10.0, (245, 46, 48)), (10.5, (237, 46, 57)),
+            (11.0, (226, 46, 68)), (11.5, (216, 46, 78)), (12.0, (205, 46, 89)), (12.5, (196, 46, 98)), (13.0, (185, 46, 109)),
+            (13.5, (175, 46, 119)), (14.0, (165, 46, 129)), (14.5, (155, 46, 140)), (15.0, (145, 46, 149))]
+_MM10_CACHE = {}
+KTTV_MM_DIR = "RADAR_mm10m/"
+KTTV_ML_LIST = "https://kttvnb.info/kttvnb-admin/map/mapajax/radar/list/MLv1/2"
+FORECAST_PNG = DATA / "forecast.png"
+FORECAST_MIN = 120                                     # xem trước 2 giờ
+
+
+def mm10_of(r, g, b, a=255):
+    """Màu -> mm/10 phút. Dưới 1 mm (màu xanh nhạt, bán trong suốt) trả 0.5; nền, chữ, viền trả None."""
+    if a < 40:
+        return None
+    key = (r >> 2, g >> 2, b >> 2, a >= 160)
+    if key in _MM10_CACHE:
+        return _MM10_CACHE[key]
+    mx, mn = max(r, g, b), min(r, g, b)
+    val = None
+    if mx - mn >= 50:
+        best, bd = None, 1e9
+        for v, (R, G, B) in MM10_LUT:
+            e = (r - R) ** 2 + (g - G) ** 2 + (b - B) ** 2
+            if e < bd:
+                best, bd = v, e
+        if bd <= 2500 and a >= 160:
+            val = best
+        elif b >= r and b >= g - 20:                    # xanh nhạt: mưa dưới 1 mm/10 phút
+            val = 0.5
+    _MM10_CACHE[key] = val
+    return val
+
+
+def mm10_grid(im, despeckle=True):
+    """Ảnh của Đài (vuông, cùng khung với radar) -> (lưới giá trị mm/10p theo hàng, W, H)."""
+    im = im.convert("RGBA")
+    W, H = im.size
+    data = list(im.getdata())
+    g = [mm10_of(*p) for p in data]
+    if despeckle:                                       # bỏ điểm lẻ: cần ít nhất 3 ô lân cận cũng có mưa
+        out = g[:]
+        for i, v in enumerate(g):
+            if v is None:
+                continue
+            y, x = divmod(i, W)
+            n = 0
+            for dy in (-1, 0, 1):
+                for dx in (-1, 0, 1):
+                    if (dy or dx) and 0 <= y + dy < H and 0 <= x + dx < W and g[(y + dy) * W + x + dx] is not None:
+                        n += 1
+            if n < 3:
+                out[i] = None
+        g = out
+    return g, W, H
+
+
+def mm10_hcm(g, W, H, step=1):
+    """Thống kê trên khung TP.HCM: (lớn nhất, số ô >= 1 mm quy về ô ~1,2 km, danh sách ô [lat, lng, mm10])."""
+    S, N, Wl, E = kttv_bounds()
+    la0, la1, lo0, lo1 = RADAR_BBOX
+    y0, y1 = int((N - la1) / (N - S) * H), int((N - la0) / (N - S) * H) + 1
+    x0, x1 = int((lo0 - Wl) / (E - Wl) * W), int((lo1 - Wl) / (E - Wl) * W) + 1
+    cx, cy, rc = W / 2, H / 2, 0.012 * W              # chỉ bỏ vùng sát trạm (~7 km)
+    mx, n, cells = 0.0, 0, []
+    for y in range(max(0, y0), min(H, y1)):
+        lat = N - (y + 0.5) / H * (N - S)
+        for x in range(max(0, x0), min(W, x1)):
+            v = g[y * W + x]
+            if v is None or (x - cx) ** 2 + (y - cy) ** 2 < rc * rc:
+                continue
+            lng = Wl + (x + 0.5) / W * (E - Wl)
+            if v >= 1:
+                n += 1
+            mx = max(mx, v)
+            if (x + y) % step == 0:
+                cells.append([round(lat, 3), round(lng, 3), v])
+    scale = (2 * KTTV_RANGE_KM / W) ** 2 / 1.44
+    cells.sort(key=lambda c: -c[2])
+    return round(mx, 1), round(n * scale), cells
+
+
+def kttv_radar(http):
     """Ảnh radar mới nhất của Đài: lọc nhiễu, lưu data/radar.png (nền trong suốt), trả về số liệu mưa trên TP.HCM."""
     from PIL import ImageFilter
     if MOCK:
         return None
     try:
-        h = {"User-Agent": UA, "Referer": KTTV_REF, "X-Requested-With": "XMLHttpRequest", "Accept": "application/json, text/javascript, */*"}
-        j = requests.get(KTTV_LIST, headers=h, timeout=20).json()
+        j = http.get(KTTV_LIST, want_json=True)
         files = [f for f in (j.get("files") or []) if isinstance(f, str) and f.endswith(".png")]
         if not files:
             raise ValueError("danh sách ảnh trống")
@@ -390,10 +557,19 @@ def kttv_radar():
         y, mth, d, hm = f.split("/")[-4:]
         hh, mm = hm[:-4].split("_")
         t = int(dt.datetime(int(y), int(mth), int(d), int(hh), int(mm), tzinfo=dt.timezone.utc).timestamp())
-        r = requests.get(KTTV_FILE + f, headers={"User-Agent": UA, "Referer": KTTV_REF}, timeout=25)
-        r.raise_for_status()
-        im = Image.open(io.BytesIO(r.content)).convert("RGB")
+        im = Image.open(io.BytesIO(http.get(KTTV_FILE + f))).convert("RGB")
         W, H = im.size
+        # lượng mưa đo được (mm trong 10 phút) cùng thời điểm: số chính thức của Đài, thay cho quy đổi gần đúng từ màu dBZ
+        mg = mm = None
+        try:
+            mf = KTTV_MM_DIR + f.split("/", 1)[1]
+            g, mw, mh = mm10_grid(Image.open(io.BytesIO(http.get(KTTV_FILE + mf))))
+            mx, n, mcells = mm10_hcm(g, mw, mh)
+            mg = (g, mw, mh)
+            mm = {"file": mf, "size": [mw, mh], "max": mx, "px": n, "cells": [c for c in mcells if c[2] >= 1][:300]}
+            log(f"Lượng mưa của Đài (mm/10 phút) lúc {iso(t)}: lớn nhất {mx} mm, {n} ô ~1,2 km có từ 1 mm trở lên (ảnh {mw}x{mh})")
+        except Exception as e:
+            log("Không lấy được lớp mm/10 phút của Đài:", repr(e)[:200])
         px = im.load()
         # mặt nạ điểm có màu (bỏ nền xám và vệt xám nhạt)
         mask = Image.new("L", (W, H), 0); mp = mask.load()
@@ -403,20 +579,31 @@ def kttv_radar():
                 if max(rr, gg, bb) - min(rr, gg, bb) >= 60:
                     mp[xx, yy] = 255
         k = max(3, round(W / 130) | 1)               # ~5 điểm ảnh với ảnh 660
-        opened = mask.filter(ImageFilter.MinFilter(k)).filter(ImageFilter.MaxFilter(k + 2))
-        op = opened.load()
+        op = mask.filter(ImageFilter.MinFilter(k)).filter(ImageFilter.MaxFilter(k + 2)).load()
+        op2 = mask.filter(ImageFilter.MinFilter(k + 4)).filter(ImageFilter.MaxFilter(k + 6)).load()
         out = Image.new("RGBA", (W, H), (0, 0, 0, 0)); o = out.load()
         S, N, Wl, E = kttv_bounds()
         la0, la1, lo0, lo1 = RADAR_BBOX
-        cx, cy, rc = W / 2, H / 2, 0.045 * W         # bỏ vòng nhiễu sát trạm
+        # Quanh trạm Nhà Bè (~25 km, gồm cả trung tâm TP) hay có vòng sóng dội vào nhà cửa. Ở vùng này chỉ giữ điểm
+        # mà lớp mm/10 phút của Đài (đã lọc) cũng có mưa; nếu không có lớp đó thì phải qua bộ lọc nhiễu mạnh hơn.
+        cx, cy = W / 2, H / 2
+        r_in, r_near = (0.012 * W) ** 2, (0.028 * W) ** 2
         cells, max_dbz, heavy, rainy = [], 0, 0, 0
         for yy in range(H):
             lat = N - (yy + 0.5) / H * (N - S)
             for xx in range(W):
                 if not (mp[xx, yy] and op[xx, yy]):
                     continue
-                if (xx - cx) ** 2 + (yy - cy) ** 2 < rc * rc:
+                d2 = (xx - cx) ** 2 + (yy - cy) ** 2
+                if d2 < r_in:
                     continue
+                if d2 < r_near:
+                    if mg:
+                        g, mw, mh = mg
+                        if g[int(yy * mh / H) * mw + int(xx * mw / W)] is None:
+                            continue
+                    elif not op2[xx, yy]:
+                        continue
                 rr, gg, bb = px[xx, yy]
                 o[xx, yy] = (rr, gg, bb, 230)
                 lng = Wl + (xx + 0.5) / W * (E - Wl)
@@ -432,11 +619,72 @@ def kttv_radar():
         cells.sort(key=lambda c: -c[2])
         # mỗi điểm ảnh ~0,9 km; quy về ô ~1,2 km cho cùng ngưỡng với RainViewer
         scale = (2 * KTTV_RANGE_KM / W) ** 2 / 1.44
-        return {"src": "kttvnb", "time": t, "file": f, "img": "radar.png", "bounds": [[round(Wl, 4), round(N, 4)], [round(E, 4), round(N, 4)], [round(E, 4), round(S, 4)], [round(Wl, 4), round(S, 4)]],
-                "max_dbz": max_dbz, "max_mmh": dbz_to_mmh(max_dbz) if max_dbz else 0,
-                "heavy_px": round(heavy * scale), "rain_px": round(rainy * scale), "cells": cells[:400]}
+        rd = {"src": "kttvnb", "time": t, "file": f, "img": "radar.png", "size": [W, H],
+              "bounds": [[round(Wl, 4), round(N, 4)], [round(E, 4), round(N, 4)], [round(E, 4), round(S, 4)], [round(Wl, 4), round(S, 4)]],
+              "max_dbz": max_dbz, "max_mmh": dbz_to_mmh(max_dbz) if max_dbz else 0,
+              "heavy_px": round(heavy * scale), "rain_px": round(rainy * scale), "cells": cells[:400]}
+        if mm:
+            rd["mm10"] = mm
+            if mm["max"] >= 1:
+                rd["max_mmh"] = round(mm["max"] * 6, 1)
+            elif rd["max_mmh"] > 5:
+                rd["max_mmh"] = 5.0                     # Đài không đo được tới 1 mm/10 phút: mưa dưới ~6 mm/giờ
+        return rd
     except Exception as e:
-        log("Không lấy được radar của Đài KTTV Nam Bộ:", repr(e)[:140])
+        log("Không lấy được radar của Đài KTTV Nam Bộ:", repr(e)[:400])
+        return None
+
+
+def kttv_forecast(http, obs_t):
+    """Dự báo AI (ConvLSTM) của Đài: các khung 10 phút tới 2 giờ sau ảnh radar mới nhất.
+    Lưu data/forecast.png (vùng có thể mưa trong 2 giờ tới, lấy giá trị lớn nhất) và thời điểm mưa có thể tới TP.HCM."""
+    if MOCK:
+        return None
+    try:
+        j = http.get(KTTV_ML_LIST, want_json=True)
+        files = [f for f in (j.get("files") or []) if isinstance(f, str) and f.endswith(".png")]
+        base = dt.datetime.fromtimestamp(obs_t, dt.timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        frames = []
+        for f in files:
+            hm = f.rsplit("/", 1)[-1][:-4]
+            if len(hm) != 4 or not hm.isdigit():
+                continue
+            t = int((base + dt.timedelta(hours=int(hm[:2]), minutes=int(hm[2:]))).timestamp())
+            if t < obs_t - 12 * 3600: t += 86400
+            if t > obs_t + 12 * 3600: t -= 86400
+            if obs_t < t <= obs_t + FORECAST_MIN * 60:
+                frames.append((t, f if "/" in f else "RADAR_NC/ConvLSTM_v1/" + f))
+        frames.sort()
+        if not frames:
+            log(f"Dự báo AI của Đài: chưa có khung nào sau {iso(obs_t)} (bản dự báo có thể chưa cập nhật)")
+            return None
+        comp, W, H, series, union = None, 0, 0, [], {}
+        for t, f in frames:
+            im = Image.open(io.BytesIO(http.get(KTTV_FILE + f.split("?")[0])))
+            if im.width > 400:                          # nửa kích thước cho nhanh (~1,8 km/điểm ảnh)
+                im = im.convert("RGBA").resize((im.width // 2, im.height // 2), Image.NEAREST)
+            g, W, H = mm10_grid(im)
+            comp = g if comp is None else [a if b is None or (a is not None and a >= b) else b for a, b in zip(comp, g)]
+            mx, n, cells = mm10_hcm(g, W, H)
+            series.append([t, mx, n])
+            for la, lo, v in cells:
+                if v >= 1 and union.get((la, lo), (0, 0))[0] < v:
+                    union[(la, lo)] = (v, t)
+        out = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        lut = {v: c for v, c in MM10_LUT}
+        out.putdata([(0, 0, 0, 0) if v is None else (43, 155, 238, 90) if v < 1 else (*lut.get(v, MM10_LUT[-1][1]), 210) for v in comp])
+        out.save(FORECAST_PNG, optimize=True)
+        first = next((t for t, mx, n in series if n >= 3), None)
+        peak = max(series, key=lambda s: (s[1], s[2]))
+        cells = sorted(([la, lo, v, t] for (la, lo), (v, t) in union.items()), key=lambda c: (c[3], -c[2]))[:300]
+        S, N, Wl, E = kttv_bounds()
+        log(f"Dự báo AI của Đài ({len(frames)} khung tới {iso(frames[-1][0])}): "
+            + (f"mưa có thể tới TP.HCM lúc {iso(first)}, lớn nhất {peak[1]} mm/10 phút" if first else "chưa thấy mưa trên TP.HCM"))
+        return {"src": "kttvnb-ml", "model": "ConvLSTM_v1", "obs": obs_t, "from": frames[0][0], "to": frames[-1][0], "img": "forecast.png",
+                "size": [W, H], "bounds": [[round(Wl, 4), round(N, 4)], [round(E, 4), round(N, 4)], [round(E, 4), round(S, 4)], [round(Wl, 4), round(S, 4)]],
+                "series": series, "first": first, "peak": peak[:2] if peak[1] >= 1 else None, "cells": cells}
+    except Exception as e:
+        log("Không lấy được dự báo AI của Đài:", repr(e)[:300])
         return None
 
 
@@ -743,7 +991,13 @@ def main():
                     tide_cams.add(c["id"])
 
     w = weather()
-    rd = kttv_radar() or radar()                  # ưu tiên radar của Đài KTTV Nam Bộ, dự phòng RainViewer
+    http = KttvHttp()
+    rd = kttv_radar(http)                         # ưu tiên radar của Đài KTTV Nam Bộ, dự phòng RainViewer
+    fc = kttv_forecast(http, rd["time"]) if rd else None
+    http.close()
+    if fc:
+        w["forecast"] = fc
+    rd = rd or radar()
     if rd:
         w["radar"] = rd
         log(f"Radar ({rd.get('src', 'rainviewer')}) lúc {iso(rd['time'])}: mưa ở {rd['rain_px']} ô ~1,2 km trên TP.HCM, mạnh nhất {rd['max_mmh']} mm/giờ")
@@ -753,7 +1007,7 @@ def main():
     # Radar (RainViewer) ở TP.HCM hay báo nhiễu, nhất là ban đêm (sóng dội vào nhà cửa quanh trạm Nhà Bè),
     # còn mô hình dự báo hay lệch chỗ, lệch giờ. Vì vậy radar hay mô hình báo mưa chỉ là gợi ý: bộ quét xem
     # ~12 camera ngay trong vùng được báo, AI thấy mưa thật ở ít nhất 3 camera (hoặc 1/3 số ảnh xem được) mới coi là đang mưa.
-    radar_says = bool(rd and rd["heavy_px"] >= 3)
+    radar_says = bool(rd and (rd["heavy_px"] >= 3 or (rd.get("mm10") or {}).get("px", 0) >= 3))
     model_says = (w["rain_1h"] or 0) >= 2
     pre, pre_tokens, check = {}, (0, 0), None
     raining = False

@@ -1,3 +1,5 @@
 anthropic>=1.0,<2
 pillow>=10
 requests>=2.31
+curl_cffi>=0.7
+playwright>=1.45
