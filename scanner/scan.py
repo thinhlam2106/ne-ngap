@@ -1259,6 +1259,210 @@ def publish_alerts(state, detections, fc, ts):
         log(f"Đã gửi {n} tin cảnh báo theo khu vực")
 
 
+
+# ---------------------------------------------------------------- nguồn chính thống bổ sung
+# 1. Trung tâm Dự báo KTTV Quốc gia (nchmf.gov.vn): tin cảnh báo mưa dông, mưa lớn, triều cường, bão có nhắc tới Nam Bộ / TP.HCM.
+#    Bộ quét đọc danh sách tin, tin nào mới thì nhờ AI tóm tắt thành một dòng cảnh báo (mỗi tin chỉ tóm tắt một lần).
+# 2. VNDMS, Ban chỉ huy PCTT TP.HCM, Cổng giao thông TP.HCM: dữ liệu nạp bằng JavaScript nên chưa biết địa chỉ dữ liệu.
+#    Bộ quét mở các trang đó bằng trình duyệt thật, ghi lại các yêu cầu dữ liệu vào data/probe-sources.json để viết bộ đọc chính xác.
+NCHMF = "https://www.nchmf.gov.vn/kttv/"
+NCHMF_PAGES = [NCHMF, NCHMF + "vi-VN/1/dong-to-loc-voi-rong-2052-15.html", NCHMF + "vi-VN/1/mua-lon-mua-lon-dien-rong-2053-15.html",
+               NCHMF + "vi-VN/1/bao-ap-thap-nhiet-doi-2049-15.html"]
+NCHMF_KEYS = ("nam-bo", "ho-chi-minh", "tphcm", "trieu-cuong", "bao-so", "ap-thap", "dong-nam-bo", "mien-dong", "song-dong-nai", "song-sai-gon")
+PROBE_FILE = DATA / "probe-sources.json"
+PROBE_PAGES = [("vndms", "https://vndms.gov.vn/"),
+               ("pclb_hcm", "https://www.phongchonglutbaotphcm.gov.vn/index.php/dubaocanhbao/du-bao-thuy-van"),
+               ("giaothong_hcm", "https://giaothong.hochiminhcity.gov.vn/Map.aspx")]
+WARN_TOOL = {
+    "name": "report_warning",
+    "description": "Tóm tắt một bản tin cảnh báo thời tiết/thủy văn cho người dân TP.HCM.",
+    "input_schema": {"type": "object", "properties": {
+        "affects_hcm": {"type": "boolean", "description": "Bản tin có nói tới TP.HCM, Nam Bộ, Đông Nam Bộ hoặc vùng ven biển Nam Bộ không"},
+        "kind": {"type": "string", "enum": ["mua_dong", "mua_lon", "trieu_cuong", "bao", "lu", "khac"]},
+        "headline": {"type": "string", "description": "Một câu tiếng Việt dưới 110 ký tự, nói điều người ở TP.HCM cần biết"},
+        "detail": {"type": "string", "description": "Tối đa 2 câu, dưới 260 ký tự: khi nào, ở đâu, mạnh cỡ nào, nên làm gì"},
+        "issued": {"type": "string", "description": "Thời điểm ra tin, dạng YYYY-MM-DD HH:MM giờ Việt Nam, rỗng nếu không rõ"},
+        "valid_until": {"type": "string", "description": "Hiệu lực tới khi nào, dạng YYYY-MM-DD HH:MM giờ Việt Nam, rỗng nếu không rõ"},
+        "risk": {"type": "integer", "description": "1 cần chú ý, 2 nguy cơ ngập/ảnh hưởng rõ, 3 nguy hiểm"},
+        "tide_peak_m": {"type": "number", "description": "Đỉnh triều dự báo cao nhất (mét) ở trạm gần TP.HCM như Phú An, Nhà Bè; 0 nếu không có"},
+        "tide_station": {"type": "string"}, "tide_time": {"type": "string", "description": "Thời điểm đỉnh triều, dạng YYYY-MM-DD HH:MM"}},
+        "required": ["affects_hcm", "kind", "headline", "risk"]}}
+
+
+def fetch_html(url, timeout=25):
+    h = {"User-Agent": UA, "Accept-Language": "vi-VN,vi;q=0.9", "Accept": "text/html,application/xhtml+xml,*/*;q=0.8"}
+    try:
+        r = requests.get(url, headers=h, timeout=timeout)
+        if r.status_code == 200 and len(r.content) > 500:
+            return r.content.decode("utf-8", "replace")
+        why = f"HTTP {r.status_code}"
+    except Exception as e:
+        why = repr(e)[:80]
+    try:
+        from curl_cffi import requests as cr
+        r = cr.get(url, impersonate="chrome", timeout=timeout, headers={"Accept-Language": "vi-VN,vi;q=0.9"})
+        if r.status_code == 200:
+            return r.content.decode("utf-8", "replace")
+        why += f" | cffi HTTP {r.status_code}"
+    except Exception as e:
+        why += " | cffi " + repr(e)[:80]
+    raise RuntimeError(why)
+
+
+def html_text(h):
+    h = re.sub(r"(?is)<(script|style|noscript)[^>]*>.*?</\1>", " ", h)
+    h = re.sub(r"(?i)<br\s*/?>|</p>|</div>|</li>|</tr>|</h\d>", "\n", h)
+    t = re.sub(r"<[^>]+>", " ", h)
+    import html as _html
+    t = _html.unescape(t)
+    t = re.sub(r"[ \t\r\f\v]+", " ", t)
+    return re.sub(r"\n\s*\n+", "\n", t).strip()
+
+
+def vn_ts(sv):
+    try:
+        return int(dt.datetime.strptime(sv.strip()[:16], "%Y-%m-%d %H:%M").replace(tzinfo=VN).timestamp())
+    except Exception:
+        return 0
+
+
+def nchmf_warnings(state, ts, allow_ai):
+    """Trả về (danh sách cảnh báo còn hiệu lực, token vào, token ra)."""
+    st = state.setdefault("nchmf", {"at": 0, "items": {}})
+    tin = tout = 0
+    if ts - st.get("at", 0) >= 25 * 60:
+        st["at"] = ts
+        links = {}
+        for u in NCHMF_PAGES:
+            try:
+                h = fetch_html(u)
+            except Exception as e:
+                log("NCHMF: không tải được", u, str(e)[:120]); continue
+            for m in re.finditer(r'href="([^"]*-post(\d+)\.html)"[^>]*>(.*?)</a>', h, re.S):
+                href, pid, txt = m.group(1), m.group(2), html_text(m.group(3))
+                full = href if href.startswith("http") else "https://www.nchmf.gov.vn" + (href if href.startswith("/") else "/kttv/" + href)
+                slug = full.lower()
+                if not any(k in slug for k in NCHMF_KEYS):
+                    continue
+                if pid not in links or len(txt) > len(links[pid][1]):
+                    links[pid] = (full, txt)
+        new = [pid for pid in sorted(links, key=int, reverse=True) if pid not in st["items"]][:3]
+        for pid in new:
+            url, title = links[pid]
+            if not allow_ai:
+                break
+            try:
+                body = html_text(fetch_html(url))
+                i = body.find(title[:40]) if title else -1
+                body = body[max(0, i - 200): max(0, i - 200) + 7000] if i >= 0 else body[:7000]
+                now_vn = dt.datetime.fromtimestamp(ts, VN).strftime("%Y-%m-%d %H:%M")
+                msg = client().messages.create(
+                    model=MODEL, max_tokens=700, tools=[WARN_TOOL], tool_choice={"type": "tool", "name": "report_warning"},
+                    messages=[{"role": "user", "content": f"Bây giờ là {now_vn} giờ Việt Nam. Đây là một bản tin của Trung tâm Dự báo KTTV Quốc gia. "
+                               "Tóm tắt cho người dân TP.HCM (sau sáp nhập gồm cả Bình Dương, Bà Rịa - Vũng Tàu cũ) bằng công cụ report_warning. "
+                               "Chỉ dùng thông tin có trong bản tin, không đoán thêm.\n\nTIÊU ĐỀ: " + title + "\n\nNỘI DUNG:\n" + body}])
+                tin += msg.usage.input_tokens; tout += msg.usage.output_tokens
+                res = next((b.input for b in msg.content if getattr(b, "type", "") == "tool_use"), None) or {}
+                st["items"][pid] = {"url": url, "title": title[:200], "seen": ts, "ai": {
+                    "affects_hcm": bool(res.get("affects_hcm")), "kind": str(res.get("kind", "khac"))[:20],
+                    "headline": str(res.get("headline", ""))[:140], "detail": str(res.get("detail", ""))[:300],
+                    "issued": vn_ts(str(res.get("issued", ""))), "until": vn_ts(str(res.get("valid_until", ""))),
+                    "risk": max(1, min(3, int(res.get("risk", 1) or 1))),
+                    "tide": {"peak": float(res.get("tide_peak_m") or 0), "station": str(res.get("tide_station", ""))[:40],
+                             "time": vn_ts(str(res.get("tide_time", "")))} if res.get("tide_peak_m") else None}}
+                log(f"NCHMF: tin mới {pid}: {st['items'][pid]['ai']['headline']}")
+            except Exception as e:
+                log("NCHMF: lỗi khi đọc tin", pid, repr(e)[:160])
+                st["items"][pid] = {"url": url, "title": title[:200], "seen": ts, "ai": None}
+        # chỉ giữ tin trong 10 ngày
+        st["items"] = {k: v for k, v in st["items"].items() if ts - v.get("seen", ts) <= 10 * 86400}
+    out = []
+    for pid, it in st["items"].items():
+        a = it.get("ai")
+        if not a or not a.get("affects_hcm"):
+            continue
+        issued = a.get("issued") or it["seen"]
+        until = a.get("until") or (issued + (3 * 86400 if a["kind"] == "trieu_cuong" else 12 * 3600))
+        if until < ts or ts - issued > 4 * 86400:
+            continue
+        out.append({"id": "nchmf-" + pid, "src": "nchmf", "kind": a["kind"], "headline": a["headline"], "detail": a["detail"],
+                    "risk": a["risk"], "issued": issued, "until": until, "url": it["url"], **({"tide": a["tide"]} if a.get("tide") else {})})
+    out.sort(key=lambda x: (-x["risk"], -x["issued"]))
+    return out[:4], tin, tout
+
+
+def warn_tide(state, ts):
+    """Mực triều ước tính lúc này theo tin triều cường của NCHMF: đỉnh triều lặp lại mỗi ~12 giờ 25 phút trong thời gian tin còn hiệu lực."""
+    best = 0.0
+    for it in state.get("nchmf", {}).get("items", {}).values():
+        a = it.get("ai") or {}
+        t = a.get("tide") or {}
+        if not a.get("affects_hcm") or not t.get("peak"):
+            continue
+        issued = a.get("issued") or it.get("seen", 0)
+        until = a.get("until") or issued + 3 * 86400
+        if not (issued - 6 * 3600 <= ts <= until + 6 * 3600):
+            continue
+        if t.get("time"):
+            d = (ts - t["time"]) % 44712
+            d = min(d, 44712 - d)
+            if d <= 2.5 * 3600:
+                best = max(best, t["peak"] - 0.12 * d / 3600)
+    return round(best, 2)
+
+
+def probe_sources(state, ts):
+    """Mở các trang nạp dữ liệu bằng JavaScript, ghi lại các yêu cầu dữ liệu (tối đa ~70 giây, 12 giờ một lần)."""
+    if ts - state.get("probe_at", 0) < 12 * 3600 or MOCK:
+        return
+    state["probe_at"] = ts
+    found = {"updated": iso(ts), "pages": {}}
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as pw:
+            try:
+                br = pw.chromium.launch(channel="chrome", headless=True, args=["--disable-blink-features=AutomationControlled"])
+            except Exception:
+                br = pw.chromium.launch(headless=True)
+            for name, url in PROBE_PAGES:
+                reqs = []
+                ctx = br.new_context(locale="vi-VN", timezone_id="Asia/Ho_Chi_Minh", viewport={"width": 1280, "height": 860}, ignore_https_errors=True)
+                pg = ctx.new_page()
+
+                def on_resp(r, reqs=reqs):
+                    try:
+                        ct = (r.headers or {}).get("content-type", "")
+                        u = r.url
+                        if r.request.resource_type not in ("xhr", "fetch") and "json" not in ct and ".ashx" not in u.lower():
+                            return
+                        if len(reqs) >= 60:
+                            return
+                        body = b""
+                        try:
+                            body = r.body()
+                        except Exception:
+                            pass
+                        reqs.append({"url": u[:400], "method": r.request.method, "post": (r.request.post_data or "")[:400],
+                                     "status": r.status, "type": ct[:60], "size": len(body),
+                                     "sample": body[:2500].decode("utf-8", "replace")})
+                    except Exception:
+                        pass
+                pg.on("response", on_resp)
+                try:
+                    pg.goto(url, wait_until="domcontentloaded", timeout=30000)
+                    pg.wait_for_timeout(12000)
+                    found["pages"][name] = {"url": url, "title": (pg.title() or "")[:120], "requests": reqs,
+                                            "text": html_text(pg.content())[:3000]}
+                except Exception as e:
+                    found["pages"][name] = {"url": url, "error": repr(e)[:200], "requests": reqs}
+                ctx.close()
+            br.close()
+    except Exception as e:
+        found["error"] = repr(e)[:200]
+    save_json(PROBE_FILE, found)
+    log("Đã dò nguồn dữ liệu:", ", ".join(f"{k} {len(v.get('requests', []))} yêu cầu" for k, v in found["pages"].items()))
+
+
 def main():
     ts = now_ts()
     state = load_json(STATE_FILE, {"cams": {}, "spend": {}, "last_wet": 0, "last_dry_scan": 0})
@@ -1319,7 +1523,12 @@ def main():
         veto_radar(rd, dry_pts, state)
     if rd:
         rd["confirmed"] = bool(check and check["confirmed"] and radar_says)
-    tide_high = (w["tide"] or 0) >= 1.45
+    # mô hình mực nước biển (Open-Meteo, ngoài khơi) thường thấp hơn trạm Phú An/Nhà Bè; khi Trung tâm Dự báo KTTV có tin
+    # triều cường thì lấy đỉnh triều trong tin (các lượt trước đã đọc) cho khoảng ±2,5 giờ quanh mỗi đỉnh
+    w["tide_warn"] = warn_tide(state, ts)
+    tide_high = max(w["tide"] or 0, w["tide_warn"]) >= 1.45
+    if w["tide_warn"]:
+        log(f"Tin triều cường: mực nước quanh đỉnh khoảng {w['tide_warn']} m")
     if raining:
         state["last_rain"] = ts
     if raining or tide_high:
@@ -1534,6 +1743,21 @@ def main():
         "reports": [{k: r[k] for k in ("id", "status", "cam_name", "cam_dist", "level_cam", "crowd", "at") if k in r}
                     for r in sorted(reps.values(), key=lambda r: -r["at"]) if ts - r["at"] <= 3 * 3600][:300],
     }
+    # cảnh báo chính thống của Trung tâm Dự báo KTTV Quốc gia
+    try:
+        warns, win, wout = nchmf_warnings(state, ts, (spent < budget) and not MOCK)
+        if win:
+            c = win / 1e6 * PRICE_IN + wout / 1e6 * PRICE_OUT
+            stats["tokens_in"] += win; stats["tokens_out"] += wout; stats["cost_usd"] = round(stats["cost_usd"] + c, 5)
+            state["spend"][today] = round(state["spend"].get(today, spent) + c, 5)
+        out["warnings"] = warns
+    except Exception as e:
+        log("NCHMF: lỗi", repr(e)[:160]); out["warnings"] = []
+    if mode == "idle":
+        try:
+            probe_sources(state, ts)
+        except Exception as e:
+            log("Dò nguồn dữ liệu: lỗi", repr(e)[:160])
     # học bản đồ nhiễu chỉ khi chắc khô: không đang mưa, camera kiểm chứng (nếu có) không thấy mưa, và camera lượt này gần như không thấy mưa
     learn_clutter(state, w.get("radar"), not raining and not (check and check["raining"]) and seen_rain <= 1)
     try:
