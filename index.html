@@ -1263,7 +1263,7 @@ body.nav .lm .lm-name { display: none; }
       <div class="cc-row"><span>Thực hiện</span><b>Nhóm Nhóm</b></div>
       <div class="cc-row"><span>Dữ liệu</span><div>Radar Đài KTTV khu vực Nam Bộ, Phòng CSGT Công an TP.HCM, camera giao thông TP.HCM, OpenStreetMap, Open-Meteo, TomTom</div></div>
       <div class="cc-row"><span>Đường dây nóng</span><b>0326 08 08 08</b></div>
-      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">12/10 · bản 08:47</span></div>
+      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">12/10 · bản 08:59</span></div>
     </div>
   </div>
   <button class="zen-btn" id="zen-btn" aria-pressed="false" aria-label="Ẩn bảng để xem trọn bản đồ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Ẩn bảng</span></button>
@@ -1344,7 +1344,7 @@ body.nav .lm .lm-name { display: none; }
           <div><a class="src" href="https://giaothong.hochiminhcity.gov.vn/" target="_blank" rel="noopener">Xem camera giao thông trực tiếp của TP.HCM</a></div>
         </div>
       </details>
-      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 12/10 · bản 08:47.</span></div>
+      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 12/10 · bản 08:59.</span></div>
     </section>
 
     <!-- Chỉ đường -->
@@ -4683,6 +4683,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     map.addSource('metro-ride', { type: 'geojson', data: EMPTY });
     map.addSource('routes', { type: 'geojson', data: EMPTY, promoteId: 'i' });
     map.addSource('jam', { type: 'geojson', data: EMPTY });
+    map.addSource('nav-jam', { type: 'geojson', data: EMPTY });
     map.addSource('reports', { type: 'geojson', data: EMPTY });
     map.addSource('rainheat', { type: 'geojson', data: EMPTY });
     map.addSource('wards', { type: 'geojson', data: { type: 'FeatureCollection', features: G.wards.map(function (w) {
@@ -4735,6 +4736,8 @@ if (typeof module !== 'undefined') module.exports = NN;
         layout: { 'symbol-placement': 'line', 'symbol-spacing': ['interpolate', ['linear'], ['zoom'], 12.5, 60, 17, 90], 'icon-image': 'rt-arrow',
           'icon-size': ['interpolate', ['linear'], ['zoom'], 12.5, 0.6, 17, 1], 'icon-rotation-alignment': 'map', 'icon-allow-overlap': true, 'icon-ignore-placement': true }
       },
+      { id: 'nav-jam', type: 'line', source: 'nav-jam', layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': ['match', ['get', 'lv'], 1, '#F5B43A', 3, '#7A1020', '#E5484D'], 'line-width': ['interpolate', ['linear'], ['zoom'], 12, 4, 17, 11], 'line-opacity': 0.95 } },
       { id: 'metro-ride-case', type: 'line', source: 'metro-ride', layout: { 'line-cap': 'round', 'line-join': 'round' } },
       { id: 'metro-ride', type: 'line', source: 'metro-ride', layout: { 'line-cap': 'round', 'line-join': 'round' } },
       { id: 'metro-dot', type: 'circle', source: 'metro-st', minzoom: 10.5 },
@@ -5055,7 +5058,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     return goongGet({ v2: 'https://rsapi.goong.io/v2/place/autocomplete' + qs, v1: 'https://rsapi.goong.io/Place/AutoComplete' + qs }).then(function (j) {
       var out = (j.predictions || []).slice(0, 3).map(function (p) {
         var sf = p.structured_formatting || {}, loc = p.geometry && p.geometry.location;
-        var it = { label: sf.main_text || p.description, sub: 'Goong · ' + (sf.secondary_text || p.description || ''), kind: 'goong', pid: p.place_id, lat: null, lng: null };
+        var it = { label: sf.main_text || p.description, sub: (sf.secondary_text || p.description || ''), kind: 'goong', pid: p.place_id, lat: null, lng: null };
         if (loc && isFinite(+loc.lat)) { it.lat = +loc.lat; it.lng = +loc.lng; }
         return it;
       });
@@ -5192,21 +5195,13 @@ if (typeof module !== 'undefined') module.exports = NN;
       var q = inp.value.trim();
       if (!G || q.length < 2) { box.hidden = true; items = []; return; }
       var local = savedMatches(q).concat(landmarkMatches(q), NN.geocode(G, expandAbbr(q), 10)); items = local; on = -1;
-      if (!skipRemote && q.length >= 4 && !/^-?\d+(\.\d+)?\s*,\s*-?\d+/.test(q) && !/^https?:/.test(q) && addrParts(q).num) {
-        clearTimeout(inp._tt);
-        inp._tt = setTimeout(function () {
-          ttSearch(q).then(function (g) {
-            if (inp.value.trim() !== q || !g.length) return;
-            items = mergeAddr(local, g).concat(items.filter(function (x) { return x.kind === 'goong'; })).slice(0, 9); paint();
-          }).catch(function () { /* hết lượt hoặc mất mạng: giữ kết quả trong máy */ });
-        }, 380);
-      }
+      // địa chỉ: Goong (dịch vụ bản đồ Việt Nam) + dữ liệu bản đồ; TomTom chỉ còn dùng cho thông tin kẹt xe
       if (!skipRemote && goongKey() && q.length >= 4 && !/^-?\d+(\.\d+)?\s*,\s*-?\d+/.test(q) && !/^https?:/.test(q)) {
         clearTimeout(gt);
         gt = setTimeout(function () {
           goongSuggest(q).then(function (g) {
             if (inp.value.trim() !== q || !g.length) return;
-            items = g.concat(items).slice(0, 9); paint();
+            items = mergeAddr(items.filter(function (x) { return x.kind !== 'goong'; }), []).slice(0, 9); items = g.concat(items); paint();
           }).catch(function () { /* hết lượt / sai tên miền: giữ kết quả có sẵn */ });
         }, 450);
       }
@@ -5236,7 +5231,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     inp.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') { box.hidden = true; return; }
       if (box.hidden) {
-        if (e.key === 'Enter') { e.preventDefault(); clearTimeout(t); render(true); var cq = ttCache[inp.value.trim()]; if (cq && cq.length) items = mergeAddr(items, cq); if (items.length) choose(0); }
+        if (e.key === 'Enter') { e.preventDefault(); clearTimeout(t); render(true); var cq = goongCache[inp.value.trim()]; if (cq && cq.length) items = cq.concat(items); if (items.length) choose(0); }
         return;
       }
       var bs = box.querySelectorAll('button');
@@ -7250,6 +7245,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     $('nav-then').textContent = nx && m.type !== 'arrive' && m.len < 250 ? 'Rồi ' + (nx.type === 'arrive' ? 'tới nơi' : navLine(nx).charAt(0).toLowerCase() + navLine(nx).slice(1)) : '';
     var left = Math.max(0, nav.r.meters - nav.along), secs = nav.r.secs * left / Math.max(1, nav.r.meters);
     if (nav.metro && nav.metroStage === 1) { secs += METRO_WAIT + nav.metro.rideSecs + (nav.metro.w2 ? nav.metro.w2.secs : 0); left += nav.metro.rideM + (nav.metro.w2 ? nav.metro.w2.meters : 0); }
+    secs += nav.jamDelay || 0;
     $('nav-eta').textContent = 'Tới lúc ' + hhmm(Date.now() + secs * 1000);
     $('nav-left').textContent = fmtMin(secs) + ' · ' + fmtKm(left);
     // giọng nói: báo trước khoảng 300 m (xe) / 100 m (đi bộ), và ngay trước chỗ rẽ
@@ -7263,6 +7259,7 @@ if (typeof module !== 'undefined') module.exports = NN;
       if (d <= near && !nav.said[nav.idx + 'n']) { nav.said[nav.idx + 'n'] = nav.said[nav.idx + 'f'] = 1; speak(TURN_SAY[m.type].charAt(0).toUpperCase() + TURN_SAY[m.type].slice(1) + ' vào ' + m.name + '.'); }
     }
     navFloodCheck(false);
+    navTraffic();
     followCam(show, brg);
   }
   // camera như Google Maps: hướng đi lên trên, mũi tên ở khoảng 2/3 màn hình, nghiêng nhẹ
@@ -7315,7 +7312,51 @@ if (typeof module !== 'undefined') module.exports = NN;
     navSetRoute(r);
     if (nav.demoReset) nav.demoReset();
   }
+  // ---------- kẹt xe phía trước khi đang dẫn đường ----------
+  // Mỗi ~75 giây hỏi TomTom tốc độ thật ở 2 điểm phía trước trên tuyến (khoảng 350 m và 1,1 km).
+  // Chậm hơn 40% tốc độ bình thường = kẹt (đỏ), chậm hơn 65% = đông (vàng); đường bị chặn thì báo ngay.
+  function navTraffic() {
+    if (!nav.on || !nav.joined || !nav.r || nav.vehicle === 'walk' || !ttKey() || IN_CLAUDE) return;
+    if (Date.now() - (nav.jamAt || 0) < 75000) return;
+    nav.jamAt = Date.now();
+    var along = nav.along || 0, L = nav.r.meters, r0 = nav.r;
+    var ds = [350, 1100].filter(function (d) { return along + d < L - 60; });
+    if (!ds.length) { nav.jamDelay = 0; return; }
+    Promise.all(ds.map(function (d) {
+      var p = pointAt(r0, along + d);
+      var u = 'https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?unit=KMPH&point=' + p[1].toFixed(5) + ',' + p[0].toFixed(5) + '&key=' + encodeURIComponent(ttKey());
+      return fetch(u).then(function (x) { return x.ok ? x.json() : null; }).catch(function () { return null; }).then(function (j) { return { d: d, f: j && j.flowSegmentData }; });
+    })).then(function (res) {
+      if (!nav.on || nav.r !== r0) return;
+      var feats = [], delay = 0, worst = null;
+      res.forEach(function (x) {
+        var f = x.f; if (!f || !(f.freeFlowSpeed > 0)) return;
+        var ratio = f.currentSpeed / f.freeFlowSpeed, lv = f.roadClosure ? 3 : ratio < 0.4 ? 2 : ratio < 0.65 ? 1 : 0;
+        if ((f.confidence || 0) < 0.5 && !f.roadClosure) lv = 0;
+        if (!lv) return;
+        delay += Math.max(0, (f.currentTravelTime || 0) - (f.freeFlowTravelTime || 0));
+        var cs = ((f.coordinates || {}).coordinate || []).map(function (c) { return [c.longitude, c.latitude]; });
+        if (cs.length > 1) feats.push({ type: 'Feature', properties: { lv: lv }, geometry: { type: 'LineString', coordinates: cs } });
+        if (!worst || lv > worst.lv) worst = { lv: lv, d: x.d, f: f };
+      });
+      nav.jamDelay = delay;
+      if (map.getSource('nav-jam')) map.getSource('nav-jam').setData({ type: 'FeatureCollection', features: feats });
+      if (worst && worst.lv >= 2) {
+        var key = worst.f.coordinates && worst.f.coordinates.coordinate && worst.f.coordinates.coordinate[0] ? worst.f.coordinates.coordinate[0].latitude.toFixed(3) + ',' + worst.f.coordinates.coordinate[0].longitude.toFixed(3) : String(Math.round(along / 500));
+        nav.jamWarned = nav.jamWarned || {};
+        if (!nav.jamWarned[key]) {
+          nav.jamWarned[key] = 1;
+          var mins = Math.round(delay / 60);
+          var msg = worst.lv === 3 ? 'Đường phía trước khoảng ' + sayDist(worst.d) + ' đang bị chặn.' :
+            'Phía trước khoảng ' + sayDist(worst.d) + ' đang kẹt xe, xe chỉ chạy khoảng ' + Math.round(worst.f.currentSpeed) + ' km/h' + (mins >= 1 ? ', chậm thêm khoảng ' + mins + ' phút.' : '.');
+          speak(msg);
+          toast(worst.lv === 3 ? 'Đường phía trước ' + fmtKm(worst.d) + ' đang bị chặn' : 'Kẹt xe phía trước ' + fmtKm(worst.d) + ' · ' + Math.round(worst.f.currentSpeed) + ' km/h' + (mins >= 1 ? ' · chậm thêm ~' + mins + ' phút' : ''), 6000);
+        }
+      }
+    });
+  }
   function navEnd(arrived) {
+    if (map.getSource('nav-jam')) map.getSource('nav-jam').setData(EMPTY);
     if (!nav.on) return;
     nav.on = false;
     if (nav.off) nav.off();
