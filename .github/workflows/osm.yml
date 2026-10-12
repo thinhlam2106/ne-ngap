@@ -19,13 +19,19 @@ jobs:
           python-version: '3.12'
       - run: pip install requests
       - name: Tải dữ liệu
-        run: python scanner/osm_extra.py
+        run: python scanner/osm_extra.py || echo "Script lỗi, vẫn lưu nhật ký"
       - name: Lưu vào repo
         run: |
           git config user.name "ne-ngap-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/osm
+          mkdir -p data/osm
+          ls -la data/osm || true
+          git add -A data/osm
           if git diff --cached --quiet; then echo "Không có gì mới."; exit 0; fi
           git commit -m "Cập nhật biển cấm và xe buýt từ OpenStreetMap"
-          for i in 1 2 3; do git pull --rebase -X theirs && git push && exit 0; sleep 5; done
+          for i in 1 2 3 4 5; do
+            git pull --rebase -X theirs origin main && git push origin HEAD:main && exit 0
+            git rebase --abort 2>/dev/null || true
+            sleep $((i * 10))
+          done
           exit 1
