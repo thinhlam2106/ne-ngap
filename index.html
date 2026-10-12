@@ -112,6 +112,16 @@ body.nav .panel { transform: translateX(calc(-100% - 40px)); }
 .nav-b[aria-pressed="false"] { color: rgba(11,42,85,.4); }
 .nav-demo { border: 0; border-radius: 99px; padding: 0 16px; height: 44px; font: 700 14px var(--font-body); background: rgba(255,212,92,.9); color: #5E3D00; }
 .nav-end { border: 0; border-radius: 99px; padding: 0 18px; height: 44px; font: 700 14px var(--font-body); background: #E5484D; color: #fff; }
+.pv-bar { position: absolute; z-index: 9; left: 50%; bottom: 94px; transform: translateX(-50%); width: min(560px, calc(100% - 340px)); display: flex; align-items: center; gap: 10px;
+  padding: 6px 8px; border-radius: 22px; background: var(--glass-strong); color: #0B2A55; -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: var(--glass-shadow); }
+.pv-bar input[type=range] { flex: 1; min-width: 0; accent-color: var(--lam); height: 28px; }
+.pv-sp { border: 0; border-radius: 99px; height: 36px; min-width: 52px; padding: 0 10px; font: 800 14px var(--font-body); background: rgba(4,118,214,.12); color: var(--lam); font-variant-numeric: tabular-nums; }
+.pv-tag { font: 700 11.5px var(--font-body); letter-spacing: .02em; color: var(--lam); white-space: nowrap; padding-left: 4px; }
+.pv-go { border: 0; border-radius: 99px; padding: 0 14px; height: 44px; font: 700 14px var(--font-body); background: #12804B; color: #fff; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+body.preview .nav-eta b { color: var(--lam); font-size: 17px; white-space: nowrap; }
+body.preview .nav-eta span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.preview .nav-end { background: rgba(11,42,85,.1); color: #0B2A55; padding: 0 14px; }
+body.preview .nav-eta b { font-size: 16px; }
 .me-dot { position: relative; width: 22px; height: 22px; }
 .me-dot i { position: absolute; inset: 0; border-radius: 50%; background: var(--lam); box-shadow: 0 0 0 4px #fff, 0 4px 14px rgba(3,40,100,.45); }
 .me-dot b { position: absolute; left: 50%; top: 50%; width: 0; height: 0; margin: -38px 0 0 -14px; border-left: 14px solid transparent; border-right: 14px solid transparent;
@@ -136,6 +146,8 @@ body.nav .loc-btn, body.intro .loc-btn { opacity: 0; pointer-events: none; }
   body.zen .loc-btn { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
   .demo-tag { left: auto; right: 14px; bottom: auto; top: calc(104px + env(safe-area-inset-top, 0px)); }
   .nav-bot { width: calc(100% - 20px); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+  .pv-bar { width: calc(100% - 20px); bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+  body.preview .nav-bot { padding-left: 16px; gap: 8px; }
   body.nav .brand { opacity: 0; pointer-events: none; }
   body.nav .panel { transform: translateY(105%); }
   .pl-head .muted { display: none; }
@@ -1169,6 +1181,14 @@ html.has-cur, html.has-cur * { cursor: none !important; }
 .wl-tide { font-weight: 600; }
 .wl a { color: var(--lam); font-weight: 600; font-size: 12.5px; text-decoration: none; }
 
+.wl-more { border-radius: 12px; padding: 0 10px; background: rgba(4,118,214,.06); font-size: 12.5px; color: var(--ink-2); }
+.wl-more summary { cursor: pointer; padding: 7px 0; font-weight: 600; display: flex; align-items: center; gap: 6px; list-style: none; }
+.wl-more summary::-webkit-details-marker { display: none; }
+.wl-more summary::after { content: '›'; margin-left: auto; font-size: 15px; transition: transform .2s; }
+.wl-more[open] summary::after { transform: rotate(90deg); }
+.wl-mini { padding: 6px 0; border-top: 1px solid rgba(6,46,107,.08); line-height: 1.4; color: var(--ink); }
+.wl-mini .wl-k { font-size: 11px; }
+.wl-mini a { color: var(--lam); font-weight: 600; text-decoration: none; white-space: nowrap; }
 .obs { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; padding: 7px 9px; border-radius: 10px; background: rgba(44,91,201,.08); font-size: 12.5px; line-height: 1.4; color: var(--ink); }
 .obs a { color: var(--lam); font-weight: 600; white-space: nowrap; }
 
@@ -1263,7 +1283,7 @@ body.nav .lm .lm-name { display: none; }
       <div class="cc-row"><span>Thực hiện</span><b>Nhóm Nhóm</b></div>
       <div class="cc-row"><span>Dữ liệu</span><div>Radar Đài KTTV khu vực Nam Bộ, Phòng CSGT Công an TP.HCM, camera giao thông TP.HCM, OpenStreetMap, Open-Meteo, TomTom</div></div>
       <div class="cc-row"><span>Đường dây nóng</span><b>0326 08 08 08</b></div>
-      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">12/10 · bản 08:59</span></div>
+      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">12/10 · bản 15:41</span></div>
     </div>
   </div>
   <button class="zen-btn" id="zen-btn" aria-pressed="false" aria-label="Ẩn bảng để xem trọn bản đồ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Ẩn bảng</span></button>
@@ -1344,7 +1364,7 @@ body.nav .lm .lm-name { display: none; }
           <div><a class="src" href="https://giaothong.hochiminhcity.gov.vn/" target="_blank" rel="noopener">Xem camera giao thông trực tiếp của TP.HCM</a></div>
         </div>
       </details>
-      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 12/10 · bản 08:59.</span></div>
+      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 12/10 · bản 15:41.</span></div>
     </section>
 
     <!-- Chỉ đường -->
@@ -1451,7 +1471,14 @@ body.nav .lm .lm-name { display: none; }
     <div class="nav-eta"><b id="nav-eta"></b><span id="nav-left"></span></div>
     <button class="nav-b" id="nav-recenter" hidden aria-label="Về vị trí của tôi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 2 4 20l8-4 8 4z"/></svg></button>
     <button class="nav-b" id="nav-voice" aria-pressed="true" aria-label="Tắt giọng nói"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path id="nav-voice-w" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg></button>
+    <button class="pv-go" id="pv-go" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 4 20l8-4 8 4z"/></svg>Bắt đầu đi</button>
     <button class="nav-end" id="nav-end">Kết thúc</button>
+  </div>
+  <div class="pv-bar" id="pv-bar" hidden>
+    <button class="nav-b" id="pv-play" aria-label="Tạm dừng"></button>
+    <span class="pv-tag">XEM TRƯỚC</span>
+    <input type="range" id="pv-range" min="0" max="1000" value="0" aria-label="Kéo để tua lộ trình">
+    <button class="pv-sp" id="pv-speed" aria-label="Đổi tốc độ xem trước">8×</button>
   </div>
   <div class="report-card" id="report-card" role="dialog" aria-label="Báo điểm ngập" hidden>
     <div class="rc-head"><b>Báo chỗ đang ngập</b><button class="icon-btn" id="rc-close" aria-label="Đóng"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
@@ -3636,6 +3663,41 @@ var NN = (function () {
     return { nodes: nodes, segs: segs, meters: meters, secs: secs, coords: nodes.map(function (q) { return [G.lon[q], G.lat[q]]; }) };
   }
 
+  // Kẹt xe thật (TomTom) -> hệ số tốc độ cho từng đoạn đường nằm dọc theo đoạn kẹt.
+  // jams: [{coords: [[lng,lat],...], k: 0..1}] ; k càng nhỏ càng chậm (0,03 = đường bị chặn)
+  function jamCong(G, jams) {
+    if (!jams || !jams.length) return null;
+    var f = new Float32Array(G.nSeg); f.fill(1);
+    jams.forEach(function (j) {
+      var cs = j.coords || []; if (cs.length < 2) return;
+      function near(lat, lng) {
+        var best = Infinity;
+        for (var i = 0; i < cs.length - 1; i++) { var d = distToSeg(lat, lng, cs[i][1], cs[i][0], cs[i + 1][1], cs[i + 1][0]); if (d < best) best = d; }
+        return best;
+      }
+      var seen = new Set();
+      for (var i = 0; i < cs.length - 1; i++) {
+        var L = dist(cs[i][1], cs[i][0], cs[i + 1][1], cs[i + 1][0]), n = Math.max(1, Math.ceil(L / 20));
+        for (var t = 0; t <= n; t++) {
+          var la = cs[i][1] + (cs[i + 1][1] - cs[i][1]) * t / n, lo = cs[i][0] + (cs[i + 1][0] - cs[i][0]) * t / n;
+          segsNear(G, la, lo, 22, function (s) {
+            if (seen.has(s)) return; seen.add(s);
+            // chỉ lấy đoạn nằm dọc theo đường kẹt (cả hai đầu đều sát đường kẹt), bỏ đường cắt ngang ở ngã tư
+            if (near(G.lat[G.segA[s]], G.lon[G.segA[s]]) > 16 || near(G.lat[G.segB[s]], G.lon[G.segB[s]]) > 16) return;
+            if (j.k < f[s]) f[s] = j.k;
+          });
+        }
+      }
+    });
+    return f;
+  }
+  // thời gian đi qua một dãy đoạn (giây) với hệ số tốc độ cong
+  function routeSecs(G, segs, vehicle, cong) {
+    var sp = SPEED[vehicle] || SPEED.moto, t = 0;
+    for (var i = 0; i < segs.length; i++) { var s = segs[i], v = sp[G.ways[G.segWay[s]][0]] || sp[6]; t += G.segLen[s] / (v / 3.6 * (cong ? cong[s] : 1)); }
+    return t;
+  }
+
   function floodsOnRoute(G, r, reports) {
     if (!r) return [];
     var hit = [];
@@ -3842,7 +3904,10 @@ var NN = (function () {
     G.types = P.types;
     G.poi = { name: new Array(n), key: new Array(n), lat: new Float64Array(n), lng: new Float64Array(n), type: new Uint8Array(n) };
     for (var i = 0; i < n; i++) {
-      G.poi.name[i] = it[i][0]; G.poi.key[i] = norm(it[i][0]);
+      // dọn tên rác từ dữ liệu bản đồ: "office_ Ủy ban … stories 5" -> "Ủy ban …"; tên kiểu mã "hospital_TamAnh" thì bỏ
+      var nm = String(it[i][0] || '').replace(/^[a-z]+_\s*/i, '').replace(/\s*stories\s*\d+\s*$/i, '').trim();
+      if (/_/.test(nm) || /^Shade\b/.test(nm)) nm = '';
+      G.poi.name[i] = nm; G.poi.key[i] = norm(nm);
       G.poi.lat[i] = it[i][1] / 1e5; G.poi.lng[i] = it[i][2] / 1e5; G.poi.type[i] = it[i][3];
     }
     G.wards = P.wards.map(function (w) {
@@ -4295,7 +4360,7 @@ var NN = (function () {
     LEVELS: LEVELS, SPEED: SPEED, TTL_MS: TTL_MS, build: build, attachPlaces: attachPlaces, attachSpots: attachSpots,
     plan: plan, snap: snap, congestion: congestion, attachCams: attachCams, camsNear: camsNear, geocode: geocode,  parseAddress: parseAddress, placeName: placeName, areaLabel: areaLabel,
     spotsNear: spotsNear, searchSpots: searchSpots, rainGrid: rainGrid, parseRain: parseRain, parseTide: parseTide, estimate: estimate, nearestRain: nearestRain, RAIN_STEPS: RAIN_STEPS, TIDE_STEPS: TIDE_STEPS, status: status, dist: dist, norm: norm, floodsOnRoute: floodsOnRoute,
-    VEHICLES: VEHICLES, maneuvers: maneuvers, locateOnRoute: locateOnRoute, bearing: bearing, shelters: shelters, route: route, floodFactors: floodFactors
+    VEHICLES: VEHICLES, maneuvers: maneuvers, locateOnRoute: locateOnRoute, bearing: bearing, shelters: shelters, route: route, floodFactors: floodFactors, jamCong: jamCong, routeSecs: routeSecs
   };
 })();
 if (typeof module !== 'undefined') module.exports = NN;
@@ -5503,12 +5568,14 @@ if (typeof module !== 'undefined') module.exports = NN;
       h += '</button>';
     });
     h += '<div class="route-acts"><button class="primary" id="nav-go"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 4 20l8-4 8 4z"/></svg>Bắt đầu đi</button>' +
+      '<button class="ghost" id="nav-preview" aria-label="Xem trước lộ trình"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"/></svg>Xem trước</button>' +
       '<button class="ghost" id="share-route"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"/></svg>Chia sẻ</button></div>';
     h += '<div class="muted">Thời gian cho ' + veh + ' khi đường thông thoáng.</div>';
     out.innerHTML = h;
   }
   $('route-out').addEventListener('click', function (e) {
     if (e.target.closest('#nav-go')) { navStart(); return; }
+    if (e.target.closest('#nav-preview')) { navStart(true); return; }
     if (e.target.closest('#share-route')) { shareRoute(); return; }
     var c = e.target.closest('[data-r]'); if (!c || !state.result) return;
     selectRoute(+c.dataset.r);
@@ -5596,22 +5663,46 @@ if (typeof module !== 'undefined') module.exports = NN;
 
   // ---------- cảnh báo chính thống (Trung tâm Dự báo KTTV Quốc gia), bộ quét tóm tắt sẵn ----------
   var WARN_KIND = { mua_dong: 'Mưa dông', mua_lon: 'Mưa lớn', trieu_cuong: 'Triều cường', bao: 'Bão, áp thấp', lu: 'Lũ', khac: 'Cảnh báo' };
+  // Bản tin KTTV: chỉ cái nào gấp (mưa lớn, triều cường sắp tới, bão, lũ ở mức nguy cơ) mới hiện thẻ to;
+  // tin tham khảo gom vào một dòng nhỏ bấm mới mở; tin chỉ nói về biển (sóng, tàu thuyền) hoặc đã qua thì giấu.
+  function warnSort(w, nowS) {
+    var txt = ((w.headline || '') + ' ' + (w.detail || '')).toLowerCase();
+    if (/biển đông|ngoài khơi|tàu thuyền|vùng biển|sóng (lớn|cao|biển)/.test(txt) && !/ngập|mưa|triều/.test(txt) && w.kind !== 'trieu_cuong') return 'hide';
+    var t = w.tide && +w.tide.time;
+    if (w.kind === 'trieu_cuong') {
+      if (t && t < nowS - 30 * 3600) return 'hide';                      // tin cũ: đỉnh triều trong tin đã qua hơn một ngày
+      if (!t && +w.issued && nowS - +w.issued > 36 * 3600) return 'hide';
+      if ((+w.risk || 1) >= 2 && (!t || t < nowS + 24 * 3600)) return 'urgent';
+      return 'info';
+    }
+    if ((+w.risk || 1) >= 3) return 'urgent';
+    if ((+w.risk || 1) >= 2 && /^(mua_lon|bao|lu)$/.test(w.kind)) return 'urgent';
+    return 'info';
+  }
   function renderWarnings() {
     var box = $('warn-list'); if (!box) return;
     var nowS = Date.now() / 1000;
     var ws = (ai.feed && Array.isArray(ai.feed.warnings) ? ai.feed.warnings : []).filter(function (w) {
       return w && typeof w.headline === 'string' && w.headline && +w.until > nowS && /^https:\/\/www\.nchmf\.gov\.vn\//.test(w.url || '');
     });
-    if (!ws.length) { box.hidden = true; box.innerHTML = ''; return; }
+    var urgent = ws.filter(function (w) { return warnSort(w, nowS) === 'urgent'; }), info = ws.filter(function (w) { return warnSort(w, nowS) === 'info'; });
+    if (!urgent.length && !info.length) { box.hidden = true; box.innerHTML = ''; return; }
     box.hidden = false;
-    box.innerHTML = ws.map(function (w) {
-      var tide = w.tide && +w.tide.peak ? '<div class="wl-tide">Đỉnh triều ' + num(+w.tide.peak, 2) + ' m' + (w.tide.station ? ' ở ' + esc(w.tide.station) : '') + (+w.tide.time ? ', khoảng ' + hhmm(+w.tide.time * 1000) + ' ngày ' + new Date(+w.tide.time * 1000).getDate() + '/' + (new Date(+w.tide.time * 1000).getMonth() + 1) : '') + '</div>' : '';
+    var open = box.querySelector('details') && box.querySelector('details').open;
+    box.innerHTML = urgent.map(function (w) {
+      // đỉnh triều lặp lại mỗi ~12 giờ 25 phút: nếu đỉnh trong tin đã qua thì hiện đỉnh kế tiếp
+      var tt = w.tide && +w.tide.time, P = 44712, nxt = tt;
+      if (tt && tt < nowS - 2 * 3600) { var dd = ((nowS - tt) % P + P) % P; nxt = dd <= 2 * 3600 ? nowS - dd : nowS + (P - dd); }
+      var tide = w.tide && +w.tide.peak ? '<div class="wl-tide">' + (nxt !== tt ? 'Đỉnh triều kế tiếp ~' : 'Đỉnh triều ') + num(+w.tide.peak, 2) + ' m' + (w.tide.station ? ' ở ' + esc(w.tide.station) : '') + (nxt ? ', khoảng ' + hhmm(nxt * 1000) + ' ngày ' + new Date(nxt * 1000).getDate() + '/' + (new Date(nxt * 1000).getMonth() + 1) : '') + '</div>' : '';
       return '<div class="wl r' + Math.max(1, Math.min(3, +w.risk || 1)) + '"><div class="wl-k">' + esc(WARN_KIND[w.kind] || 'Cảnh báo') + ' · Trung tâm Dự báo KTTV Quốc gia</div>' +
         '<b>' + esc(w.headline) + '</b>' + (w.detail ? '<div class="wl-d">' + esc(w.detail) + '</div>' : '') + tide +
         '<a href="' + esc(w.url) + '" target="_blank" rel="noopener">Đọc bản tin gốc</a></div>';
-    }).join('');
-    // báo một lần cho mỗi tin mới
-    var seen = lsGet('nn-warn-seen', []), fresh = ws.filter(function (w) { return seen.indexOf(w.id) < 0; });
+    }).join('') + (info.length ? '<details class="wl-more"' + (open ? ' open' : '') + '><summary><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>' +
+      'Dự báo thời tiết tham khảo (' + info.length + ')</summary>' + info.map(function (w) {
+        return '<div class="wl-mini"><span class="wl-k">' + esc(WARN_KIND[w.kind] || 'Cảnh báo') + '</span> ' + esc(w.headline) + ' <a href="' + esc(w.url) + '" target="_blank" rel="noopener">Bản tin gốc</a></div>';
+      }).join('') + '</details>' : '');
+    // chỉ báo nổi (toast) cho tin gấp, mỗi tin một lần
+    var seen = lsGet('nn-warn-seen', []), fresh = urgent.filter(function (w) { return seen.indexOf(w.id) < 0; });
     if (fresh.length) { toast(fresh[0].headline, 7000); lsSet('nn-warn-seen', seen.concat(fresh.map(function (w) { return w.id; })).slice(-30)); }
   }
 
@@ -7085,7 +7176,7 @@ if (typeof module !== 'undefined') module.exports = NN;
   }
   var meMarker = null;
   function navSetRoute(r) {
-    nav.r = r; nav.man = NN.maneuvers(G, r); nav.k = 0; nav.idx = 1; nav.along = 0; nav.said = {}; nav.offCount = 0;
+    nav.r = r; nav.man = NN.maneuvers(G, r); nav.k = 0; nav.idx = 1; nav.along = 0; nav.said = {}; nav.offCount = 0; nav.jamDelay = 0;
     state.result = { routes: [r], rec: 0 }; state.sel = 0;
     if (map.getSource('routes')) map.removeFeatureState({ source: 'routes' });
     labelsFor = null; drawRoutes(true);
@@ -7114,19 +7205,23 @@ if (typeof module !== 'undefined') module.exports = NN;
     if (reduceMotion || Math.abs(from.lng - to[0]) + Math.abs(from.lat - to[1]) > 0.003) { meMarker.setLngLat(to); meMarker.setRotation(rot); return; }
     var r0 = meMarker.getRotation(), dr = ((rot - r0 + 540) % 360) - 180;
     (function step(now) {
-      var k = Math.min(1, (now - t0) / 850);
+      var k = Math.min(1, (now - t0) / (nav.preview ? 300 : 850));
       meMarker.setLngLat([from.lng + (to[0] - from.lng) * k, from.lat + (to[1] - from.lat) * k]); meMarker.setRotation(r0 + dr * k);
       if (k < 1) meAnim = requestAnimationFrame(step);
     })(t0);
   }
-  function navStart() {
+  function navStart(preview) {
     var res = state.result; if (!res || !G) return;
     var r = res.routes[state.sel]; if (!r) return;
+    if (preview && r.metro) return;
+    var pvRes = res, pvSel = state.sel;
     if (popup) popup.remove(); closeShelter(); if (!$('report-card').hidden) closeReport();
     var mt = r.metro ? r : null;
     nav = { on: true, t0: Date.now(), mine: !!(state.A && state.A.mine), startPt: state.A, voice: lsGet('nn-voice', true), follow: true, dest: mt ? metroStPt(mt.a) : state.B,
-      vehicle: state.vehicle === 'metro' ? 'walk' : state.vehicle, warned: {}, lastRe: 0, wake: null, good: false, acc: null, offCount: 0, compass: null, metro: mt, metroStage: 1 };
-    compassStart();
+      vehicle: state.vehicle === 'metro' ? 'walk' : state.vehicle, warned: {}, lastRe: 0, wake: null, good: false, acc: null, offCount: 0, compass: null, metro: mt, metroStage: 1,
+      preview: !!preview, pvRes: pvRes, pvSel: pvSel };
+    if (preview) nav.voice = false;               // xem trước mặc định im lặng, bấm loa để nghe thử chỉ dẫn
+    if (!preview) compassStart();
     $('nav-voice').setAttribute('aria-pressed', String(nav.voice));
     if (mt && !mt.w1) { metroBoard(true); r = nav.r; if (!r) return; }
     else navSetRoute(mt ? mt.w1 : r);
@@ -7139,6 +7234,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     meMarker = new maplibregl.Marker({ element: el, rotationAlignment: 'map', pitchAlignment: 'map' }).setLngLat(r.coords[0]);
     $('nav-eta').textContent = 'Tới lúc ' + hhmm(Date.now() + r.secs * 1000);
     $('nav-left').textContent = fmtMin(r.secs) + ' · ' + fmtKm(r.meters);
+    if (preview) { previewStart(); return; }
     if (!locStart()) { navBanner('depart', 'Không có vị trí', 'Trình duyệt này không lấy được vị trí.'); return; }
     if (mt) $('nav-eta').textContent = 'Tới lúc ' + hhmm(Date.now() + mt.secs * 1000);
     navBanner('depart', 'Đang tìm vị trí…', nav.metroStage === 2 ? 'Lên tàu hướng ' + metroDir(mt.a, mt.b) : 'Đi theo ' + nav.man[0].name);
@@ -7216,6 +7312,54 @@ if (typeof module !== 'undefined') module.exports = NN;
     var moving = f.speed != null && f.speed > 1.5 && f.heading != null && !isNaN(f.heading);
     navFix(f.lat, f.lng, moving ? f.heading : null, false, f.acc);
   }
+  // ---------- Xem trước lộ trình: mũi tên tự chạy dọc tuyến, không cần GPS ----------
+  var PV_SPEEDS = [4, 8, 16, 32];
+  function pvPlayIcon() {
+    $('pv-play').innerHTML = nav.pvPlay ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>' : '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+    $('pv-play').setAttribute('aria-label', nav.pvPlay ? 'Tạm dừng' : 'Chạy tiếp');
+  }
+  function previewStart() {
+    document.body.classList.add('preview');
+    $('pv-bar').hidden = false; $('pv-go').hidden = false; $('nav-end').textContent = 'Thoát';
+    nav.joined = nav.good = true; nav.mine = false; nav.meOn = true; meMarker.addTo(map);
+    nav.pvSpeed = 8; nav.pvPlay = true; nav.pvAlong = 0; $('pv-speed').textContent = '8×'; pvPlayIcon();
+    nav.demoReset = function () { nav.pvAlong = 0; };
+    pvStep(true);
+    nav.pvT = setInterval(pvTick, 300);
+  }
+  function pvTick() {
+    if (!nav.on || !nav.preview || !nav.pvPlay) return;
+    var v = nav.r.meters / Math.max(1, nav.r.secs);                  // tốc độ trung bình của tuyến (m/giây)
+    nav.pvAlong = Math.min(nav.r.meters, nav.pvAlong + v * nav.pvSpeed * 0.3);
+    pvStep(false);
+  }
+  function pvStep(jump) {
+    var c = nav.r.cum, k = 0; while (k < c.length - 2 && c[k + 1] < nav.pvAlong) k++;
+    if (jump) { nav.k = k; nav.idx = 1; nav.said = {}; }
+    var p = pointAt(nav.r, nav.pvAlong);
+    navFix(p[1], p[0], p[2], true, 5);
+    $('pv-range').value = Math.round(1000 * nav.pvAlong / Math.max(1, nav.r.meters));
+  }
+  $('pv-play').onclick = function () {
+    if (!nav.preview) return;
+    if (!nav.pvPlay && nav.pvAlong >= nav.r.meters - 2) { nav.pvAlong = 0; pvStep(true); }
+    nav.pvPlay = !nav.pvPlay; pvPlayIcon();
+  };
+  $('pv-speed').onclick = function () {
+    if (!nav.preview) return;
+    nav.pvSpeed = PV_SPEEDS[(PV_SPEEDS.indexOf(nav.pvSpeed) + 1) % PV_SPEEDS.length]; this.textContent = nav.pvSpeed + '×';
+  };
+  $('pv-range').oninput = function () {
+    if (!nav.preview) return;
+    nav.pvAlong = (+this.value / 1000) * nav.r.meters; nav.follow = true; $('nav-recenter').hidden = true; pvStep(true);
+  };
+  $('pv-go').onclick = function () {
+    if (!nav.preview) return;
+    var res = nav.pvRes, sel = nav.pvSel;
+    navEnd(false, true);
+    state.result = res; state.sel = sel;
+    navStart(false);
+  };
   function pointAt(r, along) {
     var c = r.cum, k = 0; while (k < c.length - 2 && c[k + 1] < along) k++;
     var a = r.coords[k], b = r.coords[Math.min(k + 1, r.coords.length - 1)], L = c[k + 1] - c[k] || 1, t = Math.max(0, Math.min(1, (along - c[k]) / L));
@@ -7246,12 +7390,14 @@ if (typeof module !== 'undefined') module.exports = NN;
     var left = Math.max(0, nav.r.meters - nav.along), secs = nav.r.secs * left / Math.max(1, nav.r.meters);
     if (nav.metro && nav.metroStage === 1) { secs += METRO_WAIT + nav.metro.rideSecs + (nav.metro.w2 ? nav.metro.w2.secs : 0); left += nav.metro.rideM + (nav.metro.w2 ? nav.metro.w2.meters : 0); }
     secs += nav.jamDelay || 0;
-    $('nav-eta').textContent = 'Tới lúc ' + hhmm(Date.now() + secs * 1000);
-    $('nav-left').textContent = fmtMin(secs) + ' · ' + fmtKm(left);
+    $('nav-eta').textContent = nav.preview ? 'Còn ' + fmtKm(left) : 'Tới lúc ' + hhmm(Date.now() + secs * 1000);
+    $('nav-left').textContent = nav.preview ? '≈ ' + fmtMin(secs) : fmtMin(secs) + ' · ' + fmtKm(left);
     // giọng nói: báo trước khoảng 300 m (xe) / 100 m (đi bộ), và ngay trước chỗ rẽ
     var far = nav.vehicle === 'walk' ? 100 : 300, near = nav.vehicle === 'walk' ? 25 : 60;
     if ((acc || 0) > 60) { navFloodCheck(false); followCam(show, brg); return; }   // GPS còn sai số lớn: chưa đọc chỉ dẫn
-    if (m.type === 'arrive') {
+    if (m.type === 'arrive' && nav.preview) {
+      if (d < 30 && nav.pvPlay) { nav.pvPlay = false; pvPlayIcon(); speak('Bạn đã tới nơi.'); toast('Đã xem hết lộ trình. Bấm “Bắt đầu đi” khi bạn sẵn sàng.', 5000); }
+    } else if (m.type === 'arrive') {
       if (d < 30) { if (nav.metro && nav.metroStage === 1) { metroBoard(false); return; } speak('Bạn đã tới nơi.'); navEnd(true); return; }
       if (d < far && !nav.said[nav.idx + 'f']) { nav.said[nav.idx + 'f'] = 1; speak('Còn ' + sayDist(d) + (nav.metro && nav.metroStage === 1 ? ' là tới ga ' + METRO.st[nav.metro.a][0] + '.' : ' là tới nơi.')); }
     } else if (m.type !== 'straight') {
@@ -7266,7 +7412,7 @@ if (typeof module !== 'undefined') module.exports = NN;
   function followCam(show, brg) {
     if (!nav.follow) return;
     var H = map.getContainer().clientHeight;
-    map.easeTo({ center: show, bearing: brg, pitch: 55, zoom: nav.vehicle === 'walk' ? 17.6 : 17, duration: 900, easing: function (t) { return t; },
+    map.easeTo({ center: show, bearing: brg, pitch: 55, zoom: nav.vehicle === 'walk' ? 17.6 : 17, duration: nav.preview ? 320 : 900, easing: function (t) { return t; },
       padding: { top: Math.round(H * 0.42), bottom: isPhone() ? 110 : 90, left: 0, right: 0 } });
   }
   // chỗ ngập phía trước trên tuyến đang đi
@@ -7281,7 +7427,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     });
     ahead.sort(function (x, y) { return x.d - y.d; });
     var bad = ahead.filter(function (x) { return x.f.level >= V.bad; })[0];
-    if (bad && nav.warned[bad.f.id] !== 'rerouted' && Date.now() - nav.lastRe > 8000) { navReroute('flood', bad.f); return; }
+    if (bad && !nav.preview && nav.warned[bad.f.id] !== 'rerouted' && Date.now() - nav.lastRe > 8000) { navReroute('flood', bad.f); return; }
     var near = ahead.filter(function (x) { return x.d < 450; })[0], al = $('nav-alert');
     if (near) {
       al.hidden = false; al.className = 'nav-alert' + (near.f.level >= V.bad ? ' bad' : '');
@@ -7295,7 +7441,7 @@ if (typeof module !== 'undefined') module.exports = NN;
   function navReroute(why, f) {
     if (!nav.on || (!nav.pos && !nav.startPt)) return;
     nav.lastRe = Date.now();
-    var res = NN.plan(G, nav.joined ? nav.pos : (nav.startPt || nav.pos), nav.dest, nav.vehicle, floodsNow(), state.avoidHot, null);
+    var res = NN.plan(G, nav.joined ? nav.pos : (nav.startPt || nav.pos), nav.dest, nav.vehicle, floodsNow(), state.avoidHot, navJamCong());
     if (res.error) { if (f) nav.warned[f.id] = 'rerouted'; return; }
     var r = res.routes[res.rec], V = NN.VEHICLES[nav.vehicle];
     if (f) {
@@ -7315,8 +7461,38 @@ if (typeof module !== 'undefined') module.exports = NN;
   // ---------- kẹt xe phía trước khi đang dẫn đường ----------
   // Mỗi ~75 giây hỏi TomTom tốc độ thật ở 2 điểm phía trước trên tuyến (khoảng 350 m và 1,1 km).
   // Chậm hơn 40% tốc độ bình thường = kẹt (đỏ), chậm hơn 65% = đông (vàng); đường bị chặn thì báo ngay.
+  // Gặp kẹt (đỏ) hoặc đường bị chặn: tìm đường khác có tính cả chỗ kẹt, kiểm tra luôn đường mới có kẹt không,
+  // nhanh hơn rõ rệt thì tự đổi đường (như Google Maps), không thì báo "đây vẫn là đường nhanh nhất".
+  function ttFlow(lat, lng) {
+    var u = 'https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?unit=KMPH&point=' + lat.toFixed(5) + ',' + lng.toFixed(5) + '&key=' + encodeURIComponent(ttKey());
+    return fetch(u).then(function (x) { return x.ok ? x.json() : null; }).catch(function () { return null; }).then(function (j) { return (j && j.flowSegmentData) || null; });
+  }
+  function jamOf(f, d) {
+    if (!f || !(f.freeFlowSpeed > 0)) return null;
+    var ratio = f.currentSpeed / f.freeFlowSpeed, lv = f.roadClosure ? 3 : ratio < 0.4 ? 2 : ratio < 0.65 ? 1 : 0;
+    if ((f.confidence || 0) < 0.5 && !f.roadClosure) lv = 0;
+    if (!lv) return null;
+    var cs = ((f.coordinates || {}).coordinate || []).map(function (c) { return [c.longitude, c.latitude]; });
+    if (cs.length < 2) return null;
+    return { lv: lv, k: lv === 3 ? 0.03 : Math.max(0.1, Math.min(1, ratio)), coords: cs, f: f, d: d, t: Date.now(),
+      key: cs[0][1].toFixed(4) + ',' + cs[0][0].toFixed(4) + '>' + cs[cs.length - 1][1].toFixed(4) + ',' + cs[cs.length - 1][0].toFixed(4),
+      delay: Math.max(0, (f.currentTravelTime || 0) - (f.freeFlowTravelTime || 0)) };
+  }
+  function addJams(list) {
+    var now = Date.now();
+    nav.jams = (nav.jams || []).filter(function (j) { return now - j.t < 12 * 60000; });
+    list.forEach(function (j) { if (!j) return; nav.jams = nav.jams.filter(function (o) { return o.key !== j.key; }); nav.jams.push(j); });
+    if (map.getSource('nav-jam')) map.getSource('nav-jam').setData({ type: 'FeatureCollection', features: nav.jams.map(function (j) {
+      return { type: 'Feature', properties: { lv: j.lv }, geometry: { type: 'LineString', coordinates: j.coords } }; }) });
+  }
+  // hệ số tốc độ theo các chỗ kẹt đã biết (còn hiệu lực 12 phút) — dùng cho mọi lần tìm đường khi đang đi
+  function navJamCong() {
+    if (!nav.jams || !nav.jams.length) return null;
+    var now = Date.now(); nav.jams = nav.jams.filter(function (j) { return now - j.t < 12 * 60000; });
+    return NN.jamCong(G, nav.jams);
+  }
   function navTraffic() {
-    if (!nav.on || !nav.joined || !nav.r || nav.vehicle === 'walk' || !ttKey() || IN_CLAUDE) return;
+    if (!nav.on || nav.preview || !nav.joined || !nav.r || nav.vehicle === 'walk' || !ttKey() || IN_CLAUDE) return;
     if (Date.now() - (nav.jamAt || 0) < 75000) return;
     nav.jamAt = Date.now();
     var along = nav.along || 0, L = nav.r.meters, r0 = nav.r;
@@ -7324,41 +7500,67 @@ if (typeof module !== 'undefined') module.exports = NN;
     if (!ds.length) { nav.jamDelay = 0; return; }
     Promise.all(ds.map(function (d) {
       var p = pointAt(r0, along + d);
-      var u = 'https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?unit=KMPH&point=' + p[1].toFixed(5) + ',' + p[0].toFixed(5) + '&key=' + encodeURIComponent(ttKey());
-      return fetch(u).then(function (x) { return x.ok ? x.json() : null; }).catch(function () { return null; }).then(function (j) { return { d: d, f: j && j.flowSegmentData }; });
-    })).then(function (res) {
+      return ttFlow(p[1], p[0]).then(function (f) { return jamOf(f, d); });
+    })).then(function (found) {
       if (!nav.on || nav.r !== r0) return;
-      var feats = [], delay = 0, worst = null;
-      res.forEach(function (x) {
-        var f = x.f; if (!f || !(f.freeFlowSpeed > 0)) return;
-        var ratio = f.currentSpeed / f.freeFlowSpeed, lv = f.roadClosure ? 3 : ratio < 0.4 ? 2 : ratio < 0.65 ? 1 : 0;
-        if ((f.confidence || 0) < 0.5 && !f.roadClosure) lv = 0;
-        if (!lv) return;
-        delay += Math.max(0, (f.currentTravelTime || 0) - (f.freeFlowTravelTime || 0));
-        var cs = ((f.coordinates || {}).coordinate || []).map(function (c) { return [c.longitude, c.latitude]; });
-        if (cs.length > 1) feats.push({ type: 'Feature', properties: { lv: lv }, geometry: { type: 'LineString', coordinates: cs } });
-        if (!worst || lv > worst.lv) worst = { lv: lv, d: x.d, f: f };
-      });
+      found = found.filter(Boolean);
+      addJams(found);
+      var delay = 0, worst = null;
+      found.forEach(function (j) { delay += j.delay; if (!worst || j.lv > worst.lv) worst = j; });
       nav.jamDelay = delay;
-      if (map.getSource('nav-jam')) map.getSource('nav-jam').setData({ type: 'FeatureCollection', features: feats });
-      if (worst && worst.lv >= 2) {
-        var key = worst.f.coordinates && worst.f.coordinates.coordinate && worst.f.coordinates.coordinate[0] ? worst.f.coordinates.coordinate[0].latitude.toFixed(3) + ',' + worst.f.coordinates.coordinate[0].longitude.toFixed(3) : String(Math.round(along / 500));
-        nav.jamWarned = nav.jamWarned || {};
-        if (!nav.jamWarned[key]) {
-          nav.jamWarned[key] = 1;
-          var mins = Math.round(delay / 60);
-          var msg = worst.lv === 3 ? 'Đường phía trước khoảng ' + sayDist(worst.d) + ' đang bị chặn.' :
-            'Phía trước khoảng ' + sayDist(worst.d) + ' đang kẹt xe, xe chỉ chạy khoảng ' + Math.round(worst.f.currentSpeed) + ' km/h' + (mins >= 1 ? ', chậm thêm khoảng ' + mins + ' phút.' : '.');
-          speak(msg);
-          toast(worst.lv === 3 ? 'Đường phía trước ' + fmtKm(worst.d) + ' đang bị chặn' : 'Kẹt xe phía trước ' + fmtKm(worst.d) + ' · ' + Math.round(worst.f.currentSpeed) + ' km/h' + (mins >= 1 ? ' · chậm thêm ~' + mins + ' phút' : ''), 6000);
-        }
-      }
+      if (!worst || worst.lv < 2) return;
+      nav.jamWarned = nav.jamWarned || {};
+      if (nav.jamWarned[worst.key]) return;
+      nav.jamWarned[worst.key] = 1;
+      navJamReroute(worst, delay, r0);
     });
   }
-  function navEnd(arrived) {
+  function navJamReroute(worst, delay, r0) {
+    var V = NN.VEHICLES[nav.vehicle], closed = worst.lv === 3;
+    function plain(extra) {
+      var mins = Math.round(delay / 60);
+      speak((closed ? 'Đường phía trước khoảng ' + sayDist(worst.d) + ' đang bị chặn.' :
+        'Phía trước khoảng ' + sayDist(worst.d) + ' đang kẹt xe, xe chỉ chạy khoảng ' + Math.round(worst.f.currentSpeed) + ' km/h' + (mins >= 1 ? ', chậm thêm khoảng ' + mins + ' phút.' : '.')) + (extra ? ' ' + extra : ''));
+      toast((closed ? 'Đường phía trước ' + fmtKm(worst.d) + ' đang bị chặn' : 'Kẹt xe phía trước ' + fmtKm(worst.d) + ' · ' + Math.round(worst.f.currentSpeed) + ' km/h' + (mins >= 1 ? ' · chậm thêm ~' + mins + ' phút' : '')) + (extra ? ' · ' + extra.replace(/\.$/, '').toLowerCase() : ''), 6000);
+    }
+    function best() {
+      var cong = navJamCong();
+      var res = NN.plan(G, nav.pos, nav.dest, nav.vehicle, floodsNow(), state.avoidHot, cong);
+      if (res.error) return null;
+      var r = res.routes[res.rec];
+      if (r.worst >= V.bad) return null;                       // đường né kẹt lại đi qua chỗ ngập sâu: không đổi
+      var cur = NN.routeSecs(G, nav.r.segs.slice(nav.k || 0), nav.vehicle, cong);
+      return { r: r, gain: cur - r.secs, cur: cur };
+    }
+    function worth(c) { return c && c.gain >= Math.max(90, c.cur * 0.1); }
+    if (!nav.pos) { plain(); return; }
+    var c = best();
+    if (!worth(c)) { plain(closed ? 'Không có đường khác tránh được.' : 'Đây vẫn là đường nhanh nhất.'); return; }
+    // kiểm tra đường mới: hỏi TomTom 2 điểm trên đường mới (chỗ chưa biết tình hình) xem có kẹt không
+    NN.maneuvers(G, c.r);
+    var cong0 = navJamCong(), probes = [400, 1200].filter(function (d) { return d < c.r.meters - 60; }).map(function (d) { return pointAt(c.r, d); })
+      .filter(function (p) { return !cong0 || !(nav.jams || []).some(function (j) { return j.coords.some(function (q) { return NN.dist(q[1], q[0], p[1], p[0]) < 60; }); }); });
+    Promise.all(probes.map(function (p, i) { return ttFlow(p[1], p[0]).then(function (f) { return jamOf(f, [400, 1200][i]); }); })).then(function (more) {
+      if (!nav.on || nav.r !== r0) return;
+      more = more.filter(Boolean);
+      if (more.length) { addJams(more); c = best(); }
+      if (!worth(c)) { plain(closed ? 'Không có đường khác tránh được.' : 'Đường khác cũng đang kẹt, đây vẫn là đường nhanh nhất.'); return; }
+      var m = Math.round(c.gain / 60);
+      nav.lastRe = Date.now();
+      navSetRoute(c.r); nav.jamDelay = 0; nav.jamAt = Date.now();
+      if (nav.demoReset) nav.demoReset();
+      speak((closed ? 'Đường phía trước đang bị chặn' : 'Phía trước khoảng ' + sayDist(worst.d) + ' đang kẹt xe') + '. Đã đổi sang đường khác' + (m >= 1 ? ', nhanh hơn khoảng ' + m + ' phút' : '') + '.');
+      toast('Đã đổi đường để né ' + (closed ? 'đoạn bị chặn' : 'kẹt xe') + (m >= 1 ? ' · nhanh hơn ~' + m + ' phút' : ''), 6000);
+    });
+  }
+  function navEnd(arrived, quiet) {
     if (map.getSource('nav-jam')) map.getSource('nav-jam').setData(EMPTY);
     if (!nav.on) return;
     nav.on = false;
+    var wasPv = nav.preview;
+    if (nav.pvT) clearInterval(nav.pvT);
+    document.body.classList.remove('preview');
+    $('pv-bar').hidden = $('pv-go').hidden = true; $('nav-end').textContent = 'Kết thúc';
     if (nav.off) nav.off();
     if (nav.compassOff) nav.compassOff();
     cancelAnimationFrame(meAnim);
@@ -7370,6 +7572,16 @@ if (typeof module !== 'undefined') module.exports = NN;
     map.easeTo({ pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 }, duration: 600 });
     if (LOC.fix) showMe(LOC.fix);
     metroRideShow(null);
+    if (quiet) return;
+    if (wasPv) {                       // thoát xem trước: trả lại đúng các tuyến đang so sánh
+      state.result = nav.pvRes; state.sel = nav.pvSel; labelsFor = null;
+      if (map.getSource('routes')) map.removeFeatureState({ source: 'routes' });
+      drawRoutes(true);
+      var bb = new maplibregl.LngLatBounds();
+      state.result.routes.forEach(function (r) { r.coords.forEach(function (c) { bb.extend(c); }); });
+      map.fitBounds(bb, { padding: isPhone() ? { top: 120, bottom: Math.round(window.innerHeight * 0.52), left: 40, right: 70 } : { top: 80, bottom: 60, left: 440, right: 90 }, maxZoom: 16, pitch: 0, bearing: 0, duration: 700 });
+      return;
+    }
     if (state.A && state.B) runRoute(false);
     if (arrived) toast('Bạn đã tới nơi.');
   }
