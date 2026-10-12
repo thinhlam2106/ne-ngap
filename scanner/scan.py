@@ -973,6 +973,24 @@ def verify_reports(state, cams, fresh, ts, wet_recent):
 RAIN_CHECK_CAMS = 12
 
 
+RAIN_FULL_MIN = float(os.environ.get("RAIN_FULL_MIN") or 30)   # đang mưa: bao nhiêu phút xem toàn bộ camera một lần
+
+
+def rain_zone_cams(cams, rd, hot, state, ts):
+    """Camera nên xem khi đang mưa: trong vùng radar báo mưa (cộng 2,5 km), ở điểm hay ngập, hoặc vừa thấy nước trong 2 giờ."""
+    pts = []
+    if rd:
+        pts = [(c[0], c[1]) for c in rd.get("cells", []) if c[2] >= 1] + [(c[0], c[1]) for c in (rd.get("mm10") or {}).get("cells", [])]
+    out = []
+    for c in cams:
+        cs = state.get("cams", {}).get(c["id"], {})
+        wet = any(isinstance(h, list) and len(h) > 1 and (h[1] or 0) > 0 and ts - h[0] <= 2 * 3600 for h in cs.get("hist", []))
+        near = any(abs(c["lat"] - la) < 0.025 and abs(c["lng"] - lo) < 0.025 and dist_m(c["lat"], c["lng"], la, lo) <= 2500 for la, lo in pts)
+        if c["id"] in hot or wet or near:
+            out.append(c)
+    return out
+
+
 def pick_rain_check_cams(cams, rd, hot, ts):
     """Chọn ~12 camera nằm ngay trong vùng radar báo mưa (hoặc rải đều nếu chỉ mô hình báo)."""
     chosen, ids = [], set()
@@ -1536,9 +1554,18 @@ def main():
     recently_rained = ts - state.get("last_rain", 0) <= 2 * 3600     # nước còn đọng 2 giờ sau mưa
     full_due = ts - state.get("last_full_scan", 0) >= 19 * 60
 
-    if scan_all or raining:
-        mode, targets = ("all" if scan_all else "rain"), cams
+    if scan_all:
+        mode, targets = "all", cams
         state["last_full_scan"] = ts
+    elif raining:
+        # Đang mưa: mỗi 10 phút chỉ xem camera trong vùng radar báo mưa (cộng 2,5 km), camera ở điểm hay ngập
+        # và camera vừa thấy nước; cứ ~30 phút mới xem toàn bộ một lần. Tiết kiệm khoảng một nửa chi phí ngày mưa.
+        zone = rain_zone_cams(cams, rd if radar_says else None, hot, state, ts)
+        if ts - state.get("last_full_scan", 0) >= RAIN_FULL_MIN * 60 - 120 or len(zone) >= 0.7 * len(cams):
+            mode, targets = "rain", cams
+            state["last_full_scan"] = ts
+        else:
+            mode, targets = "rain-zone", zone
     elif recently_rained and full_due:
         # tạnh mưa nhưng nước còn đọng: 20 phút xem lại toàn bộ một lần
         mode, targets = "after-rain", cams
