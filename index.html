@@ -1263,7 +1263,7 @@ body.nav .lm .lm-name { display: none; }
       <div class="cc-row"><span>Thực hiện</span><b>Nhóm Nhóm</b></div>
       <div class="cc-row"><span>Dữ liệu</span><div>Radar Đài KTTV khu vực Nam Bộ, Phòng CSGT Công an TP.HCM, camera giao thông TP.HCM, OpenStreetMap, Open-Meteo, TomTom</div></div>
       <div class="cc-row"><span>Đường dây nóng</span><b>0326 08 08 08</b></div>
-      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">11/10 · bản 23:49</span></div>
+      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">12/10 · bản 08:47</span></div>
     </div>
   </div>
   <button class="zen-btn" id="zen-btn" aria-pressed="false" aria-label="Ẩn bảng để xem trọn bản đồ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Ẩn bảng</span></button>
@@ -1344,7 +1344,7 @@ body.nav .lm .lm-name { display: none; }
           <div><a class="src" href="https://giaothong.hochiminhcity.gov.vn/" target="_blank" rel="noopener">Xem camera giao thông trực tiếp của TP.HCM</a></div>
         </div>
       </details>
-      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 11/10 · bản 23:49.</span></div>
+      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 12/10 · bản 08:47.</span></div>
     </section>
 
     <!-- Chỉ đường -->
@@ -1414,7 +1414,7 @@ body.nav .lm .lm-name { display: none; }
       <details class="sim" id="goong-box" hidden>
         <summary>Số nhà chính xác và kẹt xe trực tiếp</summary>
         <div class="sim-body">
-          <div>Bản đồ mở chưa có dữ liệu số nhà ở TP.HCM, nên khi gõ số nhà, ghim chỉ nằm đúng đường. Muốn chính xác từng căn, dán khoá API miễn phí của Goong (goong.io, dịch vụ bản đồ Việt Nam) vào đây. Khoá chỉ lưu trên máy này.</div>
+          <div>Né Ngập đã dùng sẵn dữ liệu địa chỉ của Goong (goong.io, dịch vụ bản đồ Việt Nam) và TomTom để tìm đúng số nhà. Khoá chung có hạn mức mỗi ngày; nếu thấy hết lượt, bạn có thể dán khoá Goong riêng vào đây (chỉ lưu trên máy này).</div>
           <input class="text" id="goong-key" type="text" placeholder="Khoá API Goong" autocomplete="off">
           <div class="row"><button class="ghost" id="goong-save">Lưu khoá</button><span class="muted" id="goong-state"></span></div>
           <div style="margin-top:8px">Lớp “Kẹt xe trực tiếp” dùng dữ liệu tốc độ xe thật của TomTom, đã có sẵn khoá. Nếu lớp này báo hết lượt dùng trong ngày, bạn có thể dán khoá TomTom riêng (developer.tomtom.com) vào đây.</div>
@@ -5023,22 +5023,52 @@ if (typeof module !== 'undefined') module.exports = NN;
   $('swap').onclick = function () { var a = state.A; setPoint('A', state.B, false); setPoint('B', a, true); };
 
   // Goong (dữ liệu địa chỉ Việt Nam có số nhà) — chỉ dùng khi có khoá và trang chạy ngoài claude.ai
-  function goongKey() { try { return localStorage.getItem('nn-goong') || window.NN_GOONG_KEY || ''; } catch (e) { return window.NN_GOONG_KEY || ''; } }
-  function goongSuggest(q) {
-    var u = 'https://rsapi.goong.io/place/autocomplete?api_key=' + encodeURIComponent(goongKey()) + '&input=' + encodeURIComponent(q) + '&location=10.7769,106.7009&radius=60&limit=5';
-    return fetch(u).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (j) {
-      return (j.predictions || []).map(function (p) {
-        var sf = p.structured_formatting || {};
-        return { label: sf.main_text || p.description, sub: 'Địa chỉ Goong · ' + (sf.secondary_text || p.description || ''), kind: 'goong', pid: p.place_id, lat: null, lng: null };
+  // Khoá Goong của nhóm (giới hạn chỉ chạy trên thinhlam2106.github.io và nengap-hcm.netlify.app). Người dùng có thể dán khoá riêng.
+  var GOONG_DEFAULT = 'GbzuwrxhABxe7KmPcrTvdqqsPu2DsiEXibkBV5j4';
+  function goongKey() { try { return localStorage.getItem('nn-goong') || window.NN_GOONG_KEY || GOONG_DEFAULT; } catch (e) { return window.NN_GOONG_KEY || GOONG_DEFAULT; } }
+  // Hạn mức chung 1.000 lượt/ngày cho cả khoá: mỗi máy tự giới hạn 120 lượt/ngày, nhớ sẵn kết quả đã hỏi
+  var goongCache = {}, goongDet = {}, goongVer = null;
+  function goongBudget() {
+    if (localStorage.getItem && (function () { try { return localStorage.getItem('nn-goong'); } catch (e) { return null; } })()) return true;   // khoá riêng: không giới hạn
+    var d = new Date().toISOString().slice(0, 10), c = lsGet('nn-goong-use', {});
+    if (c.d !== d) c = { d: d, n: 0 };
+    if (c.n >= 120) return false;
+    c.n++; lsSet('nn-goong-use', c); return true;
+  }
+  function goongGet(paths) {        // thử API bản 2 trước, không được thì bản cũ; nhớ bản nào chạy
+    var list = goongVer ? [paths[goongVer]] : [paths.v2, paths.v1];
+    var go = function (i) {
+      return fetch(list[i]).then(function (r) {
+        if (r.status === 404 && i + 1 < list.length) return go(i + 1);
+        if (!r.ok) throw new Error(r.status);
+        if (!goongVer) goongVer = list[i] === paths.v2 ? 'v2' : 'v1';
+        return r.json();
       });
+    };
+    return go(0);
+  }
+  function goongSuggest(q) {
+    if (goongCache[q]) return Promise.resolve(goongCache[q]);
+    if (!goongBudget()) return Promise.resolve([]);
+    var c = map && map.getCenter ? map.getCenter() : { lat: 10.7769, lng: 106.7009 };
+    var qs = '?api_key=' + encodeURIComponent(goongKey()) + '&input=' + encodeURIComponent(q) + '&location=' + c.lat.toFixed(4) + ',' + c.lng.toFixed(4) + '&limit=5';
+    return goongGet({ v2: 'https://rsapi.goong.io/v2/place/autocomplete' + qs, v1: 'https://rsapi.goong.io/Place/AutoComplete' + qs }).then(function (j) {
+      var out = (j.predictions || []).slice(0, 3).map(function (p) {
+        var sf = p.structured_formatting || {}, loc = p.geometry && p.geometry.location;
+        var it = { label: sf.main_text || p.description, sub: 'Goong · ' + (sf.secondary_text || p.description || ''), kind: 'goong', pid: p.place_id, lat: null, lng: null };
+        if (loc && isFinite(+loc.lat)) { it.lat = +loc.lat; it.lng = +loc.lng; }
+        return it;
+      });
+      goongCache[q] = out; return out;
     });
   }
   function goongDetail(pid) {
-    var u = 'https://rsapi.goong.io/place/detail?place_id=' + encodeURIComponent(pid) + '&api_key=' + encodeURIComponent(goongKey());
-    return fetch(u).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (j) {
+    if (goongDet[pid]) return Promise.resolve(goongDet[pid]);
+    var qs = '?place_id=' + encodeURIComponent(pid) + '&api_key=' + encodeURIComponent(goongKey());
+    return goongGet({ v2: 'https://rsapi.goong.io/v2/place/detail' + qs, v1: 'https://rsapi.goong.io/Place/Detail' + qs }).then(function (j) {
       var loc = j && j.result && j.result.geometry && j.result.geometry.location;
       if (!loc || !isFinite(+loc.lat)) throw new Error('no location');
-      return { lat: +loc.lat, lng: +loc.lng };
+      return (goongDet[pid] = { lat: +loc.lat, lng: +loc.lng });
     });
   }
   // ---------- tìm địa chỉ trực tuyến (TomTom có dữ liệu số nhà ở TP.HCM) ----------
@@ -5070,20 +5100,11 @@ if (typeof module !== 'undefined') module.exports = NN;
         var it = { lat: +p.lat, lng: +p.lon, kind: 'tt' }, area = NN.areaLabel(G, +p.lat, +p.lon);
         if (t === 'Point Address' || t === 'Address Range') {
           if (!sameStreet(P.street.replace(/^(hem|ngo|kiet)\s+\S+\s+/, ''), st) && !sameStreet(P.street, st)) return;
-          if (P.num && num !== P.num) return;
+          if (!P.num || num !== P.num) return;
           it.label = (a.streetNumber ? 'Số ' + a.streetNumber + ' ' : '') + st;
           it.prec = t === 'Point Address' ? 3 : 2;
           it.sub = (t === 'Point Address' ? 'Đúng số nhà' : 'Số nhà ước tính theo dãy số') + (area ? ' · ' + area : '');
-        } else if (t === 'Street' || t === 'Cross Street') {
-          if (!sameStreet(P.street, st || a.freeformAddress)) return;
-          it.label = (P.num ? P.num.toUpperCase() + ' ' : '') + (st || a.freeformAddress); it.prec = 1; it.approx = !!P.num;
-          it.sub = (P.num ? 'Chưa có số nhà này, ghim nằm trên đường · ' : 'Đường · ') + (area || '');
-        } else if (t === 'POI' && r.poi && r.poi.name) {
-          var nq = NN.norm(q), nn = NN.norm(r.poi.name), toks = nq.split(' ').filter(function (x) { return x.length > 1; });
-          var hit = toks.filter(function (x) { return nn.indexOf(x) >= 0; }).length;
-          if (!toks.length || hit / toks.length < 0.6) return;
-          it.label = r.poi.name; it.prec = 2; it.ttPoi = true;
-          it.sub = 'Địa điểm · ' + (a.streetNumber ? 'số ' + a.streetNumber + ' ' : '') + (st ? st + ' · ' : '') + (area || '');
+        // TomTom chỉ dùng cho số nhà; tên đường và địa điểm lấy từ dữ liệu bản đồ và Goong (TomTom hay có địa điểm sai chỗ)
         } else return;
         it.sub += ' · TomTom';
         out.push(it);
@@ -5095,7 +5116,7 @@ if (typeof module !== 'undefined') module.exports = NN;
   function mergeAddr(local, remote) {
     var top = remote.filter(function (x) { return x.prec >= 2; }), rest = remote.filter(function (x) { return x.prec < 2; });
     var hasExact = top.some(function (x) { return x.prec === 3; });
-    var loc = hasExact ? local.filter(function (x) { return !x.approx; }).concat(local.filter(function (x) { return x.approx; })) : local;
+    var loc = hasExact ? local.filter(function (x) { return !x.approx; }) : local;   // đã có đúng số nhà: bỏ các ghim "chỉ đúng tên đường"
     var out = [];
     top.concat(loc, rest).forEach(function (x) {
       if (x.lat == null) { out.push(x); return; }
@@ -5126,6 +5147,17 @@ if (typeof module !== 'undefined') module.exports = NN;
       }
       x._k = entToks(x.label); out.push(x);
     });
+    // gõ số nhà: chỉ giữ ghim ước lượng nằm đúng tên đường đã gõ, tối đa 2; có kết quả đúng số nhà thì bỏ hết ghim ước lượng
+    var AP = addrParts(q);
+    if (AP.num) {
+      var exact = out.some(function (x) { return x.prec === 3 || x.kind === 'goong'; }), na = 0;
+      out = out.filter(function (x) {
+        if (!x.approx) return true;
+        if (exact) return false;
+        if (x.street && !sameStreet(AP.street, x.street)) return false;
+        return ++na <= 2;
+      });
+    }
     var localKeys = out.filter(function (x) { return x.kind === 'poi'; }).map(function (x) { return x._k.join(' '); });
     var sameEnt = function (a, b) {
       var A = a._k, B = b._k; if (!A.length || !B.length) return false;
@@ -5160,7 +5192,7 @@ if (typeof module !== 'undefined') module.exports = NN;
       var q = inp.value.trim();
       if (!G || q.length < 2) { box.hidden = true; items = []; return; }
       var local = savedMatches(q).concat(landmarkMatches(q), NN.geocode(G, expandAbbr(q), 10)); items = local; on = -1;
-      if (!skipRemote && q.length >= 4 && !/^-?\d+(\.\d+)?\s*,\s*-?\d+/.test(q) && !/^https?:/.test(q)) {
+      if (!skipRemote && q.length >= 4 && !/^-?\d+(\.\d+)?\s*,\s*-?\d+/.test(q) && !/^https?:/.test(q) && addrParts(q).num) {
         clearTimeout(inp._tt);
         inp._tt = setTimeout(function () {
           ttSearch(q).then(function (g) {
@@ -5169,14 +5201,14 @@ if (typeof module !== 'undefined') module.exports = NN;
           }).catch(function () { /* hết lượt hoặc mất mạng: giữ kết quả trong máy */ });
         }, 380);
       }
-      if (!skipRemote && goongKey() && q.length >= 4) {
+      if (!skipRemote && goongKey() && q.length >= 4 && !/^-?\d+(\.\d+)?\s*,\s*-?\d+/.test(q) && !/^https?:/.test(q)) {
         clearTimeout(gt);
         gt = setTimeout(function () {
           goongSuggest(q).then(function (g) {
             if (inp.value.trim() !== q || !g.length) return;
             items = g.concat(items).slice(0, 9); paint();
-          }).catch(function () { /* giữ kết quả có sẵn */ });
-        }, 280);
+          }).catch(function () { /* hết lượt / sai tên miền: giữ kết quả có sẵn */ });
+        }, 450);
       }
       paint();
     }
@@ -7340,12 +7372,13 @@ if (typeof module !== 'undefined') module.exports = NN;
   }
   if (!IN_CLAUDE) {
     $('goong-box').hidden = false;
-    $('goong-key').value = goongKey();
-    $('goong-state').textContent = goongKey() ? 'Đang dùng khoá Goong' : '';
+    try { $('goong-key').value = localStorage.getItem('nn-goong') || ''; } catch (e) {}
+    $('goong-state').textContent = (function () { try { return localStorage.getItem('nn-goong'); } catch (e) { return ''; } })() ? 'Đang dùng khoá riêng' : 'Đang dùng khoá chung của Né Ngập';
     $('goong-save').onclick = function () {
       var k = $('goong-key').value.trim();
       try { if (k) localStorage.setItem('nn-goong', k); else localStorage.removeItem('nn-goong'); } catch (e) { window.NN_GOONG_KEY = k; }
-      if (!k) { $('goong-state').textContent = 'Đã xoá khoá'; return; }
+      goongCache = {}; goongVer = null;
+      if (!k) { $('goong-state').textContent = 'Đã quay về khoá chung'; return; }
       $('goong-state').textContent = 'Đang thử khoá…';
       goongSuggest('227 Nguyễn Văn Cừ').then(function (g) { $('goong-state').textContent = g.length ? 'Khoá dùng được' : 'Khoá chạy nhưng không có kết quả'; })
         .catch(function () { $('goong-state').textContent = 'Khoá chưa dùng được, kiểm tra lại'; });
