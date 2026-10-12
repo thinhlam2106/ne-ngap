@@ -32,19 +32,28 @@ def fetch(q):
                 r = requests.post(ep, data={"data": q}, timeout=960, headers={"User-Agent": "ne-ngap/1.0 (student flood map)"})
                 if r.status_code == 200:
                     return r.json()
-                last = f"{ep} HTTP {r.status_code}"
+                last = f"{ep} HTTP {r.status_code} {r.text[:200]!r}"
             except Exception as e:
-                last = f"{ep} {repr(e)[:120]}"
+                last = f"{ep} {repr(e)[:200]}"
+            log("  thử", last)
             time.sleep(20)
     raise RuntimeError(last)
 
 
 def rc(v):
-    return round(v, 6)
+    return round(v, 5)
 
 
 def geom(el):
     return [[rc(p["lon"]), rc(p["lat"])] for p in el.get("geometry") or [] if p]
+
+
+LOG = []
+
+
+def log(*a):
+    line = time.strftime("%H:%M:%S ") + " ".join(str(x) for x in a)
+    print(line, flush=True); LOG.append(line)
 
 
 def main():
@@ -52,14 +61,27 @@ def main():
     summary = {"fetched": int(time.time())}
     only = sys.argv[1:] or list(Q)
     for name in only:
+        try:
+            one(name, summary)
+        except Exception as e:
+            import traceback
+            summary[name] = {"error": repr(e)[:300]}
+            log(name, "LỖI XỬ LÝ", traceback.format_exc()[-1500:])
+        (OUT / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=1))
+        (OUT / "log.txt").write_text("\n".join(LOG))
+
+
+def one(name, summary):
         t0 = time.time()
         try:
             d = fetch(Q[name])
         except Exception as e:
             summary[name] = {"error": str(e)}
-            print(name, "LỖI", e)
-            continue
+            log(name, "LỖI TẢI", e)
+            return
         els = d.get("elements", [])
+        if d.get("remark"):
+            log(name, "Overpass ghi chú:", d["remark"][:300])
         if name == "restrict":
             out = [{"id": e["id"], "t": {k: v for k, v in e.get("tags", {}).items() if k in TAGS or k in COND or k in ("highway", "name")}, "g": geom(e)} for e in els if e["type"] == "way"]
         elif name == "turns":
@@ -87,10 +109,9 @@ def main():
                 out.append({"id": e["id"], "ref": t.get("ref", ""), "name": t.get("name", ""), "from": t.get("from", ""), "to": t.get("to", ""),
                             "op": t.get("operator", ""), "int": t.get("interval", ""), "hrs": t.get("opening_hours", ""), "w": ways, "s": stops})
         (OUT / f"{name}.json").write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")))
-        summary[name] = {"n": len(out), "secs": round(time.time() - t0)}
-        print(name, len(out), "mục", round(time.time() - t0), "giây")
+        summary[name] = {"n": len(out), "secs": round(time.time() - t0), "bytes": (OUT / f"{name}.json").stat().st_size}
+        log(name, len(out), "mục", round(time.time() - t0), "giây,", summary[name]["bytes"], "byte")
         time.sleep(15)
-    (OUT / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=1))
 
 
 if __name__ == "__main__":
