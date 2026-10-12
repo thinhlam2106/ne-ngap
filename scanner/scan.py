@@ -1277,8 +1277,8 @@ WARN_TOOL = {
     "name": "report_warning",
     "description": "Tóm tắt một bản tin cảnh báo thời tiết/thủy văn cho người dân TP.HCM.",
     "input_schema": {"type": "object", "properties": {
-        "affects_hcm": {"type": "boolean", "description": "Bản tin có nói tới TP.HCM, Nam Bộ, Đông Nam Bộ hoặc vùng ven biển Nam Bộ không"},
-        "kind": {"type": "string", "enum": ["mua_dong", "mua_lon", "trieu_cuong", "bao", "lu", "khac"]},
+        "affects_hcm": {"type": "boolean", "description": "Bản tin có ảnh hưởng tới đất liền TP.HCM, Nam Bộ, Đông Nam Bộ (mưa, triều cường, ngập, bão đổ bộ) không. Tin chỉ nói về sóng, gió trên biển hoặc tàu thuyền ngoài khơi thì là false"},
+        "kind": {"type": "string", "enum": ["mua_dong", "mua_lon", "trieu_cuong", "bao", "lu", "khac"], "description": "Theo nội dung chính với TP.HCM: mưa dông/mưa rào là mua_dong, mưa to diện rộng là mua_lon; chỉ dùng bao khi có bão hoặc áp thấp nhiệt đới thật"},
         "headline": {"type": "string", "description": "Một câu tiếng Việt dưới 110 ký tự, nói điều người ở TP.HCM cần biết"},
         "detail": {"type": "string", "description": "Tối đa 2 câu, dưới 260 ký tự: khi nào, ở đâu, mạnh cỡ nào, nên làm gì"},
         "issued": {"type": "string", "description": "Thời điểm ra tin, dạng YYYY-MM-DD HH:MM giờ Việt Nam, rỗng nếu không rõ"},
