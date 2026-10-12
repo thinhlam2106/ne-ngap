@@ -122,6 +122,10 @@ body.preview .nav-eta b { color: var(--lam); font-size: 17px; white-space: nowra
 body.preview .nav-eta span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 body.preview .nav-end { background: rgba(11,42,85,.1); color: #0B2A55; padding: 0 14px; }
 body.preview .nav-eta b { font-size: 16px; }
+.via-dot { width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 3px solid var(--lam); box-shadow: 0 2px 6px rgba(3,40,100,.35); cursor: grab; }
+.via-dot.ghost { pointer-events: none; opacity: .9; }
+.via-note { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; padding: 8px 10px; border-radius: 12px; background: rgba(4,118,214,.08); font-size: 12.5px; color: var(--ink); }
+.via-note button { margin-left: auto; border: 0; background: none; color: var(--lam); font: 700 12.5px var(--font-body); cursor: pointer; white-space: nowrap; }
 .me-dot { position: relative; width: 22px; height: 22px; }
 .me-dot i { position: absolute; inset: 0; border-radius: 50%; background: var(--lam); box-shadow: 0 0 0 4px #fff, 0 4px 14px rgba(3,40,100,.45); }
 .me-dot b { position: absolute; left: 50%; top: 50%; width: 0; height: 0; margin: -38px 0 0 -14px; border-left: 14px solid transparent; border-right: 14px solid transparent;
@@ -1158,6 +1162,11 @@ html.has-cur, html.has-cur * { cursor: none !important; }
 .maplibregl-popup-content .m, .maplibregl-popup-content small { color: var(--ink-2); }
 /* ======== Metro số 1 ======== */
 .panel .rcard .swatch.metro, .panel .rcard.sel .swatch.metro { background: var(--metro); }
+.macc { display: flex; align-items: center; gap: 10px; margin: 0 0 8px; font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
+.macc > span { width: 44px; flex: none; }
+.mchips { display: flex; gap: 6px; flex-wrap: wrap; }
+.mchip { border: 0; border-radius: 99px; padding: 6px 12px; font: 600 12.5px var(--font-body); background: rgba(11,42,85,.06); color: var(--ink); cursor: pointer; }
+.mchip[aria-pressed="true"] { background: var(--metro); color: #fff; }
 .mlegs { list-style: none; margin: 6px 0 2px; padding: 0; display: flex; flex-direction: column; }
 .mlegs li { display: flex; gap: 10px; align-items: flex-start; padding: 5px 0; font-size: 13px; line-height: 1.35; position: relative; text-align: left; }
 .mlegs li:not(:last-child)::before { content: ""; position: absolute; left: 11px; top: 30px; bottom: -4px; width: 2px; border-radius: 1px; background: currentColor; opacity: .18; }
@@ -1283,7 +1292,7 @@ body.nav .lm .lm-name { display: none; }
       <div class="cc-row"><span>Thực hiện</span><b>Nhóm Nhóm</b></div>
       <div class="cc-row"><span>Dữ liệu</span><div>Radar Đài KTTV khu vực Nam Bộ, Phòng CSGT Công an TP.HCM, camera giao thông TP.HCM, OpenStreetMap, Open-Meteo, TomTom</div></div>
       <div class="cc-row"><span>Đường dây nóng</span><b>0326 08 08 08</b></div>
-      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">12/10 · bản 15:41</span></div>
+      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">12/10 · bản 16:00</span></div>
     </div>
   </div>
   <button class="zen-btn" id="zen-btn" aria-pressed="false" aria-label="Ẩn bảng để xem trọn bản đồ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Ẩn bảng</span></button>
@@ -1364,7 +1373,7 @@ body.nav .lm .lm-name { display: none; }
           <div><a class="src" href="https://giaothong.hochiminhcity.gov.vn/" target="_blank" rel="noopener">Xem camera giao thông trực tiếp của TP.HCM</a></div>
         </div>
       </details>
-      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 12/10 · bản 15:41.</span></div>
+      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 12/10 · bản 16:00.</span></div>
     </section>
 
     <!-- Chỉ đường -->
@@ -4407,7 +4416,7 @@ if (typeof module !== 'undefined') module.exports = NN;
 
   // ---------- trạng thái ----------
   var state = {
-    tab: 'route', vehicle: lsGet('nn-vehicle', 'scooter'), avoidHot: false,
+    tab: 'route', vehicle: lsGet('nn-vehicle', 'scooter'), avoidHot: false, mAcc: lsGet('nn-macc', 'walk'), mEgr: lsGet('nn-megr', 'walk'), via: [],
     A: null, B: null, pick: null, result: null, sel: 0,
     draft: null, level: 0
   };
@@ -4726,6 +4735,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     map.addSource('roads', { type: 'geojson', data: roadGeo(d), tolerance: 0.5 });
     if (BASE_TILES) map.addSource('base', { type: 'vector', url: 'pmtiles://' + BASE_TILES, attribution: '© OpenStreetMap · Protomaps' });
     map.addSource('ketxe', { type: 'geojson', data: KETXE });
+    map.addSource('route-drag', { type: 'geojson', data: EMPTY });
     map.addSource('inst', { type: 'geojson', data: instGeo() });
     map.addSource('named', { type: 'geojson', data: { type: 'FeatureCollection', features: [
       { type: 'Feature', properties: { n: 'Hồ Con Rùa' }, geometry: { type: 'Point', coordinates: [106.69595, 10.78264] } }] } });
@@ -4796,6 +4806,7 @@ if (typeof module !== 'undefined') module.exports = NN;
       { id: 'spot-line', type: 'line', source: 'spot-lines', layout: { 'line-cap': 'butt', 'line-join': 'round' } },
       { id: 'route-safe-case', type: 'line', source: 'routes', layout: { 'line-cap': 'round', 'line-join': 'round', 'line-sort-key': ['get', 'sel'] } },
       { id: 'route-alt', type: 'line', source: 'routes', layout: { 'line-cap': 'round', 'line-join': 'round', 'line-sort-key': ['get', 'sel'] } },
+      { id: 'route-drag', type: 'line', source: 'route-drag', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': tok('route'), 'line-width': 5, 'line-opacity': 0.75, 'line-dasharray': [1.2, 1.2] } },
       {
         id: 'route-arrow', type: 'symbol', source: 'routes', minzoom: 12.5, filter: ['==', ['get', 'sel'], 1],
         layout: { 'symbol-placement': 'line', 'symbol-spacing': ['interpolate', ['linear'], ['zoom'], 12.5, 60, 17, 90], 'icon-image': 'rt-arrow',
@@ -5078,9 +5089,96 @@ if (typeof module !== 'undefined') module.exports = NN;
     }
   }
 
+  // ---------- kéo tuyến sang đường khác (như Google Maps) ----------
+  // Nắm tuyến kéo tới chỗ khác: thêm "điểm đi qua", tìm lại đường A → điểm đi qua → B. Kéo chấm trắng để chỉnh, chạm vào để bỏ.
+  function planVia(A, vias, B, vehicle, floods, cong) {
+    var pts = [A].concat(vias, [B]), legs = [];
+    for (var i = 0; i < pts.length - 1; i++) {
+      var p = NN.plan(G, pts[i], pts[i + 1], vehicle, floods, state.avoidHot, cong || null);
+      if (p.error === 'same') continue;
+      if (p.error) return p;
+      legs.push(p.routes[p.rec]);
+    }
+    if (!legs.length) return { error: 'same' };
+    var r = { nodes: [], segs: [], coords: [], meters: 0, secs: 0, delay: 0, spots: [], via: true }, seen = new Set();
+    legs.forEach(function (L, i) {
+      r.nodes = r.nodes.concat(i ? L.nodes.slice(1) : L.nodes);
+      r.coords = r.coords.concat(i ? L.coords.slice(1) : L.coords);
+      r.segs = r.segs.concat(L.segs); r.meters += L.meters; r.secs += L.secs; r.delay += L.delay || 0;
+      (L.spots || []).forEach(function (sp) { if (!seen.has(sp)) { seen.add(sp); r.spots.push(sp); } });
+    });
+    r.floods = NN.floodsOnRoute(G, r, floods);
+    r.worst = r.floods.reduce(function (m, x) { return Math.max(m, x.level); }, 0);
+    return { routes: [r], rec: 0, via: true };
+  }
+  var viaMarkers = [], ghost = null, drag = null;
+  function viaSync() {
+    viaMarkers.forEach(function (m) { m.remove(); }); viaMarkers = [];
+    var out = $('route-out'), old = $('via-note'); if (old) old.remove();
+    if (!state.result || !state.via.length || state.vehicle === 'metro') return;
+    state.via.forEach(function (v, i) {
+      var el = document.createElement('div'); el.className = 'via-dot'; el.title = 'Kéo để đổi, chạm để bỏ điểm đi qua này';
+      var m = new maplibregl.Marker({ element: el, draggable: true }).setLngLat([v.lng, v.lat]).addTo(map);
+      var moved = false;
+      m.on('dragstart', function () { moved = true; });
+      m.on('dragend', function () { var p = m.getLngLat(); state.via[i] = { lat: p.lat, lng: p.lng }; runRoute(false); });
+      el.addEventListener('click', function (ev) { ev.stopPropagation(); if (moved) { moved = false; return; } state.via.splice(i, 1); runRoute(false); });
+      viaMarkers.push(m);
+    });
+    if (out) {
+      var n = document.createElement('div'); n.className = 'via-note'; n.id = 'via-note';
+      n.innerHTML = '<span>Đi qua ' + state.via.length + ' điểm bạn kéo tới. Kéo chấm trắng để chỉnh, chạm vào chấm để bỏ.</span><button id="via-clear">Bỏ hết</button>';
+      out.insertBefore(n, out.firstChild);
+    }
+  }
+  function viaIndex(ll) {          // chèn điểm mới đúng thứ tự dọc theo tuyến đang hiện
+    var r = state.result && state.result.routes[state.sel]; if (!r || !state.via.length) return state.via.length;
+    if (!r.cum) NN.maneuvers(G, r);
+    var at = NN.locateOnRoute(G, r, ll.lat, ll.lng, 0), i = 0;
+    while (i < state.via.length) { var v = NN.locateOnRoute(G, r, state.via[i].lat, state.via[i].lng, 0); if (!v || !at || v.along > at.along) break; i++; }
+    return i;
+  }
+  function dragStart(e) {
+    if (!state.result || state.vehicle === 'metro' || (typeof nav !== 'undefined' && nav.on) || state.pick) return;
+    var oe = e.originalEvent; if (oe && oe.touches && oe.touches.length > 1) return;
+    var f = e.features && e.features[0]; if (!f) return;
+    e.preventDefault();                                     // giữ bản đồ đứng yên trong lúc kéo tuyến
+    drag = { i: f.properties.i, x0: e.point.x, y0: e.point.y, moved: false, t: 0, grab: e.lngLat, ll: e.lngLat };
+  }
+  function dragMove(e) {
+    if (!drag) return;
+    if (!drag.moved && Math.hypot(e.point.x - drag.x0, e.point.y - drag.y0) < 8) return;
+    if (!drag.moved) {
+      drag.moved = true; drag.idx = viaIndex(drag.grab);
+      var el = document.createElement('div'); el.className = 'via-dot ghost';
+      ghost = new maplibregl.Marker({ element: el }).setLngLat(e.lngLat).addTo(map);
+    }
+    drag.ll = e.lngLat; ghost.setLngLat(e.lngLat);
+    var now = Date.now(); if (now - drag.t < 160) return; drag.t = now;
+    var vias = state.via.slice(); vias.splice(drag.idx, 0, { lat: e.lngLat.lat, lng: e.lngLat.lng });
+    var res = planVia(state.A, vias, state.B, state.vehicle, floodsNow(), null);
+    map.getSource('route-drag').setData(res.error ? EMPTY : { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: res.routes[0].coords } });
+  }
+  function dragEnd() {
+    if (!drag) return;
+    var d = drag; drag = null;
+    if (ghost) { ghost.remove(); ghost = null; }
+    if (map.getSource('route-drag')) map.getSource('route-drag').setData(EMPTY);
+    if (!d.moved) return;
+    state.via.splice(d.idx, 0, { lat: d.ll.lat, lng: d.ll.lng });
+    runRoute(false);
+  }
+  mapLoaded.then(function () {
+    map.on('mousedown', 'route-alt', dragStart); map.on('touchstart', 'route-alt', dragStart);
+    map.on('mousemove', dragMove); map.on('touchmove', dragMove);
+    map.on('mouseup', dragEnd); map.on('touchend', dragEnd); map.on('touchcancel', dragEnd);
+    map.on('mouseenter', 'route-alt', function () { if (!drag) map.getCanvas().style.cursor = 'grab'; });
+    map.on('mouseleave', 'route-alt', function () { if (!drag) map.getCanvas().style.cursor = ''; });
+  });
+
   // ---------- điểm đi / đến ----------
   function setPoint(which, pt, run) {
-    state[which] = pt;
+    state[which] = pt; state.via = [];
     var inp = which === 'A' ? $('in-a') : $('in-b');
     inp.value = pt ? pt.label : '';
     clrSync();
@@ -5354,6 +5452,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     if (map.getSource('routes')) map.getSource('routes').setData(EMPTY);
     metroRideShow(null);
     routeLabels.forEach(function (m) { m.remove(); }); routeLabels = []; labelsFor = null;
+    viaSync();
   }
   var lastFloodKey = '';
   function viaNames(r, other) {
@@ -5438,24 +5537,37 @@ if (typeof module !== 'undefined') module.exports = NN;
   function metroStPt(i) { return { lat: METRO.st[i][1], lng: METRO.st[i][2], label: 'Ga ' + METRO.st[i][0] }; }
   function metroOpen(d) { var h = (d || new Date()).getHours(); return h >= 5 && h < 22; }
   // đi bộ ra ga → đi tàu → đi bộ tới nơi. Trả về kết quả giống NN.plan để vẽ và dẫn đường như các phương tiện khác.
+  // Chặng ra ga / từ ga về: đi bộ, xe máy (tự chạy, gửi xe ở ga), xe ôm hoặc taxi (gọi xe công nghệ).
+  // v: phương tiện dùng để tìm đường; extra: giây cộng thêm (gửi xe, chờ xe tới đón); sp: tốc độ ước lượng để chọn ga (m/giây)
+  var MLEG = {
+    walk: { v: 'walk', extra: 0, sp: 1.33, verb: 'Đi bộ', ic: 'walk', short: 'Đi bộ' },
+    scooter: { v: 'scooter', extra: 180, sp: 5.5, verb: 'Chạy xe máy', ic: 'bike', short: 'Xe máy', note: 'tính cả gửi xe ở ga' },
+    ride: { v: 'scooter', extra: 300, sp: 5.5, verb: 'Đi xe ôm', ic: 'bike', short: 'Xe ôm', note: 'tính cả chờ xe tới đón ~5 phút' },
+    taxi: { v: 'car', extra: 360, sp: 5, verb: 'Đi taxi', ic: 'car', short: 'Taxi', note: 'tính cả chờ xe tới đón ~6 phút' }
+  };
+  function mLeg(k, egress) { var m = MLEG[k] || MLEG.walk; return egress && k === 'scooter' ? MLEG.walk : m; }
   function metroPlan(A, B, floods) {
+    var acc = mLeg(state.mAcc), egr = mLeg(state.mEgr, true);
     var walk = NN.plan(G, A, B, 'walk', floods, state.avoidHot, null);
-    var near = function (p) { return METRO.st.map(function (s, i) { return { i: i, d: NN.dist(p.lat, p.lng, s[1], s[2]) }; }).sort(function (x, y) { return x.d - y.d; }).slice(0, 3); };
+    var nN = acc.v === 'walk' && egr.v === 'walk' ? 3 : 5;
+    var near = function (p) { return METRO.st.map(function (s, i) { return { i: i, d: NN.dist(p.lat, p.lng, s[1], s[2]) }; }).sort(function (x, y) { return x.d - y.d; }).slice(0, nN); };
     var na = near(A), nb = near(B), cands = [];
     na.forEach(function (a) { nb.forEach(function (b) {
       if (a.i === b.i) return;
-      cands.push({ a: a.i, b: b.i, est: (a.d + b.d) * 1.3 / 1.33 + METRO_WAIT + metroRideSecs(a.i, b.i) });
+      cands.push({ a: a.i, b: b.i, est: a.d * 1.3 / acc.sp + acc.extra + b.d * 1.3 / egr.sp + egr.extra + METRO_WAIT + metroRideSecs(a.i, b.i) });
     }); });
     cands.sort(function (x, y) { return x.est - y.est; });
     var best = null;
     cands.slice(0, 3).forEach(function (c) {
-      var l1 = NN.dist(A.lat, A.lng, METRO.st[c.a][1], METRO.st[c.a][2]) < 40 ? null : NN.plan(G, A, metroStPt(c.a), 'walk', floods, state.avoidHot, null);
-      var l2 = NN.dist(B.lat, B.lng, METRO.st[c.b][1], METRO.st[c.b][2]) < 40 ? null : NN.plan(G, metroStPt(c.b), B, 'walk', floods, state.avoidHot, null);
+      var l1 = NN.dist(A.lat, A.lng, METRO.st[c.a][1], METRO.st[c.a][2]) < 40 ? null : NN.plan(G, A, metroStPt(c.a), acc.v, floods, state.avoidHot, null);
+      var l2 = NN.dist(B.lat, B.lng, METRO.st[c.b][1], METRO.st[c.b][2]) < 40 ? null : NN.plan(G, metroStPt(c.b), B, egr.v, floods, state.avoidHot, null);
       if ((l1 && l1.error && l1.error !== 'same') || (l2 && l2.error && l2.error !== 'same')) return;
       var w1 = l1 && !l1.error ? l1.routes[l1.rec] : null, w2 = l2 && !l2.error ? l2.routes[l2.rec] : null;
+      var x1 = w1 ? acc.extra : 0, x2 = w2 ? egr.extra : 0;
       var ride = metroSlice(c.a, c.b), rideM = Math.abs(METRO.st[c.b][3] - METRO.st[c.a][3]);
       var r = { metro: true, a: c.a, b: c.b, w1: w1, w2: w2, ride: ride, rideM: rideM, rideSecs: metroRideSecs(c.a, c.b),
-        secs: (w1 ? w1.secs : 0) + METRO_WAIT + metroRideSecs(c.a, c.b) + (w2 ? w2.secs : 0),
+        acc: w1 ? acc : MLEG.walk, egr: w2 ? egr : MLEG.walk, x1: x1, x2: x2,
+        secs: (w1 ? w1.secs + x1 : 0) + METRO_WAIT + metroRideSecs(c.a, c.b) + (w2 ? w2.secs + x2 : 0),
         meters: (w1 ? w1.meters : 0) + rideM + (w2 ? w2.meters : 0),
         coords: (w1 ? w1.coords : [ride[0]]).concat(ride, w2 ? w2.coords : [ride[ride.length - 1]]),
         segs: (w1 ? w1.segs : []).concat(w2 ? w2.segs : []),
@@ -5463,43 +5575,52 @@ if (typeof module !== 'undefined') module.exports = NN;
         spots: (w1 ? w1.spots : []).concat(w2 ? w2.spots : []),
         labelAt: ride[Math.floor(ride.length / 2)] };
       r.worst = r.floods.reduce(function (m, x) { return Math.max(m, x.level); }, 0);
+      r.worst1 = w1 ? w1.worst : 0; r.worst2 = w2 ? w2.worst : 0;
       if (!best || r.secs < best.secs) best = r;
     });
     var walkR = walk.error ? null : walk.routes[walk.rec];
     if (!best) {
       if (walk.error) return walk;
-      walk.metroNote = 'Không tìm được đường đi bộ ra ga metro. Đây là đường đi bộ.'; return walk;
+      walk.metroNote = 'Không tìm được đường ra ga metro. Đây là đường đi bộ.'; return walk;
     }
     var walkA = NN.dist(A.lat, A.lng, METRO.st[best.a][1], METRO.st[best.a][2]), walkB = NN.dist(B.lat, B.lng, METRO.st[best.b][1], METRO.st[best.b][2]);
     if (walkR && walkR.secs <= best.secs) {
       walk.metroNote = 'Hai điểm gần nhau hoặc xa tuyến metro, đi bộ thẳng (' + fmtMin(walkR.secs) + ') nhanh hơn đi metro (' + fmtMin(best.secs) + ').';
       return walk;
     }
-    return { routes: [best], rec: 0, metro: true, far: Math.max(walkA, walkB) > 2500, walkAlt: walkR };
+    var vehAlt = null;
+    if (best.acc.v !== 'walk') { var vp = NN.plan(G, A, B, best.acc.v, floods, state.avoidHot, null); if (!vp.error) vehAlt = { secs: vp.routes[vp.rec].secs + best.acc.extra - (best.acc === MLEG.scooter ? best.acc.extra : 0), leg: best.acc }; }
+    return { routes: [best], rec: 0, metro: true, far: (best.acc.v === 'walk' && walkA > 2500) || (best.egr.v === 'walk' && walkB > 2500), walkAlt: best.acc.v === 'walk' ? walkR : null, vehAlt: vehAlt };
   }
   function metroLegHTML(ic, main, sub) {
     return '<li><span class="ml-ic ' + ic + '">' + (ic === 'walk'
       ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="3.6" r="1.8"/><path d="M12 7.5 9 13l3 2.5-2 6M12 7.5l3.5 4 3 1M9 13l-3 2M12 15.5l3 6"/></svg>'
+      : ic === 'bike' ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17" r="3"/><circle cx="18.5" cy="17" r="3"/><path d="M8.5 17h6l2-6h-4l-2 6M14 6h3l1.5 5"/></svg>'
+      : ic === 'car' ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v-4l2-5h12l2 5v4z"/><path d="M4 12h16"/><circle cx="7.5" cy="17.5" r="1.8"/><circle cx="16.5" cy="17.5" r="1.8"/></svg>'
       : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="14" rx="3.5"/><path d="M5 10h14M8.5 21.5l2-5M15.5 21.5l-2-5"/></svg>') +
       '</span><span><b>' + main + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span></li>';
   }
   function renderMetro(res) {
     var r = res.routes[0], A = METRO.st[r.a], Bs = METRO.st[r.b], n = Math.abs(r.b - r.a), h = '';
+    var chip = function (k, key, cur) { return '<button class="mchip" data-macc="' + k + '" data-mk="' + key + '" aria-pressed="' + (cur === key) + '">' + MLEG[key].short + '</button>'; };
+    h += '<div class="macc"><span>Ra ga</span><div class="mchips">' + ['walk', 'scooter', 'ride', 'taxi'].map(function (k) { return chip('acc', k, state.mAcc); }).join('') + '</div></div>' +
+      '<div class="macc"><span>Từ ga</span><div class="mchips">' + ['walk', 'ride', 'taxi'].map(function (k) { return chip('egr', k, state.mEgr === 'scooter' ? 'walk' : state.mEgr); }).join('') + '</div></div>';
     h += '<button class="rcard sel" data-r="0" aria-pressed="true"><div class="rhead"><div class="rname"><span class="swatch metro"></span>Metro số 1: ga ' + esc(A[0]) + ' → ga ' + esc(Bs[0]) + '</div>' +
       '<div class="rmeta">' + fmtMin(r.secs) + ' <small>· ' + fmtKm(r.meters) + '</small></div></div><ol class="mlegs">';
-    h += r.w1 ? metroLegHTML('walk', 'Đi bộ ' + fmtKm(r.w1.meters) + ' tới ga ' + esc(A[0]), fmtMin(r.w1.secs)) : metroLegHTML('walk', 'Vào ga ' + esc(A[0]), '');
+    h += r.w1 ? metroLegHTML(r.acc.ic, r.acc.verb + ' ' + fmtKm(r.w1.meters) + ' tới ga ' + esc(A[0]) + (r.acc === MLEG.scooter ? ', gửi xe ở ga' : ''), fmtMin(r.w1.secs + r.x1) + (r.acc.note ? ' · ' + r.acc.note : '')) : metroLegHTML('walk', 'Vào ga ' + esc(A[0]), '');
     h += metroLegHTML('train', 'Lên tàu hướng ' + metroDir(r.a, r.b) + ', đi ' + n + ' ga, xuống ga ' + esc(Bs[0]), 'Chờ tàu khoảng 5–10 phút · ngồi tàu ' + fmtMin(r.rideSecs));
-    h += r.w2 ? metroLegHTML('walk', 'Đi bộ ' + fmtKm(r.w2.meters) + ' tới nơi', fmtMin(r.w2.secs)) : metroLegHTML('walk', 'Ra ga là tới nơi', '');
+    h += r.w2 ? metroLegHTML(r.egr.ic, r.egr.verb + ' ' + fmtKm(r.w2.meters) + ' tới nơi', fmtMin(r.w2.secs + r.x2) + (r.egr.note ? ' · ' + r.egr.note : '')) : metroLegHTML('walk', 'Ra ga là tới nơi', '');
     h += '</ol>';
-    if (r.floods.length) h += '<div class="rnote">Đoạn đi bộ qua ' + r.floods.length + ' chỗ ngập:</div><ul class="flist">' + r.floods.slice(0, 4).map(floodRow).join('') + '</ul>';
-    else h += '<div class="rnote good">Đoạn đi bộ không qua chỗ đang ngập. Tàu chạy dưới hầm và trên cao nên không bị ngập.</div>';
-    if (r.worst >= 2) h += '<div class="xtra"><div><div class="warn"><b>' + esc(LEVELS[r.worst].name) + '.</b> ' + esc(NN.VEHICLES.walk.note) + '</div></div></div>';
+    if (r.floods.length) h += '<div class="rnote">Đoạn ra ga và về đích qua ' + r.floods.length + ' chỗ ngập:</div><ul class="flist">' + r.floods.slice(0, 4).map(floodRow).join('') + '</ul>';
+    else h += '<div class="rnote good">Đoạn ra ga và về đích không qua chỗ đang ngập. Tàu chạy dưới hầm và trên cao nên không bị ngập.</div>';
+    var wv = r.worst1 >= r.worst2 ? r.acc.v : r.egr.v;
+    if (r.worst >= 2) h += '<div class="xtra"><div><div class="warn"><b>' + esc(LEVELS[r.worst].name) + '.</b> ' + esc(NN.VEHICLES[wv].note) + '</div></div></div>';
     h += '</button>';
     if (!metroOpen()) h += '<div class="warn">Giờ này metro đã ngừng. Tàu chạy khoảng 5:00–22:00, 7–12 phút một chuyến.</div>';
-    if (res.far) h += '<div class="warn">Ga gần nhất còn khá xa để đi bộ. Có thể đi xe ôm hoặc xe máy ra ga (ga có chỗ gửi xe).</div>';
-    h += '<div class="route-acts"><button class="primary" id="nav-go"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 4 20l8-4 8 4z"/></svg>' + (r.w1 ? 'Đi bộ ra ga' : 'Bắt đầu đi') + '</button>' +
+    if (res.far) h += '<div class="warn">Ga còn khá xa để đi bộ. Chọn Xe máy, Xe ôm hoặc Taxi ở trên để ra ga nhanh hơn.</div>';
+    h += '<div class="route-acts"><button class="primary" id="nav-go"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 4 20l8-4 8 4z"/></svg>' + (r.w1 ? (r.acc.v === 'walk' ? 'Đi bộ ra ga' : 'Đi xe ra ga') : 'Bắt đầu đi') + '</button>' +
       '<button class="ghost" id="share-route"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"/></svg>Chia sẻ</button></div>';
-    h += '<div class="muted">Metro chạy khoảng 5:00–22:00. Thời gian ước tính đã gồm chờ tàu.' + (res.walkAlt ? ' Đi bộ thẳng mất ' + fmtMin(res.walkAlt.secs) + '.' : '') + '</div>';
+    h += '<div class="muted">Metro chạy khoảng 5:00–22:00. Thời gian ước tính đã gồm chờ tàu.' + (res.walkAlt ? ' Đi bộ thẳng mất ' + fmtMin(res.walkAlt.secs) + '.' : '') + (res.vehAlt ? ' ' + res.vehAlt.leg.verb + ' thẳng tới nơi mất khoảng ' + fmtMin(res.vehAlt.secs) + ' khi đường thông thoáng; giờ cao điểm hoặc trời mưa thì lâu hơn nhiều, còn metro thì không bị kẹt hay ngập.' : '') + '</div>';
     $('route-out').innerHTML = h;
   }
   function metroRideShow(r) {
@@ -5509,7 +5630,7 @@ if (typeof module !== 'undefined') module.exports = NN;
   function runRoute(fit) {
     if (typeof nav !== 'undefined' && nav.on) { lastFloodKey = floodKey(); navFloodCheck(true); return; }   // đang dẫn đường: tự xử lý đổi tuyến
     if (!G || !state.A || !state.B) return;
-    var res = state.vehicle === 'metro' ? metroPlan(state.A, state.B, floodsNow()) : NN.plan(G, state.A, state.B, state.vehicle, floodsNow(), state.avoidHot, null);
+    var res = state.vehicle === 'metro' ? metroPlan(state.A, state.B, floodsNow()) : state.via.length ? planVia(state.A, state.via, state.B, state.vehicle, floodsNow(), null) : NN.plan(G, state.A, state.B, state.vehicle, floodsNow(), state.avoidHot, null);
     var out = $('route-out');
     if (res.error) {
       clearRoute();
@@ -5520,6 +5641,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     }
     state.result = res; state.sel = res.rec;
     lastFloodKey = floodKey();
+    setTimeout(viaSync, 0);
     if (map.getSource('routes')) map.removeFeatureState({ source: 'routes' });
     labelsFor = null;
     drawRoutes(true); renderRoute();
@@ -5576,6 +5698,12 @@ if (typeof module !== 'undefined') module.exports = NN;
   $('route-out').addEventListener('click', function (e) {
     if (e.target.closest('#nav-go')) { navStart(); return; }
     if (e.target.closest('#nav-preview')) { navStart(true); return; }
+    if (e.target.closest('#via-clear')) { state.via = []; runRoute(false); return; }
+    var mc = e.target.closest('[data-macc]');
+    if (mc) {
+      if (mc.dataset.macc === 'acc') { state.mAcc = mc.dataset.mk; lsSet('nn-macc', state.mAcc); } else { state.mEgr = mc.dataset.mk; lsSet('nn-megr', state.mEgr); }
+      runRoute(false); return;
+    }
     if (e.target.closest('#share-route')) { shareRoute(); return; }
     var c = e.target.closest('[data-r]'); if (!c || !state.result) return;
     selectRoute(+c.dataset.r);
@@ -5762,7 +5890,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     var box = $('ai-box'), f = ai.feed; if (!f) { box.hidden = true; return; }
     var list = aiFloods(), st = f.stats || {}, upd = (+f.updated_ts || 0) * 1000;
     var stale = Date.now() - upd > 40 * 60000;
-    var modeTxt = { rain: 'đang mưa nên xem tất cả camera', all: 'xem tất cả camera', 'after-rain': 'vừa tạnh mưa, 20 phút xem lại một lần', 'dry-hotspots': 'trời khô, chỉ xem camera ở điểm hay ngập', reports: 'xem camera gần chỗ người đi đường báo', tide: 'triều cao, xem camera ở các điểm hay ngập do triều', idle: 'chờ lượt xem tiếp theo' }[f.mode] || '';
+    var modeTxt = { rain: 'đang mưa nên xem tất cả camera', all: 'xem tất cả camera', 'after-rain': 'vừa tạnh mưa, 20 phút xem lại một lần', 'rain-zone': 'đang mưa, xem camera trong vùng mưa và điểm hay ngập (30 phút xem toàn bộ một lần)', 'dry-hotspots': 'trời khô, chỉ xem camera ở điểm hay ngập', reports: 'xem camera gần chỗ người đi đường báo', tide: 'triều cao, xem camera ở các điểm hay ngập do triều', idle: 'chờ lượt xem tiếp theo' }[f.mode] || '';
     var status = upd ? (st.classified ? 'AI xem ' + st.classified + ' camera lúc ' + hhmm(upd) : 'Cập nhật lúc ' + hhmm(upd)) + '.' : '';
     if (!upd) status = 'Bộ quét AI chưa chạy lần nào.';
     else if (stale) status = 'Chưa có lượt xem camera mới từ ' + hhmm(upd) + '. Kết quả có thể đã cũ.';
@@ -7217,8 +7345,8 @@ if (typeof module !== 'undefined') module.exports = NN;
     var pvRes = res, pvSel = state.sel;
     if (popup) popup.remove(); closeShelter(); if (!$('report-card').hidden) closeReport();
     var mt = r.metro ? r : null;
-    nav = { on: true, t0: Date.now(), mine: !!(state.A && state.A.mine), startPt: state.A, voice: lsGet('nn-voice', true), follow: true, dest: mt ? metroStPt(mt.a) : state.B,
-      vehicle: state.vehicle === 'metro' ? 'walk' : state.vehicle, warned: {}, lastRe: 0, wake: null, good: false, acc: null, offCount: 0, compass: null, metro: mt, metroStage: 1,
+    nav = { via: state.vehicle === 'metro' ? [] : state.via.slice(), on: true, t0: Date.now(), mine: !!(state.A && state.A.mine), startPt: state.A, voice: lsGet('nn-voice', true), follow: true, dest: mt ? metroStPt(mt.a) : state.B,
+      vehicle: mt ? mt.acc.v : state.vehicle === 'metro' ? 'walk' : state.vehicle, warned: {}, lastRe: 0, wake: null, good: false, acc: null, offCount: 0, compass: null, metro: mt, metroStage: 1,
       preview: !!preview, pvRes: pvRes, pvSel: pvSel };
     if (preview) nav.voice = false;               // xem trước mặc định im lặng, bấm loa để nghe thử chỉ dẫn
     if (!preview) compassStart();
@@ -7250,9 +7378,9 @@ if (typeof module !== 'undefined') module.exports = NN;
     var say = (atStart ? '' : 'Đã tới ga ' + METRO.st[mt.a][0] + '. ') + 'Lên tàu hướng ' + metroDir(mt.a, mt.b) + ', đi ' + n + ' ga, xuống ở ga ' + Bs[0] + '.';
     if (!mt.w2) { toast(say + ' Ra khỏi ga là tới nơi.', 8000); if (atStart) { nav.on = false; return; } speak(say + ' Ra khỏi ga là tới nơi.'); navEnd(false); return; }
     speak(say);
-    nav.mine = false; nav.joined = false; nav.preFit = false; nav.startPt = metroStPt(mt.b); nav.dest = state.B;
+    nav.mine = false; nav.joined = false; nav.preFit = false; nav.startPt = metroStPt(mt.b); nav.dest = state.B; nav.vehicle = mt.egr.v;
     navSetRoute(mt.w2);
-    var rest = METRO_WAIT + mt.rideSecs + mt.w2.secs;
+    var rest = METRO_WAIT + mt.rideSecs + mt.w2.secs + (mt.x2 || 0);
     $('nav-eta').textContent = 'Tới lúc ' + hhmm(Date.now() + rest * 1000);
     $('nav-left').textContent = fmtMin(rest) + ' · ' + fmtKm(mt.rideM + mt.w2.meters);
     if (!atStart && nav.pos) navPreStart(nav.pos);
@@ -7368,6 +7496,7 @@ if (typeof module !== 'undefined') module.exports = NN;
   function navFix(lat, lng, heading, demo, acc) {
     if (!nav.on) return;
     nav.pos = { lat: lat, lng: lng };
+    if (nav.via && nav.via.length && NN.dist(lat, lng, nav.via[0].lat, nav.via[0].lng) < 60) nav.via.shift();   // đã đi qua điểm kéo tới
     var loc = NN.locateOnRoute(G, nav.r, lat, lng, nav.k);
     if (!loc) return;
     // lệch khỏi tuyến (quá cả sai số GPS) 3 lần liền thì tìm đường mới từ chỗ đang đứng
@@ -7388,7 +7517,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     $('nav-street').textContent = navLine(m);
     $('nav-then').textContent = nx && m.type !== 'arrive' && m.len < 250 ? 'Rồi ' + (nx.type === 'arrive' ? 'tới nơi' : navLine(nx).charAt(0).toLowerCase() + navLine(nx).slice(1)) : '';
     var left = Math.max(0, nav.r.meters - nav.along), secs = nav.r.secs * left / Math.max(1, nav.r.meters);
-    if (nav.metro && nav.metroStage === 1) { secs += METRO_WAIT + nav.metro.rideSecs + (nav.metro.w2 ? nav.metro.w2.secs : 0); left += nav.metro.rideM + (nav.metro.w2 ? nav.metro.w2.meters : 0); }
+    if (nav.metro && nav.metroStage === 1) { secs += METRO_WAIT + nav.metro.rideSecs + (nav.metro.w2 ? nav.metro.w2.secs + (nav.metro.x2 || 0) : 0) + (nav.metro.acc === MLEG.scooter ? nav.metro.x1 : 0); left += nav.metro.rideM + (nav.metro.w2 ? nav.metro.w2.meters : 0); }
     secs += nav.jamDelay || 0;
     $('nav-eta').textContent = nav.preview ? 'Còn ' + fmtKm(left) : 'Tới lúc ' + hhmm(Date.now() + secs * 1000);
     $('nav-left').textContent = nav.preview ? '≈ ' + fmtMin(secs) : fmtMin(secs) + ' · ' + fmtKm(left);
@@ -7441,7 +7570,8 @@ if (typeof module !== 'undefined') module.exports = NN;
   function navReroute(why, f) {
     if (!nav.on || (!nav.pos && !nav.startPt)) return;
     nav.lastRe = Date.now();
-    var res = NN.plan(G, nav.joined ? nav.pos : (nav.startPt || nav.pos), nav.dest, nav.vehicle, floodsNow(), state.avoidHot, navJamCong());
+    var from0 = nav.joined ? nav.pos : (nav.startPt || nav.pos);
+    var res = nav.via && nav.via.length ? planVia(from0, nav.via, nav.dest, nav.vehicle, floodsNow(), navJamCong()) : NN.plan(G, from0, nav.dest, nav.vehicle, floodsNow(), state.avoidHot, navJamCong());
     if (res.error) { if (f) nav.warned[f.id] = 'rerouted'; return; }
     var r = res.routes[res.rec], V = NN.VEHICLES[nav.vehicle];
     if (f) {
@@ -7525,7 +7655,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     }
     function best() {
       var cong = navJamCong();
-      var res = NN.plan(G, nav.pos, nav.dest, nav.vehicle, floodsNow(), state.avoidHot, cong);
+      var res = nav.via && nav.via.length ? planVia(nav.pos, nav.via, nav.dest, nav.vehicle, floodsNow(), cong) : NN.plan(G, nav.pos, nav.dest, nav.vehicle, floodsNow(), state.avoidHot, cong);
       if (res.error) return null;
       var r = res.routes[res.rec];
       if (r.worst >= V.bad) return null;                       // đường né kẹt lại đi qua chỗ ngập sâu: không đổi
