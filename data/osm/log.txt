@@ -1,0 +1,14 @@
+09:14:58   thử https://overpass-api.de/api/interpreter HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">\n<html xmlns="http://www.w3.org/1999/xhtml" xml:'
+09:15:25 restrict 36389 mục 35 giây, 8500529 byte
+09:15:42 turns 1719 mục 2 giây, 214913 byte
+09:16:05   thử https://overpass-api.de/api/interpreter HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">\n<html xmlns="http://www.w3.org/1999/xhtml" xml:'
+09:16:31 stops LỖI XỬ LÝ Traceback (most recent call last):
+  File "/home/runner/work/ne-ngap/ne-ngap/scanner/osm_extra.py", line 65, in main
+    one(name, summary)
+  File "/home/runner/work/ne-ngap/ne-ngap/scanner/osm_extra.py", line 98, in one
+    out = [{"id": e["id"], "ll": [rc(e["lon"]), rc(e["lat"])], "t": {k: v for k, v in e.get("tags", {}).items() if k in ("name", "route_ref", "ref", "shelter", "bench", "public_transport", "highway")}} for e in els if e["type"] == "node"]
+                                     ~^^^^^^^
+KeyError: 'lon'
+
+09:16:39   thử https://overpass-api.de/api/interpreter HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">\n<html xmlns="http://www.w3.org/1999/xhtml" xml:'
+09:17:07 bus 349 mục 36 giây, 94225 byte

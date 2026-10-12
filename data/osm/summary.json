@@ -1,0 +1,21 @@
+{
+ "fetched": 1791796490,
+ "restrict": {
+  "n": 36389,
+  "secs": 35,
+  "bytes": 8500529
+ },
+ "turns": {
+  "n": 1719,
+  "secs": 2,
+  "bytes": 214913
+ },
+ "stops": {
+  "error": "KeyError('lon')"
+ },
+ "bus": {
+  "n": 349,
+  "secs": 36,
+  "bytes": 94225
+ }
+}
