@@ -1,0 +1,31 @@
+name: Tải biển cấm và xe buýt từ OpenStreetMap
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 20 * * 0'      # 3 giờ sáng thứ Hai (giờ Việt Nam) mỗi tuần cập nhật lại
+
+permissions:
+  contents: write
+
+jobs:
+  osm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install requests
+      - name: Tải dữ liệu
+        run: python scanner/osm_extra.py
+      - name: Lưu vào repo
+        run: |
+          git config user.name "ne-ngap-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/osm
+          if git diff --cached --quiet; then echo "Không có gì mới."; exit 0; fi
+          git commit -m "Cập nhật biển cấm và xe buýt từ OpenStreetMap"
+          for i in 1 2 3; do git pull --rebase -X theirs && git push && exit 0; sleep 5; done
+          exit 1
