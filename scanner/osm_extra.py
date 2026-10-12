@@ -19,7 +19,7 @@ COND = [t + ":conditional" for t in ["access", "vehicle", "motor_vehicle", "moto
 Q = {
     "restrict": f'[out:json][timeout:600];way[highway]({BB})[~"^({"|".join(TAGS + COND)})$"~"."];out tags geom;',
     "turns": f'[out:json][timeout:600];relation[type=restriction]({BB});out tags geom;',
-    "stops": f'[out:json][timeout:600];(node[highway=bus_stop]({BB});node[public_transport=platform][bus=yes]({BB});node[public_transport=stop_position][bus=yes]({BB}););out tags;',
+    "stops": f'[out:json][timeout:600];(node[highway=bus_stop]({BB});node[public_transport=platform][bus=yes]({BB});node[public_transport=stop_position][bus=yes]({BB}););out body;',
     "bus": f'[out:json][timeout:900];relation[type=route][route=bus]({BB});out tags geom;',
 }
 
@@ -95,7 +95,7 @@ def one(name, summary):
                         mem.append({"r": m["role"], "g": geom(m)})
                 out.append({"id": e["id"], "t": e.get("tags", {}), "m": mem})
         elif name == "stops":
-            out = [{"id": e["id"], "ll": [rc(e["lon"]), rc(e["lat"])], "t": {k: v for k, v in e.get("tags", {}).items() if k in ("name", "route_ref", "ref", "shelter", "bench", "public_transport", "highway")}} for e in els if e["type"] == "node"]
+            out = [{"id": e["id"], "ll": [rc(e["lon"]), rc(e["lat"])], "t": {k: v for k, v in e.get("tags", {}).items() if k in ("name", "route_ref", "ref", "shelter", "bench", "public_transport", "highway")}} for e in els if e["type"] == "node" and "lon" in e]
         else:  # bus
             out = []
             for e in els:
