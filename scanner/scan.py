@@ -89,7 +89,7 @@ Each image is preceded by its camera number. For EVERY camera, report:
   4 = water at a motorbike seat or higher, over 50 cm.
   Only give level 1 or more if you can actually see a water surface with depth on the road (wakes or spray from moving vehicles, submerged curbs, lane markings or wheels). If the only evidence is shine or reflection, the level is 0. When unsure between two levels, choose the lower one, and set confidence below 0.6 whenever you are not sure.
 - confidence: 0 to 1, how sure you are of the level.
-- raining: true only if rain is visibly falling right now: rain streaks (especially under street lights), droplets on the lens, splashes or rings on puddles, or most riders in raincoats or under umbrellas on a wet road. A dry road, or a wet road with no sign of falling rain, is false.
+- raining: true only if rain is visibly falling right now: rain streaks in the air (especially under street lights), fresh drops hitting the lens, or splashes and rings on puddles. In Ho Chi Minh City people keep raincoats on long after the rain stops, and roads stay wet for an hour, so raincoats, umbrellas, a wet or shiny road, or old droplets dried on the lens are NOT enough on their own. A dry road, or a wet road with no rain visibly falling, is false.
 - note: at most 15 words in Vietnamese describing what you see (e.g. "Nước ngập nửa bánh xe máy, xe đi chậm").
 Call the report_cameras tool once with one entry per camera number."""
 
@@ -608,7 +608,7 @@ def kttv_radar(http, state=None):
             g, mw, mh = mm10_grid(Image.open(io.BytesIO(mb)), open_k=5)
             mx, n, mcells = mm10_hcm(g, mw, mh)
             mg = (g, mw, mh)
-            mm = {"file": mf, "size": [mw, mh], "max": mx, "px": n, "cells": [c for c in mcells if c[2] >= 1][:300]}
+            mm = {"file": mf, "size": [mw, mh], "max": mx, "px": n, "cells": [c for c in mcells if c[2] >= 1][:300], "_all": [c for c in mcells if c[2] >= 0.3]}
             log(f"Lượng mưa của Đài (mm/10 phút) lúc {iso(t)}: lớn nhất {mx} mm, {n} ô ~1,2 km có từ 1 mm trở lên (ảnh {mw}x{mh})")
         except Exception as e:
             log("Không lấy được lớp mm/10 phút của Đài:", repr(e)[:200])
@@ -1170,6 +1170,47 @@ def learn_clutter(state, rd, dry):
     state["clutter"] = {"w": box[0], "v": [round(a * 0.85 + h * 0.15, 3) for a, h in zip(v, hits)]}
 
 
+RAIN_HALF_MIN = 45        # lượng mưa cộng dồn giảm một nửa sau 45 phút (nước rút dần qua cống)
+
+
+def rain_accumulate(state, rd, raining, ts):
+    """Cộng dồn lượng mưa đo thật (radar Đài KTTV, mm/10 phút) theo ô ~1,1 km, giảm dần theo thời gian.
+    Trang web dùng số này để ước tính chỗ hay ngập đang ngập, thay cho mô hình dự báo (thường báo thấp hơn nhiều lần).
+    Trả về [[vĩ độ, kinh độ, mm cộng dồn, mm/giờ lúc này], ...] cho các ô từ 2 mm trở lên."""
+    acc = state.setdefault("rain_acc", {})
+    now_mmh = {}
+    last = state.get("rain_acc_t") or ts
+    k = 0.5 ** (max(0.0, ts - last) / 60.0 / RAIN_HALF_MIN)
+    for key in list(acc):
+        acc[key] = round(acc[key] * k, 2)
+        if acc[key] < 0.3:
+            del acc[key]
+    state["rain_acc_t"] = ts
+    mm = (rd or {}).get("mm10") or {}
+    allc = mm.pop("_all", None) if mm else None
+    if rd and raining and rd.get("time") and rd.get("time") != state.get("rain_acc_rt"):
+        prev = state.get("rain_acc_rt") or (rd["time"] - 600)
+        f = max(1.0, min(3.0, (rd["time"] - prev) / 600.0))          # số khung 10 phút đã trôi qua (bù lượt quét bị trễ)
+        add = {}
+        if allc:
+            for la, lo, v in allc:
+                key = f"{la:.2f},{lo:.2f}"; add[key] = max(add.get(key, 0.0), float(v))
+        else:                                                           # không có lớp mm/10 phút: quy đổi từ độ phản hồi radar
+            for la, lo, mmh in rd.get("cells", []):
+                key = f"{la:.2f},{lo:.2f}"; add[key] = max(add.get(key, 0.0), float(mmh) / 6.0)
+        for key, v in add.items():
+            acc[key] = round(acc.get(key, 0.0) + v * f, 2)
+            now_mmh[key] = round(v * 6, 1)
+        state["rain_acc_rt"] = rd["time"]
+    out = []
+    for key, e in acc.items():
+        if e >= 2:
+            la, lo = key.split(",")
+            out.append([float(la), float(lo), round(e, 1), now_mmh.get(key, 0.0)])
+    out.sort(key=lambda x: -x[2])
+    return out[:2500]
+
+
 def veto_radar(rd, pts, state=None):
     """Bỏ các ô radar trong bán kính 2,5 km quanh camera AI vừa thấy trời khô; vẽ lại ảnh radar cho khớp."""
     if not pts:
@@ -1185,6 +1226,7 @@ def veto_radar(rd, pts, state=None):
     rd["cells"] = [c for c in rd.get("cells", []) if not near(c[0], c[1])]
     if rd.get("mm10"):
         rd["mm10"]["cells"] = [c for c in rd["mm10"].get("cells", []) if not near(c[0], c[1])]
+        rd["mm10"]["_all"] = [c for c in rd["mm10"].get("_all", []) if not near(c[0], c[1])]
         rd["mm10"]["max"] = max([c[2] for c in rd["mm10"]["cells"]] or [0])
     mx = max([c[2] for c in rd["cells"]] or [0])
     k = len(rd["cells"]) / max(1, before)
@@ -1547,6 +1589,9 @@ def main():
     tide_high = max(w["tide"] or 0, w["tide_warn"]) >= 1.45
     if w["tide_warn"]:
         log(f"Tin triều cường: mực nước quanh đỉnh khoảng {w['tide_warn']} m")
+    w["rain_acc"] = rain_accumulate(state, rd, raining, ts)
+    if w["rain_acc"]:
+        log(f"Mưa cộng dồn (radar): {len(w['rain_acc'])} ô từ 2 mm, nhiều nhất {w['rain_acc'][0][2]} mm")
     if raining:
         state["last_rain"] = ts
     if raining or tide_high:
