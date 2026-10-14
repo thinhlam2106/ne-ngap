@@ -1333,7 +1333,7 @@ body.nav .lm .lm-name { display: none; }
       <div class="cc-row"><span>Thực hiện</span><b>Nhóm Nhóm</b></div>
       <div class="cc-row"><span>Dữ liệu</span><div>Radar Đài KTTV khu vực Nam Bộ, Phòng CSGT Công an TP.HCM, camera giao thông TP.HCM, OpenStreetMap, Open-Meteo, TomTom</div></div>
       <div class="cc-row"><span>Đường dây nóng</span><b>0326 08 08 08</b></div>
-      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">14/10 · bản 10:42</span></div>
+      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">14/10 · bản 10:51</span></div>
     </div>
   </div>
   <button class="zen-btn" id="zen-btn" aria-pressed="false" aria-label="Ẩn bảng để xem trọn bản đồ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Ẩn bảng</span></button>
@@ -1414,7 +1414,7 @@ body.nav .lm .lm-name { display: none; }
           <div><a class="src" href="https://giaothong.hochiminhcity.gov.vn/" target="_blank" rel="noopener">Xem camera giao thông trực tiếp của TP.HCM</a></div>
         </div>
       </details>
-      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 14/10 · bản 10:42.</span></div>
+      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 14/10 · bản 10:51.</span></div>
     </section>
 
     <!-- Chỉ đường -->
@@ -7789,10 +7789,13 @@ if (typeof module !== 'undefined') module.exports = NN;
         if (!lv) return;
         var cs = ((f.coordinates || {}).coordinate || []).map(function (c) { return [c.longitude, c.latitude]; });
         if (cs.length < 2 || dPoly(x.p, cs) > 25) return;          // TomTom trả về đường khác (đường lớn gần đó): bỏ
-        segs.push({ cs: cs, lv: lv, delay: Math.max(0, (f.currentTravelTime || 0) - (f.freeFlowTravelTime || 0)) });
+        var key = cs[0].join() + '>' + cs[cs.length - 1].join();
+        if (segs.some(function (o) { return o.key === key; })) return;           // nhiều điểm hỏi trúng cùng một đoạn: chỉ lấy một lần
+        segs.push({ key: key, cs: cs, lv: lv, cur: Math.max(3, +f.currentSpeed || 0), ff: Math.max(5, +f.freeFlowSpeed || 0), closed: !!f.roadClosure });
       });
       res.routes.forEach(function (r, ri) {
-        var lvAt = r.coords.map(function (c) { var b = 0; segs.forEach(function (sg) { if (sg.lv > b && dPoly(c, sg.cs) <= 20) b = sg.lv; }); return b; });
+        var segAt = r.coords.map(function (c) { var b = null; segs.forEach(function (sg) { if ((!b || sg.lv > b.lv) && dPoly(c, sg.cs) <= 20) b = sg; }); return b; });
+        var lvAt = segAt.map(function (sg) { return sg ? sg.lv : 0; });
         var run = null;
         for (var k = 0; k < r.coords.length - 1; k++) {
           var lv = Math.min(lvAt[k], lvAt[k + 1]) || 0;
@@ -7800,8 +7803,15 @@ if (typeof module !== 'undefined') module.exports = NN;
           else { if (run) trafFeats.push(run); run = lv ? { ri: ri, lv: lv, cs: [r.coords[k], r.coords[k + 1]] } : null; }
         }
         if (run) trafFeats.push(run);
-        var used = segs.filter(function (sg) { return sg.cs.some(function (c) { return dPoly(c, r.coords) <= 20; }); });
-        r.trafDelay = used.reduce(function (m, sg) { return m + sg.delay; }, 0);
+        // thời gian chậm thêm: chỉ trên đúng phần tuyến bị kẹt, theo tốc độ thật so với tốc độ bình thường của đoạn đó
+        r.trafDelay = 0;
+        for (var e = 0; e < r.coords.length - 1; e++) {
+          var sg = segAt[e] && segAt[e + 1] ? (segAt[e].lv <= segAt[e + 1].lv ? segAt[e] : segAt[e + 1]) : null;
+          if (!sg || sg.closed) continue;
+          var L = NN.dist(r.coords[e][1], r.coords[e][0], r.coords[e + 1][1], r.coords[e + 1][0]);
+          r.trafDelay += Math.max(0, L / (sg.cur / 3.6) - L / (sg.ff / 3.6));
+        }
+        r.trafDelay = Math.min(r.trafDelay, r.secs * 2.5);                     // chặn số vô lý nếu TomTom trả tốc độ lỗi
         // thời gian tính cả kẹt xe, như Google Maps: sửa số trên thẻ tuyến và nhãn trên bản đồ
         var card = document.querySelector('#route-out .rcard[data-r="' + ri + '"] .rmeta');
         var mins = Math.round(r.trafDelay / 60);
