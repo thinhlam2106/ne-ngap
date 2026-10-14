@@ -1332,7 +1332,7 @@ body.nav .lm .lm-name { display: none; }
       <div class="cc-row"><span>Thực hiện</span><b>Nhóm Nhóm</b></div>
       <div class="cc-row"><span>Dữ liệu</span><div>Radar Đài KTTV khu vực Nam Bộ, Phòng CSGT Công an TP.HCM, camera giao thông TP.HCM, OpenStreetMap, Open-Meteo, TomTom</div></div>
       <div class="cc-row"><span>Đường dây nóng</span><b>0326 08 08 08</b></div>
-      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">14/10 · bản 10:25</span></div>
+      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">14/10 · bản 10:32</span></div>
     </div>
   </div>
   <button class="zen-btn" id="zen-btn" aria-pressed="false" aria-label="Ẩn bảng để xem trọn bản đồ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Ẩn bảng</span></button>
@@ -1413,7 +1413,7 @@ body.nav .lm .lm-name { display: none; }
           <div><a class="src" href="https://giaothong.hochiminhcity.gov.vn/" target="_blank" rel="noopener">Xem camera giao thông trực tiếp của TP.HCM</a></div>
         </div>
       </details>
-      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 14/10 · bản 10:25.</span></div>
+      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 14/10 · bản 10:32.</span></div>
     </section>
 
     <!-- Chỉ đường -->
@@ -7781,7 +7781,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     if (map.getLayer('tt-flow')) { map.setLayoutProperty('tt-flow', 'visibility', on ? 'visible' : 'none'); return; }
     if (!on || !ttKey()) return;
     map.addSource('tt-flow', { type: 'raster', tileSize: 256, maxzoom: 18, attribution: 'Giao thông: TomTom',
-      tiles: ['https://api.tomtom.com/traffic/map/4/tile/flow/relative0/{z}/{x}/{y}.png?tileSize=256&thickness=6&key=' + encodeURIComponent(ttKey())] });
+      tiles: ['https://api.tomtom.com/traffic/map/4/tile/flow/relative/{z}/{x}/{y}.png?tileSize=256&thickness=6&key=' + encodeURIComponent(ttKey())] });
     map.addLayer({ id: 'tt-flow', type: 'raster', source: 'tt-flow', paint: { 'raster-opacity': 0.9 } }, map.getLayer('route-alt') ? 'route-alt' : undefined);
   }
   // TomTom trả lỗi (khoá hết hạn, hết lượt miễn phí, chưa bật dịch vụ giao thông): báo ngay dưới ô chọn, không im lặng
