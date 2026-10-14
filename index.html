@@ -1199,6 +1199,7 @@ html.has-cur, html.has-cur * { cursor: none !important; }
 .wl-mini { padding: 6px 0; border-top: 1px solid rgba(6,46,107,.08); line-height: 1.4; color: var(--ink); }
 .wl-mini .wl-k { font-size: 11px; }
 .wl-mini a { color: var(--lam); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.rnote.rain { color: #1D5FA8; background: rgba(4,118,214,.08); border-radius: 10px; padding: 6px 9px; margin-top: 4px; }
 .obs { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; padding: 7px 9px; border-radius: 10px; background: rgba(44,91,201,.08); font-size: 12.5px; line-height: 1.4; color: var(--ink); }
 .obs a { color: var(--lam); font-weight: 600; white-space: nowrap; }
 
@@ -1331,7 +1332,7 @@ body.nav .lm .lm-name { display: none; }
       <div class="cc-row"><span>Thực hiện</span><b>Nhóm Nhóm</b></div>
       <div class="cc-row"><span>Dữ liệu</span><div>Radar Đài KTTV khu vực Nam Bộ, Phòng CSGT Công an TP.HCM, camera giao thông TP.HCM, OpenStreetMap, Open-Meteo, TomTom</div></div>
       <div class="cc-row"><span>Đường dây nóng</span><b>0326 08 08 08</b></div>
-      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">12/10 · bản 20:35</span></div>
+      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">14/10 · bản 10:25</span></div>
     </div>
   </div>
   <button class="zen-btn" id="zen-btn" aria-pressed="false" aria-label="Ẩn bảng để xem trọn bản đồ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Ẩn bảng</span></button>
@@ -1412,7 +1413,7 @@ body.nav .lm .lm-name { display: none; }
           <div><a class="src" href="https://giaothong.hochiminhcity.gov.vn/" target="_blank" rel="noopener">Xem camera giao thông trực tiếp của TP.HCM</a></div>
         </div>
       </details>
-      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 12/10 · bản 20:35.</span></div>
+      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 14/10 · bản 10:25.</span></div>
     </section>
 
     <!-- Chỉ đường -->
@@ -4409,10 +4410,24 @@ var NN = (function () {
     return o;
   }
   // Trả về danh sách điểm có thể đang ngập, mức theo bánh xe
-  function estimate(G, rain, tide) {
+  // racc: lượng mưa cộng dồn đo bằng radar Đài KTTV do bộ quét gửi về, [[vĩ độ, kinh độ, mm cộng dồn, mm/giờ lúc này], ...]
+  // (mô hình dự báo thường báo thấp hơn mưa thật nhiều lần, nên lấy số lớn hơn giữa hai nguồn)
+  function radarAt(racc, lat, lng) {
+    var best = null;
+    for (var i = 0; i < racc.length; i++) {
+      var c = racc[i];
+      if (Math.abs(c[0] - lat) > 0.012 || Math.abs(c[1] - lng) > 0.012) continue;
+      if (dist(lat, lng, c[0], c[1]) > 1200) continue;
+      if (!best || c[2] > best[2]) best = c;
+    }
+    return best;
+  }
+  function estimate(G, rain, tide, racc) {
     var out = [];
     G.spots.forEach(function (sp) {
       var r = rain ? nearestRain(rain, sp.lat, sp.lng) : null;
+      var rc = racc && racc.length ? radarAt(racc, sp.lat, sp.lng) : null;
+      if (rc && (!r || rc[2] > r.eff)) r = { now: rc[3] || 0, eff: rc[2], last1h: rc[2], last3h: rc[2], next1h: r ? r.next1h : 0, radar: true };
       var rl = r ? stepLevel(r.eff, RAIN_STEPS) : 0;
       var tl = (tide && sp.c === 2) ? stepLevel(tide.now, TIDE_STEPS) : 0;
       // Triều cao một mình không đủ để nói "đang ngập": số triều lấy ngoài cửa biển, còn đường phố
@@ -4440,7 +4455,7 @@ var NN = (function () {
   return {
     LEVELS: LEVELS, SPEED: SPEED, TTL_MS: TTL_MS, build: build, attachPlaces: attachPlaces, attachSpots: attachSpots,
     plan: plan, snap: snap, congestion: congestion, attachCams: attachCams, camsNear: camsNear, geocode: geocode,  parseAddress: parseAddress, placeName: placeName, areaLabel: areaLabel,
-    spotsNear: spotsNear, searchSpots: searchSpots, rainGrid: rainGrid, parseRain: parseRain, parseTide: parseTide, estimate: estimate, nearestRain: nearestRain, RAIN_STEPS: RAIN_STEPS, TIDE_STEPS: TIDE_STEPS, status: status, dist: dist, norm: norm, floodsOnRoute: floodsOnRoute,
+    spotsNear: spotsNear, searchSpots: searchSpots, rainGrid: rainGrid, parseRain: parseRain, parseTide: parseTide, estimate: estimate, nearestRain: nearestRain, radarAt: radarAt, RAIN_STEPS: RAIN_STEPS, TIDE_STEPS: TIDE_STEPS, status: status, dist: dist, norm: norm, floodsOnRoute: floodsOnRoute,
     VEHICLES: VEHICLES, maneuvers: maneuvers, locateOnRoute: locateOnRoute, bearing: bearing, shelters: shelters, route: route, floodFactors: floodFactors, jamCong: jamCong, routeSecs: routeSecs
   };
 })();
@@ -5660,7 +5675,9 @@ if (typeof module !== 'undefined') module.exports = NN;
         '<div class="rmeta">' + fmtMin(r.secs) + ' <small>· ' + fmtKm(r.meters) + '</small></div></div>';
       if (tags.length) h += '<div class="row">' + tags.join('') + '</div>';
       if (r.floods.length) h += '<div class="rnote">Đi qua ' + r.floods.length + ' chỗ ngập:</div><ul class="flist">' + r.floods.slice(0, 4).map(floodRow).join('') + '</ul>';
-      else h += '<div class="rnote good">Không qua chỗ đang ngập.</div>';
+      var rr = routeRain(r);
+      if (!r.floods.length) h += rr ? '<div class="rnote">Chưa thấy chỗ ngập trên đường.</div>' : '<div class="rnote good">Không qua chỗ đang ngập.</div>';
+      h += rainNote(rr);
       var quiet = r.spots.filter(function (sp) { return !estIds[sp.id]; }), extra = '';
       if (quiet.length) {
         var nm = []; quiet.forEach(function (sp) { if (nm.indexOf(sp.s) < 0) nm.push(sp.s); });
@@ -5861,6 +5878,7 @@ if (typeof module !== 'undefined') module.exports = NN;
       return { type: 'Feature', properties: { id: d.id, level: d.level }, geometry: { type: 'Point', coordinates: [d.lng, d.lat] } };
     }) });
     syncMine(); renderAI(); radarAuto(); updateRainLegend(); renderCamRain(); renderWarnings();
+    if (G && !live.sim) computeEst();
     if (live.rainRaw || live.sim) computeEst(); else { updateCount(); refreshTraffic(); renderNow(); }
     if (nav.on) navFloodCheck(true);
     else if (state.result && floodKey() !== lastFloodKey) runRoute(false);
@@ -5974,6 +5992,36 @@ if (typeof module !== 'undefined') module.exports = NN;
   function validUpd(x) {
     if (!x || typeof x.r !== 'string' || (x.k !== 'still' && x.k !== 'gone') || !isFinite(+x.at)) return null;
     return { r: x.r, k: x.k, at: +x.at, by: typeof x.by === 'string' ? x.by : null };
+  }
+  // Mưa trên tuyến đường: lấy từ radar Đài KTTV (lượt quét gần nhất, trong vòng 40 phút), đo dọc tuyến mỗi ~150 m
+  function radarNow() {
+    var f = ai.feed, rd = f && f.weather && f.weather.radar;
+    if (!rd || !rd.time || Date.now() / 1000 - rd.time > 40 * 60) return null;
+    if (!rd.confirmed && !camRainIds().length) return null;           // radar chưa được camera xác nhận: có thể là nhiễu
+    var cells = (rd.cells || []).map(function (c) { return [c[0], c[1], c[2]]; });
+    ((rd.mm10 && rd.mm10.cells) || []).forEach(function (c) { cells.push([c[0], c[1], c[2] * 6]); });
+    return cells.length ? { t: rd.time, cells: cells } : null;
+  }
+  function routeRain(r) {
+    var R = radarNow(); if (!r || !R) return null;
+    var wet = 0, heavy = 0, mx = 0, step = 0;
+    var at = function (lng, lat) {
+      var m = 0;
+      for (var i = 0; i < R.cells.length; i++) { var c = R.cells[i]; if (Math.abs(c[0] - lat) < 0.012 && Math.abs(c[1] - lng) < 0.012 && c[2] > m && NN.dist(lat, lng, c[0], c[1]) <= 1300) m = c[2]; }
+      return m;
+    };
+    var cur = at(r.coords[0][0], r.coords[0][1]);
+    for (var k = 1; k < r.coords.length; k++) {
+      var a = r.coords[k - 1], b = r.coords[k], d = NN.dist(a[1], a[0], b[1], b[0]);
+      step += d; if (step >= 150) { step = 0; cur = at(b[0], b[1]); }
+      if (cur >= 2) wet += d; if (cur >= 10) heavy += d; if (cur > mx) mx = cur;
+    }
+    return wet >= 300 ? { wet: wet, heavy: heavy, max: mx, t: R.t } : null;
+  }
+  function rainNote(rr) {
+    if (!rr) return '';
+    return '<div class="rnote rain">Đang mưa trên ' + fmtKm(rr.wet) + ' đường đi' + (rr.heavy >= 300 ? ', trong đó ' + fmtKm(rr.heavy) + ' mưa to (có chỗ khoảng ' + Math.round(rr.max) + ' mm/giờ)' : '') +
+      '. Radar Đài KTTV lúc ' + hhmm(rr.t * 1000) + '. Chỗ trũng có thể ngập mà camera chưa thấy, đi chậm và để ý mặt đường.</div>';
   }
   function floodsNow() { return active.concat(aiFloods(), typeof live !== 'undefined' && live ? live.est : []); }
   function floodKey() { return floodsNow().map(function (r) { return r.id + ':' + r.level; }).sort().join('|'); }
@@ -6563,7 +6611,8 @@ if (typeof module !== 'undefined') module.exports = NN;
         live.tide = { now: Math.max(t0.now, wt.now), peak: t0.peak == null || wt.peak > t0.peak ? wt.peak : t0.peak, peakT: t0.peak == null || wt.peak > t0.peak ? wt.peakT : t0.peakT, src: 'nchmf' };
       }
     }
-    live.est = NN.estimate(G, live.rain, live.tide).filter(function (e) { return live.sim || !camSaysDry(e.spot); });
+    var racc = ai.feed && ai.feed.weather && Array.isArray(ai.feed.weather.rain_acc) && Date.now() / 1000 - (+ai.feed.updated_ts || 0) < 30 * 60 ? ai.feed.weather.rain_acc : null;
+    live.est = NN.estimate(G, live.rain, live.tide, live.sim ? null : racc).filter(function (e) { return live.sim || !camSaysDry(e.spot); });
     if (map.getSource('est')) {
       map.getSource('est').setData({ type: 'FeatureCollection', features: live.est.map(function (e) { return { type: 'Feature', properties: { id: e.id, level: e.level }, geometry: { type: 'Point', coordinates: [e.lng, e.lat] } }; }) });
       map.getSource('rainheat').setData({ type: 'FeatureCollection', features: (live.sim ? live.rain || [] : []).filter(function (r) { return r.ok && r.now >= 0.3; }).map(function (r) { return { type: 'Feature', properties: { mmh: r.now }, geometry: { type: 'Point', coordinates: [r.lng, r.lat] } }; }) });
@@ -6665,7 +6714,7 @@ if (typeof module !== 'undefined') module.exports = NN;
   function openEstPopup(id) {
     var e = live.est.find(function (x) { return x.id === id; }); if (!e) return;
     openPopupId = null; if (popup) popup.remove();
-    var why = e.tideLevel && e.rainLevel ? 'mưa kèm triều cường' : e.tideLevel ? 'triều cường' : 'mưa ' + num(e.rain.last1h) + ' mm trong giờ qua';
+    var why = e.tideLevel && e.rainLevel ? 'mưa kèm triều cường' : e.tideLevel ? 'triều cường' : e.rain.radar ? 'radar Đài KTTV đo mưa cộng dồn khoảng ' + num(e.rain.eff) + ' mm' : 'mưa ' + num(e.rain.last1h) + ' mm trong giờ qua';
     popup = new maplibregl.Popup({ maxWidth: '290px', offset: 14 }).setLngLat([e.lng, e.lat]).setHTML(
       '<div class="pop"><div class="lv">' + wheel(e.level, 28) + '<span>Nguy cơ ngập, có thể tới ' + esc(LEVELS[e.level].short.toLowerCase()) + (e.level === 2 ? ' xe' : ' chân') + '</span></div>' +
       '<div class="m"><b>' + esc(e.street) + '</b> · ' + esc(LEVELS[e.level].cm) + (live.sim ? ' · mô phỏng' : '') + '</div>' +
@@ -7276,11 +7325,28 @@ if (typeof module !== 'undefined') module.exports = NN;
   function navLine(m) { return m.type === 'arrive' ? 'Tới nơi' : (TURN[m.type] || 'Đi tiếp vào') + ' ' + m.name; }
   function sayDist(d) { return d >= 950 ? (Math.round(d / 100) / 10).toString().replace('.', ',') + ' ki lô mét' : (Math.round(d / 50) * 50) + ' mét'; }
   var viVoice = null;
-  function pickVoice() { if (!window.speechSynthesis) return; var vs = speechSynthesis.getVoices(); viVoice = vs.find(function (v) { return /^vi/i.test(v.lang); }) || null; }
+  // Giọng đọc lấy từ máy. Ưu tiên giọng tiếng Việt tự nhiên (Edge có sẵn HoaiMy, NamMinh; điện thoại có giọng Google tiếng Việt).
+  // Máy tính không cài giọng tiếng Việt thì KHÔNG đọc bằng giọng tiếng Anh (nghe rất sai), chỉ báo một lần cách bật.
+  var voicesReady = false, noViWarned = false;
+  function pickVoice() {
+    if (!window.speechSynthesis) return;
+    var vs = speechSynthesis.getVoices(); if (vs.length) voicesReady = true;
+    var vi = vs.filter(function (v) { return /^vi([-_]|$)/i.test(v.lang) || /vietnam|tiếng việt|hoaimy|namminh/i.test(v.name); });
+    var score = function (v) { return (/natural|online|neural/i.test(v.name) ? 4 : 0) + (/hoaimy|namminh|google/i.test(v.name) ? 2 : 0) + (v.localService ? 0 : 1); };
+    vi.sort(function (a, b) { return score(b) - score(a); });
+    viVoice = vi[0] || null;
+  }
   if (window.speechSynthesis) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+  function noViVoice() {
+    if (noViWarned) return; noViWarned = true;
+    var edge = /Edg\//.test(navigator.userAgent);
+    toast('Máy này chưa có giọng đọc tiếng Việt nên Né Ngập không đọc chỉ dẫn (chỉ hiện chữ). ' + (edge ? 'Hãy cài giọng tiếng Việt trong Cài đặt Windows → Thời gian và ngôn ngữ → Giọng nói.' : 'Mở bằng Microsoft Edge (có sẵn giọng tiếng Việt) hoặc cài giọng tiếng Việt trong cài đặt máy.'), 9000);
+  }
   function speak(t) {
     if (!nav.voice || !window.speechSynthesis || !t) return;
-    try { speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(t); u.lang = 'vi-VN'; if (viVoice) u.voice = viVoice; u.rate = 1.02; speechSynthesis.speak(u); } catch (e) {}
+    if (!viVoice) pickVoice();
+    if (!viVoice) { if (voicesReady) noViVoice(); return; }
+    try { speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(t); u.lang = viVoice.lang || 'vi-VN'; u.voice = viVoice; u.rate = 1.02; speechSynthesis.speak(u); } catch (e) {}
   }
   var meMarker = null;
   function navSetRoute(r) {
@@ -7343,6 +7409,8 @@ if (typeof module !== 'undefined') module.exports = NN;
     $('nav-eta').textContent = 'Tới lúc ' + hhmm(Date.now() + r.secs * 1000);
     $('nav-left').textContent = fmtMin(r.secs) + ' · ' + fmtKm(r.meters);
     if (preview) { previewStart(); return; }
+    var rr0 = routeRain(r);
+    if (rr0 && rr0.heavy >= 500) setTimeout(function () { if (nav.on) { toast('Trên đường đi đang mưa to khoảng ' + fmtKm(rr0.heavy) + '. Đi chậm, tránh vũng nước sâu.', 6000); speak('Trên đường đi đang mưa to khoảng ' + sayDist(rr0.heavy) + '. Đi chậm, tránh vũng nước sâu.'); } }, 6000);
     if (!locStart()) { navBanner('depart', 'Không có vị trí', 'Trình duyệt này không lấy được vị trí.'); return; }
     if (mt) $('nav-eta').textContent = 'Tới lúc ' + hhmm(Date.now() + mt.secs * 1000);
     navBanner('depart', 'Đang tìm vị trí…', nav.metroStage === 2 ? 'Lên tàu hướng ' + metroDir(mt.a, mt.b) : 'Đi theo ' + nav.man[0].name);
@@ -7573,7 +7641,7 @@ if (typeof module !== 'undefined') module.exports = NN;
   // nhanh hơn rõ rệt thì tự đổi đường (như Google Maps), không thì báo "đây vẫn là đường nhanh nhất".
   function ttFlow(lat, lng) {
     var u = 'https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?unit=KMPH&point=' + lat.toFixed(5) + ',' + lng.toFixed(5) + '&key=' + encodeURIComponent(ttKey());
-    return fetch(u).then(function (x) { return x.ok ? x.json() : null; }).catch(function () { return null; }).then(function (j) { return (j && j.flowSegmentData) || null; });
+    return fetch(u).then(function (x) { if (x.status === 403 || x.status === 429) ttFail(x.status); return x.ok ? x.json() : null; }).catch(function () { return null; }).then(function (j) { return (j && j.flowSegmentData) || null; });
   }
   function jamOf(f, d) {
     if (!f || !(f.freeFlowSpeed > 0)) return null;
@@ -7695,7 +7763,8 @@ if (typeof module !== 'undefined') module.exports = NN;
   }
   $('nav-end').onclick = function () { navEnd(false); };
   $('nav-voice').onclick = function () {
-    nav.voice = !nav.voice; lsSet('nn-voice', nav.voice); this.setAttribute('aria-pressed', String(nav.voice));
+    nav.voice = !nav.voice;
+    if (nav.voice && !viVoice) { pickVoice(); if (!viVoice && voicesReady) noViVoice(); } lsSet('nn-voice', nav.voice); this.setAttribute('aria-pressed', String(nav.voice));
     this.setAttribute('aria-label', nav.voice ? 'Tắt giọng nói' : 'Bật giọng nói');
     if (!nav.voice && window.speechSynthesis) speechSynthesis.cancel();
   };
@@ -7715,6 +7784,20 @@ if (typeof module !== 'undefined') module.exports = NN;
       tiles: ['https://api.tomtom.com/traffic/map/4/tile/flow/relative0/{z}/{x}/{y}.png?tileSize=256&thickness=6&key=' + encodeURIComponent(ttKey())] });
     map.addLayer({ id: 'tt-flow', type: 'raster', source: 'tt-flow', paint: { 'raster-opacity': 0.9 } }, map.getLayer('route-alt') ? 'route-alt' : undefined);
   }
+  // TomTom trả lỗi (khoá hết hạn, hết lượt miễn phí, chưa bật dịch vụ giao thông): báo ngay dưới ô chọn, không im lặng
+  var ttErr = 0;
+  function ttFail(status) {
+    if (ttErr) return; ttErr = status || 1;
+    var why = status === 403 ? 'khoá bị từ chối (hết hạn hoặc chưa bật dịch vụ giao thông)' : status === 429 ? 'hết lượt miễn phí trong ngày' : 'không kết nối được';
+    var lg = $('tt-lg'); lg.hidden = false;
+    lg.innerHTML = '<span style="color:#E5484D;font-weight:700">TomTom đang không trả dữ liệu: ' + why + (status ? ' (lỗi ' + status + ')' : '') + '.</span>';
+  }
+  mapLoaded.then(function () {
+    map.on('error', function (e) {
+      var u = (e && e.error && (e.error.url || '')) || '', st = e && e.error && e.error.status;
+      if ((e && e.sourceId === 'tt-flow') || /api\.tomtom\.com/.test(u)) { if (st !== 404) ttFail(st); }
+    });
+  });
   $('lyr-tt').onchange = function () { setTomTom(this.checked); try { localStorage.setItem('nn-tt-on', this.checked ? '1' : '0'); } catch (e) {} };
   if (!IN_CLAUDE) {
     var ownTT = false; try { ownTT = !!localStorage.getItem('nn-tomtom'); } catch (e) {}
