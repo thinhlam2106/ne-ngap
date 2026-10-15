@@ -52,18 +52,19 @@ jobs:
         run: |
           git config user.name "ne-ngap-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/flood-ai.json data/state.json
+          git add data/flood-ai.json data/state.json data/cams.json
           for f in data/radar.png data/forecast.png data/probe-sources.json; do if [ -f "$f" ]; then git add "$f"; fi; done
           if git diff --cached --quiet; then echo "Không có gì mới."; exit 0; fi
           git commit -m "Cập nhật ngập từ camera"
           for i in 1 2 3; do
-            if git pull --rebase -X theirs && git push; then
+            if git pull --rebase --autostash -X theirs && git push; then
               # báo cho các trang đang mở: có kết quả mới ở commit này (trang đọc file theo mã commit, không bị bộ đệm 5 phút)
               curl -s -m 10 -d "$(git rev-parse HEAD)" "https://ntfy.sh/${FEED_TOPIC}" > /dev/null || true
               exit 0
             fi
             sleep 5
           done
+          echo "Không đẩy được kết quả lên repo. Tình trạng:"; git status; git log --oneline -3
           exit 1
 
       # Đang mưa: chờ tới phút thứ 5 kể từ đầu lượt rồi xem nhanh camera trong vùng mưa và điểm hay ngập, lưu tiếp.
@@ -87,16 +88,17 @@ jobs:
         run: |
           git config user.name "ne-ngap-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/flood-ai.json data/state.json
+          git add data/flood-ai.json data/state.json data/cams.json
           for f in data/radar.png data/forecast.png data/probe-sources.json; do if [ -f "$f" ]; then git add "$f"; fi; done
           if git diff --cached --quiet; then echo "Không có gì mới."; exit 0; fi
           git commit -m "Cập nhật ngập từ camera (lượt nhanh)"
           for i in 1 2 3; do
-            if git pull --rebase -X theirs && git push; then
+            if git pull --rebase --autostash -X theirs && git push; then
               # báo cho các trang đang mở: có kết quả mới ở commit này (trang đọc file theo mã commit, không bị bộ đệm 5 phút)
               curl -s -m 10 -d "$(git rev-parse HEAD)" "https://ntfy.sh/${FEED_TOPIC}" > /dev/null || true
               exit 0
             fi
             sleep 5
           done
+          echo "Không đẩy được kết quả lên repo. Tình trạng:"; git status; git log --oneline -3
           exit 1

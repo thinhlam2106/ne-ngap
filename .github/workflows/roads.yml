@@ -43,7 +43,7 @@ jobs:
           if git diff --cached --quiet; then echo "Không có gì mới."; exit 0; fi
           git commit -m "Cập nhật mạng lưới đường OpenStreetMap"
           for i in 1 2 3 4 5; do
-            git pull --rebase -X theirs origin main && git push origin HEAD:main && exit 0
+            git pull --rebase --autostash -X theirs origin main && git push origin HEAD:main && exit 0
             git rebase --abort 2>/dev/null || true
             sleep $((i * 10))
           done
