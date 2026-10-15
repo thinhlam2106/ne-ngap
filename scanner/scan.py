@@ -153,12 +153,37 @@ def save_json(path, obj):
 
 
 # ---------------------------------------------------------------- camera
+def _load_bien():
+    try:
+        return json.loads((DATA / "hcm_bien.json").read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+BIEN = _load_bien()       # ranh giới TP.HCM mới (đã nới ~1 km, không gồm Côn Đảo), để bỏ camera Đồng Nai, Long An, Tây Ninh
+
+
+def in_hcm(lat, lng):
+    if not BIEN:
+        return 10.30 <= lat <= 11.55 and 106.30 <= lng <= 107.62
+    rings = BIEN["rings"] if isinstance(BIEN, dict) else BIEN
+    inside = False
+    for ring in rings:
+        j = len(ring) - 1
+        for i in range(len(ring)):
+            xi, yi = ring[i]; xj, yj = ring[j]
+            if (yi > lat) != (yj > lat) and lng < (xj - xi) * (lat - yi) / (yj - yi) + xi:
+                inside = not inside
+            j = i
+    return inside
+
+
 def load_cameras():
     """Danh mục camera: thử lấy mới từ Notis, lỗi thì dùng bản lưu sẵn."""
     cams = []
     if not MOCK:
         try:
-            r = requests.get("https://api.notis.vn/v4/cameras/bybbox?lat1=11.20&lng1=106.90&lat2=10.30&lng2=106.30",
+            r = requests.get("https://api.notis.vn/v4/cameras/bybbox?lat1=11.55&lng1=107.62&lat2=10.30&lng2=106.30",   # TP.HCM mới (gồm Bình Dương, Bà Rịa - Vũng Tàu cũ)
                              headers=HEADERS, timeout=20)
             r.raise_for_status()
             for x in r.json():
@@ -170,13 +195,20 @@ def load_cameras():
             cams = []
     if not cams:
         for x in load_json(CAMS_FILE, []):
-            cams.append({"id": x[0], "name": x[1], "lat": x[2], "lng": x[3], "notis": bool(x[4])})
+            if in_hcm(x[2], x[3]):
+                cams.append({"id": x[0], "name": x[1], "lat": x[2], "lng": x[3], "notis": bool(x[4])})
     else:
         # giữ cả camera chỉ có trong danh mục lưu sẵn (lấy ảnh qua cổng thành phố)
         known = {c["id"] for c in cams}
-        for x in load_json(CAMS_FILE, []):
-            if x[0] not in known:
+        saved = load_json(CAMS_FILE, [])
+        for x in saved:
+            if x[0] not in known and in_hcm(x[2], x[3]):
                 cams.append({"id": x[0], "name": x[1], "lat": x[2], "lng": x[3], "notis": False})
+        cams = [c for c in cams if in_hcm(c["lat"], c["lng"])]
+        # lưu lại danh mục khi có camera mới (trang web đọc file này để hiện thêm camera)
+        if len(cams) != len(saved) or {c["id"] for c in cams} != {x[0] for x in saved}:
+            save_json(CAMS_FILE, [[c["id"], c["name"], round(c["lat"], 6), round(c["lng"], 6), 1 if c["notis"] else 0] for c in cams])
+            log(f"Đã lưu danh mục camera: {len(cams)} camera (trước: {len(saved)})")
     return cams
 
 
@@ -271,7 +303,7 @@ UB = {15: "88ddee", 16: "6cd1eb", 17: "51c5e8", 18: "36bae5", 19: "1baee2", 20: 
       55: "ffaaff", 56: "ff9fff", 57: "ff95ff", 58: "ff8bff", 59: "ff81ff", 60: "ff77ff", 61: "ff6cff", 62: "ff62ff",
       63: "ff58ff", 64: "ff4eff", 65: "ffffff"}
 UB_RGB = [(d, tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))) for d, h in UB.items()]
-RADAR_BBOX = (10.35, 11.20, 106.35, 107.05)     # lat_min, lat_max, lng_min, lng_max (TP.HCM mới)
+RADAR_BBOX = (10.30, 11.55, 106.30, 107.62)     # lat_min, lat_max, lng_min, lng_max (TP.HCM mới)
 RADAR_Z = 7                                     # RainViewer miễn phí chỉ tới zoom 7 (mỗi điểm ảnh ~1,2 km)
 
 
