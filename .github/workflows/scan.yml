@@ -20,8 +20,11 @@ concurrency:
 jobs:
   scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 9
+    timeout-minutes: 15
     steps:
+      - name: Ghi giờ bắt đầu
+        run: echo "T0=$(date +%s)" >> $GITHUB_ENV
+
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
@@ -34,6 +37,7 @@ jobs:
         run: pip install -r scanner/requirements.txt
 
       - name: AI xem camera
+        id: scan
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           SCAN_ALL: ${{ inputs.scan_all }}
@@ -49,9 +53,44 @@ jobs:
           git config user.name "ne-ngap-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/flood-ai.json data/state.json
-          for f in data/radar.png data/forecast.png; do if [ -f "$f" ]; then git add "$f"; fi; done
+          for f in data/radar.png data/forecast.png data/probe-sources.json; do if [ -f "$f" ]; then git add "$f"; fi; done
           if git diff --cached --quiet; then echo "Không có gì mới."; exit 0; fi
           git commit -m "Cập nhật ngập từ camera"
+          for i in 1 2 3; do
+            if git pull --rebase -X theirs && git push; then
+              # báo cho các trang đang mở: có kết quả mới ở commit này (trang đọc file theo mã commit, không bị bộ đệm 5 phút)
+              curl -s -m 10 -d "$(git rev-parse HEAD)" "https://ntfy.sh/${FEED_TOPIC}" > /dev/null || true
+              exit 0
+            fi
+            sleep 5
+          done
+          exit 1
+
+      # Đang mưa: chờ tới phút thứ 5 kể từ đầu lượt rồi xem nhanh camera trong vùng mưa và điểm hay ngập, lưu tiếp.
+      # Nhờ vậy lúc mưa, thông tin camera chỉ cũ khoảng 5 phút thay vì 10; lúc trời khô không chạy, không tốn thêm.
+      - name: Lượt xem nhanh giữa giờ (chỉ khi đang mưa)
+        if: steps.scan.outputs.rain_pass == '1'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          FAST_PASS: '1'
+          DAILY_BUDGET_USD: ${{ vars.DAILY_BUDGET_USD || '1.5' }}
+          DRY_SCAN_HOURS: ${{ vars.DRY_SCAN_HOURS || '3' }}
+          REPORT_TOPIC: ${{ vars.REPORT_TOPIC || 'ne-ngap-bao-ngap-hcm-k7q2' }}
+        run: |
+          W=$(( 300 - ($(date +%s) - T0) )); if [ $W -gt 0 ]; then sleep $W; fi
+          python scanner/scan.py
+
+      - name: Lưu kết quả lượt nhanh
+        if: steps.scan.outputs.rain_pass == '1'
+        env:
+          FEED_TOPIC: ${{ vars.FEED_TOPIC || 'ne-ngap-feed-hcm-k7q2' }}
+        run: |
+          git config user.name "ne-ngap-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/flood-ai.json data/state.json
+          for f in data/radar.png data/forecast.png data/probe-sources.json; do if [ -f "$f" ]; then git add "$f"; fi; done
+          if git diff --cached --quiet; then echo "Không có gì mới."; exit 0; fi
+          git commit -m "Cập nhật ngập từ camera (lượt nhanh)"
           for i in 1 2 3; do
             if git pull --rebase -X theirs && git push; then
               # báo cho các trang đang mở: có kết quả mới ở commit này (trang đọc file theo mã commit, không bị bộ đệm 5 phút)
