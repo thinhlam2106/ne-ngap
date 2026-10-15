@@ -8,7 +8,7 @@ chỉ để bộ tìm đường đọc.
 import json, time, pathlib, sys
 import requests
 
-BB = "10.35,106.35,11.20,107.05"          # TP.HCM (cũ) và vùng giáp ranh
+BB = "10.30,106.30,11.55,107.62"          # TP.HCM mới (gồm Bình Dương, Bà Rịa - Vũng Tàu cũ)
 EPS = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter",
        "https://overpass.private.coffee/api/interpreter", "https://maps.mail.ru/osm/tools/overpass/api/interpreter"]
 OUT = pathlib.Path(__file__).resolve().parent.parent / "data" / "osm"
@@ -18,9 +18,9 @@ COND = [t + ":conditional" for t in ["access", "vehicle", "motor_vehicle", "moto
 
 Q = {
     "restrict": f'[out:json][timeout:600];way[highway]({BB})[~"^({"|".join(TAGS + COND)})$"~"."];out tags geom;',
-    "turns": f'[out:json][timeout:600];relation[type=restriction]({BB});out tags geom;',
+    "turns": f'[out:json][timeout:600];relation[type=restriction]({BB});out body geom;',
     "stops": f'[out:json][timeout:600];(node[highway=bus_stop]({BB});node[public_transport=platform][bus=yes]({BB});node[public_transport=stop_position][bus=yes]({BB}););out body;',
-    "bus": f'[out:json][timeout:900];relation[type=route][route=bus]({BB});out tags geom;',
+    "bus": f'[out:json][timeout:900];relation[type=route][route=bus]({BB});out body geom;',
 }
 
 
