@@ -1139,7 +1139,7 @@ def decide(cam_state, ts, wet=True, strict=False):
             "times": sum(1 for h in hist if h[1] >= 1)}
 
 
-VETO_M = 2500
+VETO_M = 1500
 
 
 def clutter_lookup(state, rd):
@@ -1531,6 +1531,8 @@ def main():
     spent = state.setdefault("spend", {}).get(today, 0.0)
     budget = float(os.environ.get("DAILY_BUDGET_USD") or 1.5)
     scan_all = os.environ.get("SCAN_ALL", "").lower() in ("1", "true", "yes")
+    # Lượt xem nhanh ở phút thứ 5 (chỉ chạy khi lượt chính vừa thấy đang mưa): chỉ xem camera trong vùng mưa và điểm hay ngập
+    fast = os.environ.get("FAST_PASS") == "1" and not scan_all
 
     cams = load_cameras()
     spots = load_json(SPOTS_FILE, [])
@@ -1564,12 +1566,15 @@ def main():
     model_says = (w["rain_1h"] or 0) >= 2
     pre, pre_tokens, check = {}, (0, 0), None
     raining = False
-    if (radar_says or model_says) and not scan_all and (spent < budget or MOCK):
+    if fast:
+        raining = ts - state.get("last_rain", 0) <= 15 * 60            # lượt chính vừa xác nhận mưa: tin luôn, không kiểm chứng lại
+        log("Lượt xem nhanh giữa giờ" + (" (đang mưa)" if raining else ": mưa đã tạnh, bỏ qua"))
+    elif (radar_says or model_says) and not scan_all and (spent < budget or MOCK):
         chk = pick_rain_check_cams(cams, rd if radar_says else None, hot, ts)
         pre, tin0, tout0, n_rain, n_ok = rain_check(chk)
         pre_tokens = (tin0, tout0)
         if n_ok >= 4:
-            raining = n_rain >= max(3, math.ceil(n_ok / 3))
+            raining = n_rain >= max(2, math.ceil(n_ok / 4))
         else:
             raining = radar_says and model_says        # camera không xem được: chỉ tin khi cả hai nguồn cùng báo
         check = {"cams": len(chk), "usable": n_ok, "raining": n_rain, "confirmed": raining,
@@ -1578,7 +1583,8 @@ def main():
     w["rain_check"] = check
     # Camera là số đo tại mặt đường: ~12 camera ngay trong vùng radar báo mưa mà đều thấy trời khô
     # thì vệt radar quanh các camera đó là nhiễu, xoá khỏi số liệu và khỏi ảnh hiển thị.
-    if rd and rd.get("src") == "kttvnb" and check and not check["confirmed"] and check["usable"] >= 4:
+    # Chỉ xoá khi TẤT CẢ camera kiểm chứng đều khô (mưa lác đác thì có camera thấy, có camera không: giữ radar)
+    if rd and rd.get("src") == "kttvnb" and check and not check["confirmed"] and check["usable"] >= 5 and check["raining"] == 0:
         dry_pts = [(by_id_all[c]["lat"], by_id_all[c]["lng"]) for c, r in pre.items() if r["usable"] and not r.get("rain") and c in by_id_all]
         veto_radar(rd, dry_pts, state)
     if rd:
@@ -1599,7 +1605,9 @@ def main():
     recently_rained = ts - state.get("last_rain", 0) <= 2 * 3600     # nước còn đọng 2 giờ sau mưa
     full_due = ts - state.get("last_full_scan", 0) >= 19 * 60
 
-    if scan_all:
+    if fast:
+        mode, targets = ("rain-fast", rain_zone_cams(cams, rd if radar_says else None, hot, state, ts)[:350]) if raining else ("idle", [])
+    elif scan_all:
         mode, targets = "all", cams
         state["last_full_scan"] = ts
     elif raining:
@@ -1615,6 +1623,10 @@ def main():
         # tạnh mưa nhưng nước còn đọng: 20 phút xem lại toàn bộ một lần
         mode, targets = "after-rain", cams
         state["last_full_scan"] = ts
+    elif radar_says and check and check.get("raining", 0) >= 1 and ts - state.get("last_probe", 0) >= 19 * 60:
+        # radar báo mưa, vài camera thấy mưa nhưng chưa đủ để chắc: 20 phút xem một lần các camera trong vùng radar báo mưa
+        mode, targets = "rain-probe", rain_zone_cams(cams, rd, set(), state, ts)[:300]
+        state["last_probe"] = ts
     elif tide_high:
         # triều cao mà không mưa: chỉ ngập ở vùng trũng ven sông, xem camera gần các điểm hay ngập do triều
         mode, targets = "tide", [c for c in cams if c["id"] in tide_cams]
@@ -1745,6 +1757,8 @@ def main():
         state["last_rain"] = state["last_wet"] = ts
         state["last_full_scan"] = 0
         log(f"Camera thấy đang mưa ở {seen_rain}/{len(seen_ok)} chỗ: lượt sau sẽ xem toàn bộ camera")
+    if w.get("radar") and seen_rain >= 5:
+        w["radar"]["confirmed"] = True        # nhiều camera thấy mưa thật: radar đúng, dù bước kiểm chứng nhanh lúc đầu nói không
 
     # dọn phản hồi "Không ngập" cũ hơn 1 giờ
     state["disputes"] = {k: [d for d in v if ts - d[0] <= 60 * 60] for k, v in state.get("disputes", {}).items()}
@@ -1817,15 +1831,19 @@ def main():
     }
     # cảnh báo chính thống của Trung tâm Dự báo KTTV Quốc gia
     try:
+        if fast:                                                       # lượt nhanh: giữ nguyên bản tin của lượt chính
+            raise StopIteration
         warns, win, wout = nchmf_warnings(state, ts, (spent < budget) and not MOCK)
         if win:
             c = win / 1e6 * PRICE_IN + wout / 1e6 * PRICE_OUT
             stats["tokens_in"] += win; stats["tokens_out"] += wout; stats["cost_usd"] = round(stats["cost_usd"] + c, 5)
             state["spend"][today] = round(state["spend"].get(today, spent) + c, 5)
         out["warnings"] = warns
+    except StopIteration:
+        out["warnings"] = (load_json(OUT_FILE, {}) or {}).get("warnings", [])
     except Exception as e:
         log("NCHMF: lỗi", repr(e)[:160]); out["warnings"] = []
-    if mode == "idle":
+    if mode == "idle" and not fast:
         try:
             probe_sources(state, ts)
         except Exception as e:
@@ -1838,6 +1856,11 @@ def main():
         log("Lỗi khi gửi cảnh báo theo khu vực:", repr(e)[:160])
     save_json(OUT_FILE, out)
     save_json(STATE_FILE, state)
+    # báo cho workflow: đang mưa thì 5 phút nữa chạy thêm một lượt xem nhanh
+    gh_out = os.environ.get("GITHUB_OUTPUT")
+    if gh_out and not fast:
+        with open(gh_out, "a") as fh:
+            fh.write("rain_pass=%s\n" % ("1" if mode in ("rain", "rain-zone") else "0"))
     conf = sum(1 for d in detections if d["confirmed"])
     rs = {}
     for r in reps.values():
