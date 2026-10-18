@@ -1,21 +1,23 @@
 {
- "fetched": 1791796490,
+ "fetched": 1792360805,
  "restrict": {
-  "n": 36389,
-  "secs": 35,
-  "bytes": 8500529
+  "n": 40900,
+  "secs": 44,
+  "bytes": 10003574
  },
  "turns": {
-  "n": 1719,
-  "secs": 2,
-  "bytes": 214913
+  "n": 1761,
+  "secs": 43,
+  "bytes": 828533
  },
  "stops": {
-  "error": "KeyError('lon')"
+  "n": 7101,
+  "secs": 65,
+  "bytes": 988745
  },
  "bus": {
-  "n": 349,
-  "secs": 36,
-  "bytes": 94225
+  "n": 359,
+  "secs": 50,
+  "bytes": 6837707
  }
 }
