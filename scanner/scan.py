@@ -72,6 +72,8 @@ PHOTO_MAX_AGE = 2 * 3600      # ảnh chụp quá 2 giờ thì không dùng
 SITE_URL = os.environ.get("SITE_URL") or "https://thinhlam2106.github.io/ne-ngap/"
 ALERT_CELL = 0.03            # ô cảnh báo ~3 km; mỗi ô là một kênh ntfy "ne-ngap-o-<i>-<j>"
 ALERT_MAX = 40               # tối đa số tin cảnh báo mỗi lượt
+PUSH_TOPIC = os.environ.get("PUSH_TOPIC") or "ne-ngap-dangky-hcm-k7q2"   # kênh nhận gói đăng ký thông báo đẩy (đã mã hoá)
+PUSH_FILE = DATA / "push.bin"   # danh sách máy nhận thông báo đẩy, mã hoá bằng khoá trong secret PUSH_KEYS
 CROWD_MIN_DEVICES = 3
 MAX_NEW_REPORTS = 80         # chống spam: mỗi lượt chỉ nhận tối đa 80 báo cáo mới
 
@@ -860,6 +862,8 @@ def fetch_reports(state, ts):
             rep_ = {"id": rid, "lat": round(lat, 6), "lng": round(lng, 6), "level": level, "at": at,
                     "street": str(x.get("street", ""))[:80], "note": str(x.get("note", ""))[:120],
                     "dev": str(x.get("dev", ""))[:40] or rid, "status": "checking", "dry": 0}
+            if x.get("far"):
+                rep_["far"] = 1                       # người báo không đứng gần chỗ đó (hoặc máy không có GPS)
             ph, shot = str(x.get("photo") or ""), x.get("shot")
             if PHOTO_RE.match(ph) and (not isinstance(shot, (int, float)) or at - shot <= PHOTO_MAX_AGE):
                 rep_["photo"] = ph
@@ -988,7 +992,8 @@ def verify_reports(state, cams, fresh, ts, wet_recent):
         group = [o for o in pool if abs(o["at"] - r["at"]) <= 45 * 60
                  and dist_m(r["lat"], r["lng"], o["lat"], o["lng"]) <= CROWD_RADIUS_M]
         devs = {o["dev"] for o in group}
-        if len(devs) >= CROWD_MIN_DEVICES and wet_recent:
+        # "nhiều người cùng báo" (không có camera kiểm chứng) cần ít nhất một người đang đứng tại chỗ
+        if len(devs) >= CROWD_MIN_DEVICES and wet_recent and any(not o.get("far") for o in group):
             lv = sorted(o["level"] for o in group)[len(group) // 2]
             r.update(status="crowd", crowd=len(devs), level_crowd=min(lv, 3), last_pos=max(o["at"] for o in group))
         elif r["status"] == "crowd":
@@ -1302,7 +1307,69 @@ def alert_cells(lat, lng, radius_m):
     return out
 
 
-def publish_alerts(state, detections, fc, ts):
+def push_setup(state):
+    """Bật thông báo đẩy nếu có secret PUSH_KEYS: đọc các gói đăng ký mới trên kênh ntfy."""
+    sec = os.environ.get("PUSH_KEYS")
+    if not sec:
+        return None
+    try:
+        from webpush_nn import Push
+        P = Push(sec, PUSH_FILE)
+        if not MOCK:
+            last, n = P.pull(PUSH_TOPIC, state.get("push_since"))
+            state["push_since"] = last
+            if n:
+                log(f"Thông báo đẩy: {n} gói đăng ký mới, tổng {len(P.subs)} máy")
+        return P
+    except Exception as e:
+        log("Thông báo đẩy: lỗi khi khởi động", repr(e)[:160])
+        return None
+
+
+def push_digest(push, state, detections, w, ts):
+    """Bản tin 6:30 sáng và 16:30 chiều cho từng máy: nơi đã lưu đang khô, đang mưa, sắp mưa hay đang ngập."""
+    now = dt.datetime.fromtimestamp(ts, VN)
+    hm = now.hour * 60 + now.minute
+    slot = "s" if 385 <= hm <= 450 else "c" if 985 <= hm <= 1050 else None
+    if not slot:
+        return
+    key = now.strftime("%Y-%m-%d") + slot
+    if state.get("push_digest") == key:
+        return
+    state["push_digest"] = key
+    fc = (w or {}).get("forecast") or {}
+    rd = (w or {}).get("radar") or {}
+    n = 0
+    for ep, info in list(push.subs.items()):
+        if not info.get("d"):
+            continue
+        lines = []
+        for pl in info["p"]:
+            try:
+                i, j = map(int, pl["t"].rsplit("-", 2)[1:])
+            except Exception:
+                continue
+            la, lo = 10 + (i + 0.5) * ALERT_CELL, 106 + (j + 0.5) * ALERT_CELL
+            fl = [d for d in detections if d.get("confirmed") and d.get("level", 0) >= 1 and dist_m(la, lo, d["lat"], d["lng"]) <= 2500]
+            if fl:
+                d = max(fl, key=lambda x: x["level"])
+                txt = f"đang ngập {LEVEL_VI[int(d['level'])][0]} ở {d['name'][:40]}"
+            elif any(c[2] >= 0.3 and dist_m(la, lo, c[0], c[1]) <= 2500 for c in rd.get("cells", [])):
+                txt = "đang mưa, chưa thấy ngập"
+            else:
+                soon = [c[3] for c in fc.get("cells", []) if c[3] > ts and dist_m(la, lo, c[0], c[1]) <= 2500]
+                txt = ("có thể mưa khoảng " + dt.datetime.fromtimestamp(min(soon), VN).strftime("%H:%M")) if soon else "khô ráo, chưa thấy ngập"
+            lines.append(f"{pl['n'] or 'Nơi của bạn'}: {txt}")
+        if not lines:
+            continue
+        title = "Bản tin Né Ngập sáng nay" if slot == "s" else "Bản tin Né Ngập chiều nay"
+        if push.send(ep, info, {"title": title, "body": ". ".join(lines) + ".", "url": SITE_URL, "tag": "digest"}, ttl=2 * 3600, urgency="normal"):
+            n += 1
+    if n:
+        log(f"Thông báo đẩy: đã gửi bản tin cho {n} máy")
+
+
+def publish_alerts(state, detections, fc, ts, push=None):
     """Gửi tin cảnh báo vào kênh ntfy của từng ô ~3 km: chỗ ngập mới được xác nhận, và dự báo sắp mưa to.
     Người dùng lưu "Nơi của tôi" trên trang và đăng ký đúng kênh của ô đó."""
     sent = state.setdefault("alerted", {})
@@ -1341,12 +1408,20 @@ def publish_alerts(state, detections, fc, ts):
     for key, body in msgs[:ALERT_MAX]:
         if MOCK:
             n += 1; sent[key] = ts; continue
+        ok = False
         try:
             r = requests.post("https://ntfy.sh/", json=body, headers={"User-Agent": UA}, timeout=10)
-            if r.ok:
-                n += 1; sent[key] = ts
+            ok = r.ok
         except Exception:
             pass
+        if push:
+            try:
+                if push.to_topic(body["topic"], {"title": body["title"], "body": body["message"], "url": body.get("click") or SITE_URL, "tag": key}):
+                    ok = True
+            except Exception as e:
+                log("Thông báo đẩy: lỗi khi gửi", repr(e)[:120])
+        if ok:
+            n += 1; sent[key] = ts
     if n:
         log(f"Đã gửi {n} tin cảnh báo theo khu vực")
 
@@ -1882,10 +1957,22 @@ def main():
             log("Dò nguồn dữ liệu: lỗi", repr(e)[:160])
     # học bản đồ nhiễu chỉ khi chắc khô: không đang mưa, camera kiểm chứng (nếu có) không thấy mưa, và camera lượt này gần như không thấy mưa
     learn_clutter(state, w.get("radar"), not raining and not (check and check["raining"]) and seen_rain <= 1)
+    push = push_setup(state)
+    if push:
+        out["push"] = push.public()                       # khoá công khai để trang web đăng ký nhận thông báo đẩy
     try:
-        publish_alerts(state, detections, w.get("forecast"), ts)
+        publish_alerts(state, detections, w.get("forecast"), ts, push)
     except Exception as e:
         log("Lỗi khi gửi cảnh báo theo khu vực:", repr(e)[:160])
+    if push:
+        try:
+            if not MOCK and not fast:
+                push_digest(push, state, detections, w, ts)
+            push.save()
+            if push.dead:
+                log(f"Thông báo đẩy: bỏ {push.dead} máy đã huỷ đăng ký")
+        except Exception as e:
+            log("Thông báo đẩy: lỗi", repr(e)[:160])
     save_json(OUT_FILE, out)
     save_json(STATE_FILE, state)
     # báo cho workflow: đang mưa thì 5 phút nữa chạy thêm một lượt xem nhanh
