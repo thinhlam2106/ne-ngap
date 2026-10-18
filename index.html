@@ -1377,7 +1377,7 @@ body.nav #app .maplibregl-ctrl-bottom-left { left: 0; }
   #app .side-card .sh-item .t span { font-size: 11.5px; }
   #app .fcbar, body.zen #app .fcbar, body:not(.zen) #app .fcbar { left: 12px; right: 80px; width: auto; min-width: 0; transform: none; bottom: var(--v3-bot, 150px); }
   #app .pickbar { top: calc(var(--v3-top) + 64px); }
-  #app .toast { top: auto; bottom: calc(var(--v3-nh) + 86px); }
+  #app .toast { top: auto; bottom: calc(var(--v3-bot, 150px) + 70px); }
   body.nav #app .toast { bottom: calc(110px + env(safe-area-inset-bottom, 0px)); }
   #app .maplibregl-ctrl-bottom-left { left: 0; bottom: var(--v3-bot, 150px); }
   body.nav #app .maplibregl-ctrl-bottom-left { bottom: 90px; }
@@ -1544,13 +1544,29 @@ body.v3-picking .v3-peek, body.v3-picking .v3-go, body.v3-picking .v3-chips, bod
 @keyframes sh-nhip { 0% { box-shadow: 0 0 0 0 rgba(4,118,214,.55), 0 10px 26px rgba(4,118,214,.4); } 70% { box-shadow: 0 0 0 14px rgba(4,118,214,0), 0 10px 26px rgba(4,118,214,.4); } 100% { box-shadow: 0 0 0 0 rgba(4,118,214,0), 0 10px 26px rgba(4,118,214,.4); } }
 @media (prefers-reduced-motion: reduce) { .v3-shelter.wet { animation: none; } }
 body:not(.zen) .v3-shelter { left: calc(var(--rl) + 508px); }
-.v3-rainbar, body:not(.zen) .v3-rainbar { left: auto; right: 120px; bottom: 22px; }   /* máy tính: thang mưa ở góc dưới phải, cạnh nút phóng to */
+@media (min-width: 761px) { .v3-rainbar, body:not(.zen) .v3-rainbar { left: auto; right: 120px; bottom: 22px; } }   /* máy tính: thang mưa ở góc dưới phải, cạnh nút phóng to */
 body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.sh-open .v3-shelter, body.rc-open .v3-shelter, body.card-open .v3-shelter { opacity: 0; pointer-events: none; }
 @media (max-width: 1100px) and (min-width: 761px) { body:not(.zen) .v3-shelter { display: none; } }
 @media (max-width: 760px) {
   .v3-shelter, body:not(.zen) .v3-shelter { left: 12px; bottom: var(--v3-bot, 150px); height: 56px; padding-right: 16px; }
-  .v3-rainbar, body:not(.zen) .v3-rainbar { left: 12px; }
+  .v3-rainbar, body:not(.zen) .v3-rainbar { left: 12px; right: 66px; top: var(--v3-top); bottom: auto; }
   #app.v3-full .v3-shelter { opacity: 0; pointer-events: none; }
+}
+/* ======== cộng đồng xác nhận ======== */
+.vote { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; padding-top: 8px; border-top: 1px solid rgba(11,42,85,.1); }
+.vq { font-size: 12.5px; font-weight: 700; color: #0B2A55; }
+.vbtns { display: flex; flex-wrap: wrap; gap: 6px; }
+.vb { border: 0; border-radius: 99px; padding: 7px 11px; font: 600 12.5px var(--font-body); background: rgba(4,118,214,.1); color: #04509A; cursor: pointer; }
+.vb:hover { background: rgba(4,118,214,.18); }
+.vb.vb-bad { background: rgba(236,51,85,.1); color: #B4233F; }
+.vb.vb-gone { background: rgba(18,128,75,.12); color: #0E6B3E; }
+.vb[aria-pressed="true"] { background: var(--lam); color: #fff; }
+.vb:disabled:not([aria-pressed="true"]) { opacity: .45; cursor: default; }
+.vsum { font-size: 12.5px; }
+.vthx { font-size: 12.5px; font-weight: 700; color: #12804B; }
+@media (max-width: 760px) {
+  body.pop-open .v3-peek, body.pop-open .v3-shelter, body.pop-open .v3-go, body.pop-open #app .loc-btn, body.pop-open .v3-rainbar { opacity: 0; pointer-events: none; }
+  .maplibregl-popup-content { max-height: 58vh; overflow-y: auto; }
 }
 </style>
 
@@ -1722,7 +1738,7 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
       <div class="cc-row"><span>Thực hiện</span><b>Nhóm Nhóm</b></div>
       <div class="cc-row"><span>Dữ liệu</span><div>Radar Đài KTTV khu vực Nam Bộ, Phòng CSGT Công an TP.HCM, camera giao thông TP.HCM, OpenStreetMap, Open-Meteo, TomTom</div></div>
       <div class="cc-row"><span>Đường dây nóng</span><b>0326 08 08 08</b></div>
-      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">18/10, bản 15:48</span></div>
+      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">18/10, bản 16:07</span></div>
     </div>
   </div>
   <button class="zen-btn" id="zen-btn" aria-pressed="false" aria-label="Ẩn bảng để xem trọn bản đồ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Ẩn bảng</span></button>
@@ -1805,7 +1821,7 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
           <div><a class="src" href="https://giaothong.hochiminhcity.gov.vn/" target="_blank" rel="noopener">Xem camera giao thông trực tiếp của TP.HCM</a></div>
         </div>
       </details>
-      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 18/10, bản 15:48.</span></div>
+      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 18/10, bản 16:07.</span></div>
     </section>
 
     <!-- Chỉ đường -->
@@ -6416,13 +6432,14 @@ if (typeof module !== 'undefined') module.exports = NN;
     if (!ai.feed || !Array.isArray(ai.feed.detections)) return [];
     var nowS = Date.now() / 1000;
     return ai.feed.detections.filter(function (d) {
-      return d && d.confirmed && d.level >= 1 && d.level <= 4 && isFinite(+d.lat) && isFinite(+d.lng) && nowS - (+d.seen || 0) <= 45 * 60;
+      return d && d.confirmed && d.level >= 1 && d.level <= 4 && isFinite(+d.lat) && isFinite(+d.lng) && nowS - Math.max(+d.seen || 0, +d.vseen || 0) <= 45 * 60;
     }).map(function (d) {
       var src = d.src === 'report' || d.src === 'crowd' || d.src === 'photo' ? d.src : 'cam';
       return { id: src === 'cam' ? 'ai-' + d.cam : 'rp-' + String(d.rid || d.cam), cam: d.cam ? String(d.cam) : '', lat: +d.lat, lng: +d.lng, level: +d.level, street: String(d.name || 'Camera').slice(0, 80),
         note: String(d.note || '').slice(0, 120), seen: +d.seen * 1000, since: (+d.since || +d.seen) * 1000, times: +d.times || 1, conf: +d.conf || 0, ai: true,
         src: src, camName: String(d.cam_name || '').slice(0, 80), camDist: +d.cam_dist || 0, crowd: +d.crowd || 0, repLevel: +d.reported_level || 0,
-        photo: /^https:\/\/ntfy\.sh\/file\/[\w.-]+$/.test(d.photo || '') ? d.photo : '' };
+        photo: /^https:\/\/ntfy\.sh\/file\/[\w.-]+$/.test(d.photo || '') ? d.photo : '',
+        votes: d.votes && typeof d.votes === 'object' ? d.votes : null, vlast: (+d.vlast || 0) * 1000, vdevs: +d.vdevs || 0 };
     });
   }
   // Lấy kết quả mới nhất. raw.githubusercontent.com giữ bản cũ tới 5 phút (bỏ qua ?t=...), nên mỗi lượt quét xong
@@ -6635,6 +6652,47 @@ if (typeof module !== 'undefined') module.exports = NN;
   // Nút "Không ngập": người dùng thấy AI báo sai. Gửi vào hàng chờ; lượt quét sau AI xem lại camera với
   // ngưỡng khắt khe (chỉ giữ điểm nếu rất chắc từ 0,85). Không gỡ ngay để tránh bị bấm bừa che mất chỗ ngập thật.
   function disputeKey(d) { return d.cam ? 'c:' + d.cam : 'r:' + d.id; }
+  // ---------- cộng đồng xác nhận: một chạm, gửi lên bộ quét để mọi người cùng thấy ----------
+  var VOTES = [['still', 'Vẫn còn ngập'], ['deeper', 'Ngập sâu hơn'], ['less', 'Đã rút bớt'], ['gone', 'Nước đã rút'], ['pass', 'Xe máy vẫn qua được'], ['avoid', 'Nên tránh']];
+  var VOTE_SAY = { still: 'vẫn còn ngập', deeper: 'ngập sâu hơn', less: 'đã rút bớt', gone: 'nước đã rút', pass: 'xe máy vẫn qua được', avoid: 'nên tránh' };
+  function vkey(d) { return d.src === 'cam' ? String(d.cam) : 'rp:' + String(d.id).replace(/^rp-/, ''); }
+  function voteHTML(d) {
+    if (store.mode !== 'queue') return disputeHTML(d);
+    var mine = lsGet('nn-myvotes', {})[vkey(d)], fresh = mine && Date.now() - mine.t < 20 * 60000;
+    var h = '<div class="vote"><div class="vq">Bạn đang ở gần đây? Cho người đi sau biết:</div><div class="vbtns">' +
+      VOTES.map(function (v) {
+        return '<button class="vb' + (v[0] === 'gone' ? ' vb-gone' : v[0] === 'avoid' || v[0] === 'deeper' ? ' vb-bad' : '') + '" data-vote2="' + v[0] + '" data-vid="' + esc(d.id) + '"' +
+          (mine && mine.k === v[0] ? ' aria-pressed="true"' : '') + (fresh ? ' disabled' : '') + '>' + esc(v[1]) + '</button>';
+      }).join('') + '</div>';
+    if (fresh) h += '<div class="m vsum">Bạn đã báo "' + esc(VOTE_SAY[mine.k]) + '" lúc ' + hhmm(mine.t) + '. Cảm ơn bạn!</div>';
+    if (d.votes) {
+      var parts = VOTES.filter(function (v) { return d.votes[v[0]]; }).map(function (v) { return d.votes[v[0]] + ' người nói ' + VOTE_SAY[v[0]]; });
+      if (parts.length) h += '<div class="m vsum"><b>Người đi đường:</b> ' + esc(parts.join(', ')) + (d.vlast ? ' (lần cuối lúc ' + hhmm(d.vlast) + ')' : '') + '.</div>';
+    }
+    var under = ai.feed && Array.isArray(ai.feed.disputed) && ai.feed.disputed.indexOf(d.src === 'cam' ? String(d.cam) : vkey(d)) >= 0;
+    if (under) h += '<div class="m vsum">Có người báo nước đã rút, AI đang xem lại camera.</div>';
+    var n = (d.src === 'report' || d.src === 'photo' ? 1 : d.src === 'crowd' ? (d.crowd || 0) : 0) + (d.vdevs || 0);
+    if (n) h += '<div class="vthx">Cảm ơn mọi người: ' + n + ' lượt báo và xác nhận chỗ này.</div>';
+    return h + '</div>';
+  }
+  document.addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-vote2]'); if (!b || b.disabled) return;
+    var d = aiFloods().find(function (x) { return x.id === b.dataset.vid; }); if (!d) return;
+    var k = b.dataset.vote2, box = b.closest('.vote');
+    box.querySelectorAll('[data-vote2]').forEach(function (x) { x.disabled = true; });
+    b.setAttribute('aria-pressed', 'true');
+    var msg = { v: 1, kind: 'vote', id: newId(), k: k, cam: d.src === 'cam' ? String(d.cam) : '', rid: d.src !== 'cam' ? String(d.id).replace(/^rp-/, '') : '', lat: d.lat, lng: d.lng, dev: devId() };
+    fetch('https://ntfy.sh/' + REPORT_TOPIC, { method: 'POST', body: JSON.stringify(msg) }).then(function (r) {
+      if (!r.ok) throw new Error(r.status);
+      var mv = lsGet('nn-myvotes', {}); mv[vkey(d)] = { k: k, t: Date.now() };
+      Object.keys(mv).forEach(function (x) { if (Date.now() - mv[x].t > 6 * 3600e3) delete mv[x]; });
+      lsSet('nn-myvotes', mv);
+      toast(k === 'gone' ? 'Cảm ơn bạn. AI sẽ xem lại camera; đủ người báo thì điểm này được gỡ khỏi bản đồ.' : 'Cảm ơn bạn. Mọi người sẽ thấy xác nhận này sau vài phút.', 4500);
+    }).catch(function () {
+      box.querySelectorAll('[data-vote2]').forEach(function (x) { x.disabled = false; }); b.removeAttribute('aria-pressed');
+      toast('Chưa gửi được, kiểm tra mạng rồi thử lại.');
+    });
+  });
   function disputeHTML(d) {
     if (store.mode !== 'queue') return '';
     var done = lsGet('nn-disputed', {})[disputeKey(d)];
@@ -6664,7 +6722,7 @@ if (typeof module !== 'undefined') module.exports = NN;
         '<div class="pop"><div class="lv">' + wheel(d.level, 28) + '<span>' + esc(head) + '</span></div>' +
         '<div class="m"><b>' + esc(d.street) + '</b><br>' + esc(LEVELS[d.level].name) + ' (' + esc(LEVELS[d.level].cm) + ')</div>' +
         /* ảnh người dân gửi chỉ để AI kiểm tra, không hiện công khai */
-        '<div class="m">' + esc(aiWho(d)) + '.</div><div class="m">' + esc(LEVELS[d.level].advice) + '</div>' + disputeHTML(d) + '<div class="acts row">' + shareBtn(d.lat, d.lng, d.street, d.level) + '</div></div>').addTo(map);
+        '<div class="m">' + esc(aiWho(d)) + '.</div><div class="m">' + esc(LEVELS[d.level].advice) + '</div>' + voteHTML(d) + '<div class="acts row">' + shareBtn(d.lat, d.lng, d.street, d.level) + '</div></div>').addTo(map);
       return;
     }
     popup = new maplibregl.Popup({ maxWidth: '340px', offset: 14, className: 'campop' }).setLngLat([d.lng, d.lat]).setHTML(
@@ -6676,7 +6734,7 @@ if (typeof module !== 'undefined') module.exports = NN;
       camHTML(cm, true) +
       '<div class="m">Ảnh trên là ảnh mới nhất' + (d.src === 'report' ? ' của camera ' + esc(d.camName) : '') + '. AI xem lúc ' + hhmm(d.seen) + '. AI có thể nhầm, nhất là ban đêm. Nhìn ảnh thấy không ngập thì bấm nút dưới; thấy mức nước khác thì chạm mức đúng:</div>' +
       /* ảnh người dân gửi chỉ để AI kiểm tra, không hiện công khai */
-      disputeHTML(d) + quickLevels(cm) + '<div class="acts row">' + shareBtn(d.lat, d.lng, d.street, d.level) + '</div></div>').addTo(map);
+      voteHTML(d) + quickLevels(cm) + '<div class="acts row">' + shareBtn(d.lat, d.lng, d.street, d.level) + '</div></div>').addTo(map);
     loadCamsIn(popup.getElement());
   }
   document.addEventListener('click', function (ev) {
@@ -6785,6 +6843,10 @@ if (typeof module !== 'undefined') module.exports = NN;
 
   // ---------- báo cáo của máy này: theo dõi kết quả AI kiểm chứng ----------
   function mineText(r) {
+    var t = mineText0(r), v = (r.info || {}).votes;
+    return v ? t + ' ' + v + ' người khác đã xác nhận báo cáo của bạn. Cảm ơn bạn!' : t;
+  }
+  function mineText0(r) {
     var i = r.info || {}, dd = i.cam_dist ? ' (cách ' + Math.round(i.cam_dist / 10) * 10 + ' m)' : '';
     switch (r.pend) {
       case 'confirmed': return 'Camera ' + (i.cam_name || '') + dd + ' xác nhận có ngập. Mọi người đã thấy điểm này.';
@@ -9045,6 +9107,17 @@ if (typeof module !== 'undefined') module.exports = NN;
     ['report-card', 'shelter-card'].forEach(function (id) { mo2.observe($(id), { attributes: true, attributeFilter: ['hidden', 'class'] }); });
     document.querySelectorAll('.v3-card').forEach(function (c) { mo2.observe(c, { attributes: true, attributeFilter: ['hidden'] }); });
     openState();
+    // khung thông tin trên bản đồ đang mở (điện thoại): ẩn các nút nổi để không che khung, dời bản đồ cho khung có chỗ hiện
+    (function () {
+      var P = maplibregl.Popup.prototype, add = P.addTo, rm = P.remove;
+      var upd = function () { body.classList.toggle('pop-open', !!document.querySelector('.maplibregl-popup')); };
+      P.addTo = function (m) {
+        var r = add.call(this, m); upd();
+        if (isPhone() && this.getLngLat) { var ll = this.getLngLat(); m.easeTo({ center: ll, offset: [0, Math.round(window.innerHeight * 0.3)], duration: 400 }); }
+        return r;
+      };
+      P.remove = function () { var r = rm.call(this); setTimeout(upd, 0); return r; };
+    })();
     window.__nnV3 = { sync: sync, bot: bot, peek: peek };
   })();
 
