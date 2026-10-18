@@ -1220,7 +1220,7 @@ body.nav .lm .lm-name { display: none; }
    Luôn nền sáng (bỏ chế độ tối: ban đêm ngoài đường khó nhìn).
    ===================================================================== */
 :root { color-scheme: light; }
-#app .brand, #app .zen-btn, #app .credit-btn, #app .fab, #app .map-pill, #app .panel .tabs, #app .panel .song, #app #p-route > .sec-title:first-child, #app #p-list > .sec-title:first-child, #app #f-s { display: none !important; }
+#app .brand, #app .zen-btn, #app .credit-btn, #app .fab, #app .map-pill, #app .panel .tabs, #app .panel .song, #app #p-route > .sec-title:first-child, #app #p-list > .sec-title:first-child { display: none !important; }
 .v3-nav { position: absolute; z-index: 10; left: 0; top: 0; bottom: 0; width: 72px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0 16px;
   background: #fff; box-shadow: 1px 0 0 rgba(11,42,85,.08), 6px 0 22px rgba(3,40,100,.07); }
 .v3-menu { width: 44px; height: 44px; flex: none; border: 0; border-radius: 50%; background: none; color: #0B2A55; display: grid; place-items: center; }
@@ -1568,6 +1568,9 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
   body.pop-open .v3-peek, body.pop-open .v3-shelter, body.pop-open .v3-go, body.pop-open #app .loc-btn, body.pop-open .v3-rainbar { opacity: 0; pointer-events: none; }
   .maplibregl-popup-content { max-height: 58vh; overflow-y: auto; }
 }
+/* mục Tra cứu: thanh bên máy tính có, điện thoại mở từ ô tìm kiếm */
+@media (max-width: 760px) { .v3-ni-list { display: none; } }
+.v3-sg [data-v3list] b { color: var(--lam); }
 </style>
 
 <div id="app">
@@ -1671,6 +1674,7 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
     <button class="v3-logo" id="v3-logo" aria-label="Giới thiệu Né Ngập và nguồn dữ liệu" aria-expanded="false"><svg viewBox="0 0 40 22" aria-hidden="true"><use href="#nn-song"/></svg><span class="wordmark">NÉ<br>NGẬP</span></button>
     <button class="v3-ni" data-nav="explore" aria-pressed="true"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg></i><span>Khám phá</span></button>
     <button class="v3-ni v3-ni-now" data-nav="now" aria-pressed="false"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3s6 6.6 6 11a6 6 0 0 1-12 0c0-4.4 6-11 6-11z"/></svg><b class="v3-badge" id="v3-cnt" hidden>0</b></i><span>Đang ngập</span></button>
+    <button class="v3-ni v3-ni-list" data-nav="list" aria-pressed="false"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.3"/><circle cx="4.5" cy="12" r="1.3"/><circle cx="4.5" cy="18" r="1.3"/></svg></i><span>Tra cứu</span></button>
     <button class="v3-ni" data-nav="me" aria-pressed="false"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></i><span>Của tôi</span></button>
     <button class="v3-ni v3-ni-rep" data-nav="report" aria-pressed="false"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></i><span>Báo ngập</span></button>
   </nav>
@@ -1738,7 +1742,7 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
       <div class="cc-row"><span>Thực hiện</span><b>Nhóm Nhóm</b></div>
       <div class="cc-row"><span>Dữ liệu</span><div>Radar Đài KTTV khu vực Nam Bộ, Phòng CSGT Công an TP.HCM, camera giao thông TP.HCM, OpenStreetMap, Open-Meteo, TomTom</div></div>
       <div class="cc-row"><span>Đường dây nóng</span><b>0326 08 08 08</b></div>
-      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">18/10, bản 16:07</span></div>
+      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">18/10, bản 16:42</span></div>
     </div>
   </div>
   <button class="zen-btn" id="zen-btn" aria-pressed="false" aria-label="Ẩn bảng để xem trọn bản đồ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Ẩn bảng</span></button>
@@ -1821,7 +1825,7 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
           <div><a class="src" href="https://giaothong.hochiminhcity.gov.vn/" target="_blank" rel="noopener">Xem camera giao thông trực tiếp của TP.HCM</a></div>
         </div>
       </details>
-      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 18/10, bản 16:07.</span></div>
+      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 18/10, bản 16:42.</span></div>
     </section>
 
     <!-- Chỉ đường -->
@@ -8897,7 +8901,7 @@ if (typeof module !== 'undefined') module.exports = NN;
   // =====================================================================
   (function () {
     var app = $('app'), body = document.body, nav = $('v3-nav');
-    var TITLE = { route: 'Tìm đường né ngập', now: 'Đang ngập', list: 'Tìm kiếm', me: 'Của tôi' };
+    var TITLE = { route: 'Tìm đường né ngập', now: 'Đang ngập', list: 'Tra cứu điểm hay ngập', me: 'Của tôi' };
     // "Của tôi": nơi đã lưu, cảnh báo, quyền riêng tư, ghi công
     var me = $('p-me');
     me.insertBefore($('places'), me.firstChild);
@@ -8918,7 +8922,7 @@ if (typeof module !== 'undefined') module.exports = NN;
 
     function sync() {
       var zen = body.classList.contains('zen'), rep = !$('report-card').hidden;
-      var cur = rep ? 'report' : zen ? 'explore' : state.tab === 'me' ? 'me' : state.tab === 'now' && !isPhone() ? 'now' : 'explore';
+      var cur = rep ? 'report' : zen ? 'explore' : state.tab === 'me' ? 'me' : state.tab === 'now' && !isPhone() ? 'now' : state.tab === 'list' && !isPhone() ? 'list' : 'explore';
       nav.querySelectorAll('[data-nav]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.nav === cur)); });
       $('v3-ph-t').textContent = TITLE[state.tab] || '';
     }
@@ -9003,6 +9007,15 @@ if (typeof module !== 'undefined') module.exports = NN;
       showPlace(it);
     }, function () { closePlace(); }, spotHits);
     q.addEventListener('input', function () { $('v3-q-x').hidden = !q.value; });
+    function emptyHint() {
+      if (q.value.trim()) return;
+      $('v3-sg').innerHTML = '<button type="button" data-v3list><b>Tra cứu điểm hay ngập</b><small>Danh sách ' + (G && G.spots ? G.spots.length + ' ' : '') +
+        'điểm hay ngập theo CSGT TP.HCM và báo chí, lọc theo mưa hay triều</small></button>';
+      $('v3-sg').hidden = false;
+    }
+    q.addEventListener('focus', emptyHint);
+    q.addEventListener('input', function () { if (!q.value.trim()) emptyHint(); });
+    $('v3-sg').addEventListener('click', function (e) { if (e.target.closest('[data-v3list]')) { $('v3-sg').hidden = true; q.blur(); setTab('list'); } });
     $('v3-q-x').onclick = function () { q.value = ''; delete q.dataset.chosen; $('v3-q-x').hidden = true; $('v3-sg').hidden = true; closePlace(); q.focus(); };
     $('v3-pc-x').onclick = closePlace;
     $('v3-pc-go').onclick = function () {
