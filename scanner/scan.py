@@ -842,6 +842,21 @@ def fetch_reports(state, ts):
             rid = str(x["id"])[:40]
             if not rid.replace("-", "").isalnum() or rid in known:
                 continue
+            if x.get("kind") == "vote":
+                # người đi đường bấm nút trả lời nhanh trên một điểm ngập: còn ngập, ngập sâu hơn, đã rút bớt, nước đã rút, xe máy vẫn qua được, nên tránh
+                at = int(m.get("time") or ts)
+                k = str(x.get("k", ""))
+                tgt = str(x.get("cam") or "")[:40] or ("rp:" + str(x.get("rid") or "")[:40])
+                dev = str(x.get("dev", ""))[:40] or rid
+                if k in VOTE_KINDS and ts - at <= 90 * 60 and len(tgt) > 3:
+                    vs = [v for v in state.setdefault("votes", {}).setdefault(tgt, []) if v[1] != dev]   # mỗi máy giữ lượt mới nhất
+                    vs.append([at, dev, k]); state["votes"][tgt] = vs[-40:]
+                    if k == "gone":                   # "nước đã rút" tính như báo AI nhầm: xem lại camera, đủ 2 máy thì gỡ báo cáo
+                        dis = state.setdefault("disputes", {}).setdefault(tgt, [])
+                        if all(d[1] != dev for d in dis):
+                            dis.append([at, dev])
+                known[rid] = {"id": rid, "kind": "vote", "at": at, "status": "vote", "lat": 0, "lng": 0}
+                continue
             if x.get("kind") == "dispute":
                 # người dùng bấm "Không ngập" trên một điểm AI báo
                 at = int(m.get("time") or ts)
@@ -886,6 +901,22 @@ def cams_near(cams, lat, lng, radius):
                 out.append((d, c))
     out.sort(key=lambda x: x[0])
     return out[:VERIFY_MAX_CAMS]
+
+
+VOTE_KINDS = ("still", "deeper", "less", "gone", "pass", "avoid")
+VOTE_POS = ("still", "deeper", "less", "pass", "avoid")     # các trả lời cho biết chỗ đó vẫn còn nước
+
+
+def vote_info(state, key, ts, after=0):
+    """Tóm tắt lượt xác nhận 90 phút qua (sau mốc after): đếm theo loại, lần gần nhất còn nước, số máy."""
+    vs = [v for v in state.get("votes", {}).get(key, []) if ts - v[0] <= 90 * 60 and v[0] >= after]
+    if not vs:
+        return None
+    cnt = {}
+    for v in vs:
+        cnt[v[2]] = cnt.get(v[2], 0) + 1
+    pos = max([v[0] for v in vs if v[2] in VOTE_POS] or [0])
+    return {"n": cnt, "pos": pos, "last": max(v[0] for v in vs), "devs": len({v[1] for v in vs})}
 
 
 def disputed(state, key, ts):
@@ -946,7 +977,7 @@ def verify_reports(state, cams, fresh, ts, wet_recent):
     """Cập nhật trạng thái báo cáo theo kết quả AI vừa xem (fresh: cam_id -> kết quả lượt này)."""
     reps = state.get("reports", {})
     for r in reps.values():
-        if r.get("kind") == "dispute":
+        if r.get("kind") in ("dispute", "vote"):
             continue
         st = r["status"]
         if st in ("checking", "confirmed"):
@@ -971,15 +1002,17 @@ def verify_reports(state, cams, fresh, ts, wet_recent):
                     r["status"] = "cleared"           # camera thấy nước đã rút
             if r["status"] == "checking" and ts - r["at"] > CHECK_FOR:
                 r["status"] = "unverifiable"          # không lấy được ảnh camera
-            if r["status"] == "confirmed" and ts - r.get("last_pos", ts) > REPORT_KEEP:
+            vi = vote_info(state, "rp:" + r["id"], ts)
+            if r["status"] == "confirmed" and ts - max(r.get("last_pos", ts), vi["pos"] if vi else 0) > REPORT_KEEP:
                 r["status"] = "expired"
     # ảnh người đi đường gửi: AI thấy ngập rõ trong ảnh thì công bố ngay (camera xác nhận vẫn được ưu tiên)
     for r in reps.values():
-        if not r.get("photo") or r.get("kind") == "dispute":
+        if not r.get("photo") or r.get("kind") in ("dispute", "vote"):
             continue
         good = r.get("photo_ok") and r.get("photo_level", 0) >= 1 and r.get("photo_conf", 0) >= 0.7
         if r["status"] in ("checking", "no_camera", "unverifiable", "not_seen", "photo") and good:
-            if disputed(state, "rp:" + r["id"], ts) >= 2 or ts - r["at"] > REPORT_KEEP:
+            vi = vote_info(state, "rp:" + r["id"], ts)
+            if disputed(state, "rp:" + r["id"], ts) >= 2 or ts - max(r["at"], vi["pos"] if vi else 0) > REPORT_KEEP:
                 r["status"] = "expired"
             else:
                 r.update(status="photo", level_photo=min(r["photo_level"], 4), last_pos=r["at"], since=r["at"])
@@ -999,7 +1032,8 @@ def verify_reports(state, cams, fresh, ts, wet_recent):
         elif r["status"] == "crowd":
             r["status"] = "expired"
     for r in reps.values():
-        if r["status"] == "crowd" and ts - r.get("last_pos", r["at"]) > 60 * 60:
+        vi = vote_info(state, "rp:" + r["id"], ts) if r["status"] == "crowd" else None
+        if r["status"] == "crowd" and ts - max(r.get("last_pos", r["at"]), vi["pos"] if vi else 0) > 60 * 60:
             r["status"] = "expired"
     # dọn báo cáo cũ hơn 6 giờ
     for k in [k for k, r in reps.items() if ts - r["at"] > 6 * 3600]:
@@ -1868,6 +1902,8 @@ def main():
         w["radar"]["confirmed"] = True        # nhiều camera thấy mưa thật: radar đúng, dù bước kiểm chứng nhanh lúc đầu nói không
 
     # dọn phản hồi "Không ngập" cũ hơn 1 giờ
+    state["votes"] = {k: [v for v in vs if ts - v[0] <= 3 * 3600] for k, vs in state.get("votes", {}).items()}
+    state["votes"] = {k: v for k, v in state["votes"].items() if v}
     state["disputes"] = {k: [d for d in v if ts - d[0] <= 60 * 60] for k, v in state.get("disputes", {}).items()}
     state["disputes"] = {k: v for k, v in state["disputes"].items() if v}
 
@@ -1916,6 +1952,13 @@ def main():
                                "level": r["level_crowd"], "reported_level": r["level"], "conf": 0.5, "crowd": r["crowd"],
                                "note": f"{r['crowd']} người cùng báo ngập quanh đây", "confirmed": True,
                                "seen": r["last_pos"], "since": r["at"], "times": 1})
+    for d in detections:
+        key = ("rp:" + str(d["rid"])) if d.get("rid") else str(d.get("cam") or "")
+        vi = vote_info(state, key, ts, after=int(d.get("since") or 0) - 15 * 60)
+        if vi:
+            d["votes"] = vi["n"]; d["vlast"] = vi["last"]; d["vdevs"] = vi["devs"]
+            if vi["pos"] > (d.get("seen") or 0):
+                d["vseen"] = vi["pos"]            # người đi đường vừa xác nhận còn nước: trang giữ điểm lâu hơn
     detections.sort(key=lambda x: (-x["confirmed"], -x["level"], -x["conf"]))
     # dọn lịch sử quá cũ
     for cid in list(state["cams"]):
@@ -1933,8 +1976,10 @@ def main():
         "disputed": sorted(k for k in state.get("disputes", {}) if disputed(state, k, ts)),
         "raining_cams": sorted(cid for cid, r in fresh.items() if r["usable"] and r.get("rain")),
         "dry": sorted(cid for cid, r in fresh.items() if r["usable"] and r["level"] == 0 and r["conf"] >= 0.6),
-        "reports": [{k: r[k] for k in ("id", "status", "cam_name", "cam_dist", "level_cam", "crowd", "at") if k in r}
-                    for r in sorted(reps.values(), key=lambda r: -r["at"]) if ts - r["at"] <= 3 * 3600][:300],
+        "reports": [dict({k: r[k] for k in ("id", "status", "cam_name", "cam_dist", "level_cam", "crowd", "at") if k in r},
+                         **({"votes": len({v[1] for v in state.get("votes", {}).get("rp:" + r["id"], []) if v[2] in VOTE_POS and v[1] != r.get("dev")})}
+                            if state.get("votes", {}).get("rp:" + r["id"]) else {}))
+                    for r in sorted(reps.values(), key=lambda r: -r["at"]) if ts - r["at"] <= 3 * 3600 and r.get("kind") != "vote"][:300],
     }
     # cảnh báo chính thống của Trung tâm Dự báo KTTV Quốc gia
     try:
