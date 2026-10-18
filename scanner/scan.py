@@ -1286,7 +1286,7 @@ def veto_radar(rd, pts, state=None):
 
 
 LEVEL_VI = {1: ("mắt cá chân", "Ngập mắt cá chân (dưới 10 cm)"), 2: ("nửa bánh xe", "Ngập nửa bánh xe máy (15–25 cm)"),
-            3: ("ngang bô", "Ngập ngang bô xe (30–40 cm)"), 4: ("lút yên", "Ngập lút yên xe (trên 50 cm)")}
+            3: ("ngang pô", "Ngập ngang pô xe (30–40 cm)"), 4: ("lút yên", "Ngập lút yên xe (trên 50 cm)")}
 
 
 def alert_cells(lat, lng, radius_m):
