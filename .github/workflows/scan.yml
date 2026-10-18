@@ -40,6 +40,8 @@ jobs:
         id: scan
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PUSH_KEYS: ${{ secrets.PUSH_KEYS }}
+          SITE_URL: ${{ vars.SITE_URL || 'https://nengap-hcm.netlify.app/' }}
           SCAN_ALL: ${{ inputs.scan_all }}
           DAILY_BUDGET_USD: ${{ vars.DAILY_BUDGET_USD || '1.5' }}
           DRY_SCAN_HOURS: ${{ vars.DRY_SCAN_HOURS || '3' }}
@@ -53,7 +55,7 @@ jobs:
           git config user.name "ne-ngap-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/flood-ai.json data/state.json data/cams.json
-          for f in data/radar.png data/forecast.png data/probe-sources.json; do if [ -f "$f" ]; then git add "$f"; fi; done
+          for f in data/radar.png data/forecast.png data/probe-sources.json data/push.bin; do if [ -f "$f" ]; then git add "$f"; fi; done
           if git diff --cached --quiet; then echo "Không có gì mới."; exit 0; fi
           git commit -m "Cập nhật ngập từ camera"
           for i in 1 2 3; do
@@ -73,6 +75,8 @@ jobs:
         if: steps.scan.outputs.rain_pass == '1'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PUSH_KEYS: ${{ secrets.PUSH_KEYS }}
+          SITE_URL: ${{ vars.SITE_URL || 'https://nengap-hcm.netlify.app/' }}
           FAST_PASS: '1'
           DAILY_BUDGET_USD: ${{ vars.DAILY_BUDGET_USD || '1.5' }}
           DRY_SCAN_HOURS: ${{ vars.DRY_SCAN_HOURS || '3' }}
@@ -89,7 +93,7 @@ jobs:
           git config user.name "ne-ngap-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/flood-ai.json data/state.json data/cams.json
-          for f in data/radar.png data/forecast.png data/probe-sources.json; do if [ -f "$f" ]; then git add "$f"; fi; done
+          for f in data/radar.png data/forecast.png data/probe-sources.json data/push.bin; do if [ -f "$f" ]; then git add "$f"; fi; done
           if git diff --cached --quiet; then echo "Không có gì mới."; exit 0; fi
           git commit -m "Cập nhật ngập từ camera (lượt nhanh)"
           for i in 1 2 3; do
