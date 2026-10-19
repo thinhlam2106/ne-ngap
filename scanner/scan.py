@@ -193,7 +193,8 @@ def load_cameras():
                 lo, la = x["loc"]["coordinates"]
                 c = {"id": x["_id"], "name": x.get("name", "").strip(), "lat": la, "lng": lo, "notis": True}
                 # hướng camera nhìn (độ, 0 = bắc) nếu Notis có ghi: trang web vẽ tia xanh theo hướng này
-                for k in ("heading", "angle", "direction", "bearing", "azimuth", "rotation", "dir", "huong"):
+                # camera xoay được (ptz) thì hướng thay đổi liên tục: không vẽ tia
+                for k in (() if x.get("ptz") else ("heading", "angle", "direction", "bearing", "azimuth", "rotation", "dir", "huong")):
                     v = x.get(k)
                     try:
                         if v is not None and v != "" and 0 <= float(v) <= 360:
@@ -222,7 +223,7 @@ def load_cameras():
                 cams.append({"id": x[0], "name": x[1], "lat": x[2], "lng": x[3], "notis": False})
         cams = [c for c in cams if in_hcm(c["lat"], c["lng"])]
         # lưu lại danh mục khi có camera mới (trang web đọc file này để hiện thêm camera)
-        hd_new = any("hd" in c for c in cams) and not any(len(x) > 5 for x in saved)
+        hd_new = {c["id"]: c.get("hd") for c in cams} != {x[0]: (x[5] if len(x) > 5 else None) for x in saved}
         if hd_new or len(cams) != len(saved) or {c["id"] for c in cams} != {x[0] for x in saved}:
             save_json(CAMS_FILE, [[c["id"], c["name"], round(c["lat"], 6), round(c["lng"], 6), 1 if c["notis"] else 0] + ([c["hd"]] if "hd" in c else [])
                                   for c in cams])
