@@ -188,10 +188,24 @@ def load_cameras():
             r = requests.get("https://api.notis.vn/v4/cameras/bybbox?lat1=11.55&lng1=107.62&lat2=10.30&lng2=106.30",   # TP.HCM mới (gồm Bình Dương, Bà Rịa - Vũng Tàu cũ)
                              headers=HEADERS, timeout=20)
             r.raise_for_status()
-            for x in r.json():
+            raw = r.json()
+            for x in raw:
                 lo, la = x["loc"]["coordinates"]
-                cams.append({"id": x["_id"], "name": x.get("name", "").strip(), "lat": la, "lng": lo, "notis": True})
-            log(f"Danh mục camera mới từ Notis: {len(cams)}")
+                c = {"id": x["_id"], "name": x.get("name", "").strip(), "lat": la, "lng": lo, "notis": True}
+                # hướng camera nhìn (độ, 0 = bắc) nếu Notis có ghi: trang web vẽ tia xanh theo hướng này
+                for k in ("heading", "angle", "direction", "bearing", "azimuth", "rotation", "dir", "huong"):
+                    v = x.get(k)
+                    try:
+                        if v is not None and v != "" and 0 <= float(v) <= 360:
+                            c["hd"] = round(float(v)) % 360
+                            break
+                    except (TypeError, ValueError):
+                        pass
+                cams.append(c)
+            log(f"Danh mục camera mới từ Notis: {len(cams)}, có hướng: {sum(1 for c in cams if 'hd' in c)}")
+            # ghi lại các trường Notis trả về (một lần) để biết nguồn có những thông tin gì
+            if raw and not (DATA / "cam-fields.json").exists():
+                save_json(DATA / "cam-fields.json", {"keys": sorted({k for x in raw[:50] for k in x}), "sample": raw[:2]})
         except Exception as e:
             log("Không lấy được danh mục mới, dùng bản lưu sẵn:", repr(e)[:120])
             cams = []
@@ -208,8 +222,10 @@ def load_cameras():
                 cams.append({"id": x[0], "name": x[1], "lat": x[2], "lng": x[3], "notis": False})
         cams = [c for c in cams if in_hcm(c["lat"], c["lng"])]
         # lưu lại danh mục khi có camera mới (trang web đọc file này để hiện thêm camera)
-        if len(cams) != len(saved) or {c["id"] for c in cams} != {x[0] for x in saved}:
-            save_json(CAMS_FILE, [[c["id"], c["name"], round(c["lat"], 6), round(c["lng"], 6), 1 if c["notis"] else 0] for c in cams])
+        hd_new = any("hd" in c for c in cams) and not any(len(x) > 5 for x in saved)
+        if hd_new or len(cams) != len(saved) or {c["id"] for c in cams} != {x[0] for x in saved}:
+            save_json(CAMS_FILE, [[c["id"], c["name"], round(c["lat"], 6), round(c["lng"], 6), 1 if c["notis"] else 0] + ([c["hd"]] if "hd" in c else [])
+                                  for c in cams])
             log(f"Đã lưu danh mục camera: {len(cams)} camera (trước: {len(saved)})")
     return cams
 
@@ -1970,6 +1986,9 @@ def main():
     out = {
         "updated": iso(ts), "updated_ts": ts, "mode": mode, "model": MODEL,
         "weather": w, "stats": stats, "cameras_total": len(cams),
+        # camera đang không lấy được ảnh (lỗi lượt gần nhất, không có ảnh tốt nào trong 24 giờ): trang làm mờ
+        "cams_off": sorted(cid for cid, cs in state["cams"].items()
+                           if cs.get("err") and (not cs.get("hist") or ts - cs["hist"][-1][0] > 24 * 3600)),
         "spend_today_usd": state["spend"].get(today, 0.0), "budget_usd": budget,
         "detections": detections,
         # camera AI vừa xem lượt này và thấy đường khô: bản đồ dùng để bỏ ước tính ngập ở gần đó
