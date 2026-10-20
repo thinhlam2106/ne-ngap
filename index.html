@@ -6,7 +6,9 @@
 <meta name="description" content="Né Ngập: bản đồ ngập TP.HCM theo mưa, triều và người đi đường. Tìm đường né chỗ ngập.">
 <meta name="theme-color" content="#0476D6">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -92,6 +94,9 @@ body.intro .map-pill { opacity: 0; }
 .sh-item .t b { display: block; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sh-item .t span { font-size: 12px; color: rgba(11,42,85,.66); }
 .sh-item button { flex: none; border: 0; border-radius: 99px; padding: 6px 11px; font: 600 12px var(--font-body); background: rgba(4,118,214,.12); color: var(--lam); }
+.vm-wait { display: flex; align-items: center; gap: 10px; padding: 14px 4px; font-size: 13px; color: rgba(11,42,85,.75); }
+.vm-wait .spin { width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid rgba(4,118,214,.2); border-top-color: #0476D6; animation: vmspin .8s linear infinite; flex: none; }
+@keyframes vmspin { to { transform: rotate(360deg); } }
 .hp-calls { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .hp-calls a { display: flex; flex-direction: column; gap: 1px; padding: 9px 12px; border-radius: 14px; background: rgba(229,56,59,.09); color: #9B1C1F; text-decoration: none; }
 .hp-calls a b { font: 700 16px var(--font-body); white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -434,11 +439,23 @@ button { cursor: pointer; }
 .fact { background: var(--panel); border-radius: 8px; padding: 6px 8px; display: flex; flex-direction: column; }
 .fact b { font-variant-numeric: tabular-nums; font-size: 15px; }
 .fact span { font-size: 11px; color: var(--ink-2); line-height: 1.25; }
+.fact b small { font-size: 11px; font-weight: 600; color: var(--ink-2); }
+.fact.bad b { color: var(--lv3, #E5383B); }
+.nrows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.nrows li { display: flex; gap: 9px; align-items: flex-start; font-size: 13px; line-height: 1.45; color: var(--ink-2); }
+.nrows li b { color: var(--ink); font-weight: 600; }
+.nrows .ni { flex: none; width: 24px; height: 24px; border-radius: 8px; display: grid; place-items: center; background: rgba(4,118,214,.1); color: #0476D6; margin-top: -1px; }
+.nrows .ni svg { width: 15px; height: 15px; }
+.nlink { border: 0; background: none; padding: 0; font: inherit; font-weight: 600; color: #0476D6; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.nsrc { font-size: 11px; color: var(--ink-3); margin-top: 6px; }
 .est-tag { font-size: 11px; font-weight: 700; color: var(--ink-3); }
 .sim { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
 .sim summary { cursor: pointer; font-weight: 600; font-size: 13px; color: var(--ink-2); }
 .sim-body { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; font-size: 13px; }
-.sim-body input[type=range] { width: 100%; accent-color: var(--accent); }
+.sim-body input[type=range] { width: 100%; accent-color: var(--accent); margin-bottom: 0; }
+.zones { display: flex; margin: -4px 0 6px; font-size: 11px; font-weight: 600; }
+.zones span { border-top: 3px solid var(--z, transparent); padding-top: 3px; text-align: center; color: var(--z, inherit); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.zones span + span { margin-left: 2px; }
 .layer-toggles { display: flex; flex-direction: column; gap: 6px; }
 /* Nút và thẻ báo ngập nhỏ */
 .fab { position: absolute; z-index: 6; left: 420px; bottom: 30px; border: 0; background: var(--ink); color: var(--panel); font-weight: 700; padding: 10px 16px 10px 12px; border-radius: 99px; box-shadow: var(--shadow); display: flex; gap: 6px; align-items: center; font-size: 14px; }
@@ -466,13 +483,13 @@ button { cursor: pointer; }
 .rain-lg { display: flex; flex-direction: column; gap: 3px; padding-bottom: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--line); width: 100%; }
 .legend:has(.rain-lg:not([hidden])) { max-width: 260px; min-width: 232px; }
 .rain-lg .unit { text-transform: none; letter-spacing: 0; font-weight: 600; color: var(--ink-3); }
-.rain-bar { height: 10px; border-radius: 3px; background: linear-gradient(90deg, #6F88B4 0%, #0078F0 16%, #00A890 34%, #00FC00 48%, #B4FC00 58%, #FCF000 66%, #FCA000 78%, #F03C00 90%, #C800C8 100%); }
+.rain-bar { height: 10px; border-radius: 5px; background: linear-gradient(90deg, #5AA8FF 0%, #2F7BFF 16%, #4B4DFF 34%, #7B3FF2 50%, #E0479E 68%, #FF8C42 84%, #FFE14D 100%); }
 .rain-words, .rain-ticks { position: relative; height: 14px; font-size: 10.5px; color: var(--ink-2); }
 .rain-words span { position: absolute; text-align: center; font-weight: 600; white-space: nowrap; }
 .rain-ticks span { position: absolute; transform: translateX(-50%); font-variant-numeric: tabular-nums; }
 .rain-src { font-size: 10.5px; color: var(--ink-3); line-height: 1.3; }
 /* Dự báo mưa 2 giờ tới: thang mm/10 phút của Đài KTTV Nam Bộ (1 → 15, tuyến tính) */
-.fc-bar { height: 10px; border-radius: 3px; background: linear-gradient(90deg, #2B9BEE 0%, #38FA2F 7.1%, #F7F82F 14.3%, #F7B02F 28.6%, #F52E30 64.3%, #912E95 100%); }
+.fc-bar { height: 10px; border-radius: 5px; background: linear-gradient(90deg, #5AA8FF 0%, #2F7BFF 16%, #4B4DFF 34%, #7B3FF2 50%, #E0479E 68%, #FF8C42 84%, #FFE14D 100%); }
 .legend:has(#fc-lg:not([hidden])) { max-width: 260px; min-width: 232px; }
 
 /* Camera */
@@ -529,6 +546,11 @@ button { cursor: pointer; }
   padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 12px; max-width: 220px;
 }
 .legend .lg { display: flex; align-items: center; gap: 8px; }
+.legend .lgi { width: 24px; height: 24px; flex: none; }
+.legend .lgi.sm { width: 18px; height: 18px; }
+.legend .lg-sub { font-size: 11.5px; color: var(--ink-3); margin: 2px 0 0; }
+.legend .lv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; font-size: 12.5px; }
+.legend .lv-grid div { display: flex; align-items: center; gap: 6px; }
 .legend .lg-note { font-size: 11px; line-height: 1.4; color: var(--ink-3); margin: 1px 0 3px 26px; max-width: 220px; }
 .legend .c { width: 14px; height: 14px; border-radius: 50%; background: var(--c); border: 2px solid var(--panel); box-shadow: 0 0 0 1px var(--c); flex: none; }
 .legend .h { width: 18px; height: 4px; flex: none; background: repeating-linear-gradient(90deg, var(--hot) 0 5px, transparent 5px 8px); }
@@ -1450,9 +1472,31 @@ body.nav #app .maplibregl-ctrl-bottom-left { left: 0; }
 /* ======== thanh dải màu lượng mưa: tự hiện khi radar thấy mưa ======== */
 .v3-rainbar { z-index: 6; left: calc(var(--rl) + 112px); bottom: 44px; width: 290px; padding: 8px 14px 6px; border-radius: 18px; display: flex; flex-direction: column; gap: 3px; color: #0B2A55; transition: left .6s var(--ease), opacity .3s; }
 .v3-rainbar .ttl { font: 700 12px var(--font-body); color: #0B2A55; }
+.rb-v { display: none; }
+.v3-wx { position: absolute; z-index: 6; display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 12px 0 9px; border: 0; border-radius: 20px; background: rgba(255,255,255,.96);
+  box-shadow: 0 4px 14px rgba(3,40,100,.16); color: #0B2A55; font: 600 12.5px var(--font-body); cursor: pointer; transition: opacity .3s; }
+.v3-wx svg { width: 22px; height: 22px; }
+.v3-wx[aria-expanded="true"] { background: #E8F1FF; }
+@media (min-width: 761px) { .v3-wx { right: 120px; bottom: 22px; } .v3-rainbar, body:not(.zen) .v3-rainbar { bottom: 72px !important; } }
+@media (max-width: 760px) { .v3-wx { left: 10px; top: calc(var(--v3-top) + 2px); } }
+.v3-compass { position: absolute; z-index: 7; width: 40px; height: 40px; border-radius: 50%; border: 0; display: grid; place-items: center; background: rgba(255,255,255,.96);
+  box-shadow: 0 4px 14px rgba(3,40,100,.18); cursor: pointer; padding: 0; }
+.v3-compass svg { width: 22px; height: 22px; transition: transform .1s linear; }
+@media (max-width: 760px) {
+  /* điện thoại: thang mưa thành cột dọc nhỏ sát mép trái, như bản đồ mưa của ứng dụng thời tiết */
+  #app .v3-rainbar, body:not(.zen) #app .v3-rainbar { left: 10px; right: auto; width: auto; padding: 7px 8px 8px; border-radius: 14px; top: calc(var(--v3-top) + 50px); }
+  #app .v3-rainbar .ttl, #app .v3-rainbar .rain-words, #app .v3-rainbar .rain-bar, #app .v3-rainbar .rain-ticks { display: none; }
+  .rb-v { display: flex; flex-direction: column; gap: 5px; }
+  .rb-v b { font: 700 11px var(--font-body); color: #0B2A55; }
+  .rb-col { display: flex; gap: 6px; height: 112px; }
+  .rb-col i { width: 7px; border-radius: 4px; background: linear-gradient(0deg, #5AA8FF 0%, #2F7BFF 16%, #4B4DFF 34%, #7B3FF2 50%, #E0479E 68%, #FF8C42 84%, #FFE14D 100%); }
+  .rb-col ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; justify-content: space-between; font-size: 10.5px; color: rgba(11,42,85,.75); }
+}
 .v3-rainbar .ttl .unit { font-weight: 600; color: rgba(11,42,85,.6); }
 body:not(.zen) .v3-rainbar { left: calc(var(--rl) + 516px); }
-#app.lyr-open .v3-rainbar, body.nav .v3-rainbar, body.intro .v3-rainbar { opacity: 0; pointer-events: none; }
+#app.lyr-open .v3-rainbar, body.nav .v3-rainbar, body.intro .v3-rainbar, #app.lyr-open .v3-wx, body.nav .v3-wx, body.intro .v3-wx { opacity: 0; pointer-events: none; }
+@media (max-width: 760px) { #app.lyr-open .v3-shelter, #app.lyr-open .v3-go, #app.lyr-open .v3-peek, #app.lyr-open .loc-btn, #app.lyr-open .v3-compass { opacity: 0; pointer-events: none; } }
+@media (max-width: 760px) { #app.lyr-open .v3-shelter, #app.lyr-open .v3-go, #app.lyr-open .v3-peek, #app.lyr-open .loc-btn, #app.lyr-open .v3-compass { opacity: 0; pointer-events: none; } }
 @media (min-width: 761px) {
   /* thanh dọc bên trái: mỗi mục là một ô ngang hết cột, rê chuột vào là cả ô đậm lên */
   .v3-nav { padding: 0 0 12px; gap: 0; }
@@ -1745,12 +1789,15 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
     </div>
   </div>
   <button class="v3-layers" id="v3-layers" aria-expanded="false" aria-label="Lớp bản đồ và chú giải"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 8.5l10 5.5 10-5.5zM2 13.5l10 5.5 10-5.5"/></svg><span>Lớp</span></button>
+  <button class="v3-wx" id="v3-wx" aria-expanded="false" aria-label="Lượng mưa trên bản đồ, bấm để xem thang màu" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 15a4 4 0 0 1-.6-7.96A5.5 5.5 0 0 1 17 8a3.5 3.5 0 0 1 0 7z"/><path d="M9 18l-1 2.5M13 18l-1 2.5M17 18l-1 2.5" stroke="var(--wxc,#2F7BFF)"/></svg><span id="v3-wx-t">Mưa</span></button>
   <div class="v3-rainbar" id="v3-rainbar" aria-label="Thang lượng mưa" hidden>
     <div class="ttl" id="v3-rb-t">Lượng mưa <span class="unit">mm/giờ</span></div>
     <div class="rain-words"><span style="left:0;width:34%">nhỏ</span><span style="left:34%;width:24%">vừa</span><span style="left:58%;width:20%">to</span><span style="left:78%;width:22%">rất to</span></div>
     <div class="rain-bar" aria-hidden="true"></div>
     <div class="rain-ticks"><span style="left:16%">1</span><span style="left:34%">3</span><span style="left:48%">8</span><span style="left:66%">25</span><span style="left:90%">70</span></div>
+    <div class="rb-v" aria-hidden="true"><b>Mưa</b><div class="rb-col"><i></i><ul><li>Rất to</li><li>To</li><li>Vừa</li><li>Nhỏ</li></ul></div></div>
   </div>
+  <button class="v3-compass" id="v3-compass" aria-label="Xoay bản đồ về hướng bắc" title="Về hướng bắc" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 8 12h8z" fill="#E5383B"/><path d="M12 21l4-9H8z" fill="#9AA8BF"/></svg></button>
   <div class="v3-card v3-place" id="v3-place" role="dialog" aria-label="Địa điểm" hidden>
     <div class="rc-head"><b id="v3-pc-t"></b><button class="icon-btn" id="v3-pc-x" aria-label="Đóng"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
     <div class="v3-card-t" id="v3-pc-s"></div>
@@ -1791,7 +1838,7 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
       <div class="cc-row"><span>Thực hiện</span><b>Nhóm Nhóm</b></div>
       <div class="cc-row"><span>Dữ liệu</span><div>Radar Đài KTTV khu vực Nam Bộ, Phòng CSGT Công an TP.HCM, camera giao thông TP.HCM, OpenStreetMap, Open-Meteo, TomTom</div></div>
       <div class="cc-row"><span>Đường dây nóng</span><a class="tel" href="tel:0326080808">0326 080 808</a></div>
-      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">20/10, bản 20:00</span></div>
+      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">20/10, bản 21:35</span></div>
     </div>
   </div>
   <button class="zen-btn" id="zen-btn" aria-pressed="false" aria-label="Ẩn bảng để xem trọn bản đồ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Ẩn bảng</span></button>
@@ -1844,10 +1891,12 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
       <details class="sim" id="sim">
         <summary>Thử mô phỏng một cơn mưa</summary>
         <div class="sim-body">
-          <label for="sim-rain">Mưa trong 1 giờ qua: <b id="sim-rain-v">40 mm (mưa to)</b></label>
-          <input type="range" id="sim-rain" min="0" max="120" step="5" value="40">
-          <label for="sim-tide">Mực triều: <b id="sim-tide-v">1,40 m (triều khá cao)</b></label>
-          <input type="range" id="sim-tide" min="0.6" max="1.8" step="0.05" value="1.4">
+          <label for="sim-rain">Cơn mưa: <b id="sim-rain-v">Mưa to (40 mm trong 1 giờ)</b></label>
+          <input type="range" id="sim-rain" min="0" max="9" step="1" value="5">
+          <div class="zones" aria-hidden="true"><span style="flex:0 0 5.6%"></span><span style="flex:0 0 11.1%;--z:#2F7BFF">Vừa</span><span style="flex:0 0 44.4%;--z:#7B3FF2">Mưa to</span><span style="flex:1;--z:#E0479E">Mưa rất to</span></div>
+          <label for="sim-tide">Triều: <b id="sim-tide-v">Khá cao (1,40 m)</b></label>
+          <input type="range" id="sim-tide" min="0" max="10" step="1" value="4">
+          <div class="zones" aria-hidden="true"><span style="flex:0 0 15%;--z:#7FA7D9">Thường</span><span style="flex:0 0 30%;--z:#2F7BFF">Khá cao</span><span style="flex:0 0 30%;--z:#7B3FF2">Triều cường</span><span style="flex:1;--z:#E0479E">Rất cao</span></div>
           <div class="row"><button class="ghost" id="sim-on">Bật mô phỏng</button><button class="ghost" id="sim-off" hidden>Tắt, quay về số liệu thật</button></div>
           <div class="muted">Mưa phủ bán kính khoảng 9 km quanh giữa bản đồ, kéo bản đồ thì mưa dời theo. Triều từ 1,45 m: điểm ven sông ngập cả khi không mưa.</div>
         </div>
@@ -1875,7 +1924,7 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
         </ul>
         <a class="src" href="https://giaothong.hochiminhcity.gov.vn/" target="_blank" rel="noopener">Xem camera giao thông trực tiếp của TP.HCM</a>
       </details>
-      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 20/10, bản 20:00.</span></div>
+      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 20/10, bản 21:35.</span></div>
     </section>
 
     <!-- Chỉ đường -->
@@ -2059,19 +2108,26 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
       <div class="rain-ticks"><span style="left:2%">1</span><span style="left:14.3%">3</span><span style="left:28.6%">5</span><span style="left:64.3%">10</span><span style="left:97%">15</span></div>
       <div class="rain-src" id="fc-src"></div>
     </div>
-    <div class="ttl">Mức ngập</div>
-    <div class="lg"><span class="aic" style="--c:var(--lv2)"></span>Camera thấy ngập</div>
-    <div class="lg" id="lg-camrain" hidden><span class="c" style="--c:#2f8fd8"></span>Camera thấy đang mưa</div>
-    <div class="lg"><span class="c est" style="--c:var(--lv2)"></span>Có thể ngập (ước tính)</div>
-    <div class="lg"><span class="c" style="--c:var(--lv1)"></span>Mắt cá chân</div>
-    <div class="lg"><span class="c" style="--c:var(--lv2)"></span>Nửa bánh xe</div>
-    <div class="lg"><span class="c" style="--c:var(--lv3)"></span>Ngang pô xe</div>
-    <div class="lg"><span class="c" style="--c:var(--lv4)"></span>Lút yên xe</div>
+    <div class="ttl">Chỗ đang ngập</div>
+    <div class="lg"><canvas class="lgi" data-lg="ai"></canvas>Camera thấy ngập (chấm viền đậm)</div>
+    <div class="lg"><canvas class="lgi" data-lg="rep"></canvas>Người đi đường báo</div>
+    <div class="lg"><canvas class="lgi" data-lg="est"></canvas>Có thể ngập, ước tính (vòng rỗng)</div>
+    <div class="lg-sub">Màu và số trên chấm cho biết nước sâu tới đâu</div>
+    <div class="lv-grid">
+      <div><canvas class="lgi sm" data-lg="lv1"></canvas>Mắt cá chân</div>
+      <div><canvas class="lgi sm" data-lg="lv2"></canvas>Nửa bánh xe</div>
+      <div><canvas class="lgi sm" data-lg="lv3"></canvas>Ngang pô xe</div>
+      <div><canvas class="lgi sm" data-lg="lv4"></canvas>Lút yên xe</div>
+    </div>
+    <div class="ttl" style="margin-top:6px">Trên bản đồ</div>
     <div class="lg"><span class="ic" id="lg-rain"></span>Điểm hay ngập khi mưa</div>
     <div class="lg"><span class="ic" id="lg-tide"></span>Điểm hay ngập do triều cường</div>
     <div class="lg-note">Ngập do mưa: rút sau khi tạnh. Ngập do triều: theo giờ nước sông lên, trời nắng vẫn có thể ngập.</div>
-    <div class="lg"><span class="mt" aria-hidden="true"><i></i></span>Metro số 1</div>
-    <div class="lg"><span class="kx" aria-hidden="true"></span>Hay kẹt xe</div>
+    <div class="lg"><canvas class="lgi" data-lg="cam"></canvas>Camera giao thông (bấm để xem ảnh)</div>
+    <div class="lg"><canvas class="lgi" data-lg="cone"></canvas>Hướng camera đang nhìn</div>
+    <div class="lg" id="lg-camrain" hidden><canvas class="lgi" data-lg="camrain"></canvas>Camera thấy đang mưa</div>
+    <div class="lg"><canvas class="lgi" data-lg="metro"></canvas>Metro số 1</div>
+    <div class="lg"><canvas class="lgi" data-lg="ketxe"></canvas>Hay kẹt xe</div>
   </div>
   <div class="pickbar" id="pickbar" hidden><span id="pick-text">Chạm vào bản đồ để chọn điểm</span><button id="pick-cancel">Huỷ</button></div>
   <div class="toast" id="toast" role="status" hidden></div>
@@ -5352,7 +5408,7 @@ if (typeof module !== 'undefined') module.exports = NN;
       container: 'map',
       style: { version: 8, glyphs: 'nn://glyphs/{fontstack}/{range}.pbf', sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': tok('land') } }] },
       center: [106.700, 10.785], zoom: 12.6, minZoom: 8.5, maxZoom: 18.5,
-      attributionControl: false, dragRotate: false, pitchWithRotate: false, touchPitch: false
+      attributionControl: false, dragRotate: true, pitchWithRotate: false, touchPitch: false
     });
   } catch (e) {
     // máy không hỗ trợ WebGL hoặc đã tắt tăng tốc phần cứng
@@ -5361,7 +5417,22 @@ if (typeof module !== 'undefined') module.exports = NN;
     return;
   }
   window.__nnMap = map; window.__nnState = state; window.__nnDbg = function () { return { G: G, nav: nav, NN: NN, cones: camCones }; };
-  map.touchZoomRotate.disableRotation();
+  // xoay bản đồ: hiện nút la bàn, bấm để quay về hướng bắc
+  (function () {
+    var cp = $('v3-compass'), ic = cp.querySelector('svg');
+    function place() {
+      var L = $('v3-layers'); if (!L) return;
+      var r = L.getBoundingClientRect(), a = $('app').getBoundingClientRect();
+      cp.style.left = (r.left - a.left + (r.width - 40) / 2) + 'px'; cp.style.top = (r.bottom - a.top + 10) + 'px';
+    }
+    function sync() {
+      var b = map.getBearing(), on = Math.abs(b) > 2 && !(typeof nav !== 'undefined' && nav.on);
+      if (on && cp.hidden) place();
+      cp.hidden = !on; ic.style.transform = 'rotate(' + (-b) + 'deg)';
+    }
+    map.on('rotate', sync); map.on('rotateend', sync); window.addEventListener('resize', function () { if (!cp.hidden) place(); });
+    cp.onclick = function () { map.easeTo({ bearing: 0, duration: 400 }); };
+  })();
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
   map.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: '© OpenStreetMap contributors (dữ liệu 9/2026). Điểm hay ngập: CSGT TP.HCM' }), 'bottom-left');
 
@@ -5516,7 +5587,29 @@ if (typeof module !== 'undefined') module.exports = NN;
       if (map.hasImage(id)) map.updateImage(id, img); else map.addImage(id, img, { pixelRatio: 2 });
     });
   }
+  // biểu tượng chú giải vẽ bằng đúng màu, nét, kiểu của lớp trên bản đồ
+  function lgIcon(cv, k) {
+    var S = cv.classList.contains('sm') ? 18 : 24, d = 2; cv.width = cv.height = S * d;
+    var g = cv.getContext('2d'); g.scale(d, d); var c = S / 2;
+    var lv = { lv1: tok('lv1'), lv2: tok('lv2'), lv3: tok('lv3'), lv4: tok('lv4') };
+    function dot(r, fill, sw, stroke) { g.beginPath(); g.arc(c, c, r, 0, 2 * Math.PI); if (fill) { g.fillStyle = fill; g.fill(); } if (sw) { g.lineWidth = sw; g.strokeStyle = stroke; g.stroke(); } }
+    function halo(r, col, a) { var gr = g.createRadialGradient(c, c, 0, c, c, r); gr.addColorStop(0, col); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.globalAlpha = a; g.fillStyle = gr; g.beginPath(); g.arc(c, c, r, 0, 2 * Math.PI); g.fill(); g.globalAlpha = 1; }
+    if (k === 'ai') { halo(12, lv.lv2, 0.45); dot(6.5, lv.lv2, 2, tok('ink')); }
+    else if (k === 'rep') { halo(12, lv.lv2, 0.35); dot(6.5, lv.lv2, 2.5, tok('panel')); g.fillStyle = '#fff'; g.font = '700 7.5px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('2', c, c + 0.5); }
+    else if (k === 'est') dot(6.5, null, 3, lv.lv2);
+    else if (/^lv\d$/.test(k)) { dot(S / 2 - 2.5, lv[k], 2, tok('panel')); g.fillStyle = '#fff'; g.font = '700 8px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(k.slice(2), c, c + 0.5); }
+    else if (k === 'cam') { var ci = camIcon(); g.drawImage(ci, 1, 1, S - 2, S - 2); }
+    else if (k === 'cone') {
+      g.fillStyle = 'rgba(30,123,255,.28)'; g.beginPath(); g.moveTo(4, S - 4); g.arc(4, S - 4, S - 5, -Math.PI / 2 + 0.25, -0.25); g.closePath(); g.fill();
+      g.fillStyle = 'rgba(30,123,255,.25)'; g.beginPath(); g.moveTo(4, S - 4); g.arc(4, S - 4, (S - 5) * 0.55, -Math.PI / 2 + 0.25, -0.25); g.closePath(); g.fill();
+      g.fillStyle = tok('ink'); g.fillRect(1.5, S - 6.5, 5, 5);
+    }
+    else if (k === 'camrain') { halo(11, '#2f8fd8', 0.55); dot(3.2, '#2f8fd8', 1.2, '#fff'); }
+    else if (k === 'metro') { g.strokeStyle = tok('metro'); g.lineWidth = 3.4; g.lineCap = 'round'; g.beginPath(); g.moveTo(2, c); g.lineTo(S - 2, c); g.stroke(); dot(3.6, '#fff', 2, tok('metro')); }
+    else if (k === 'ketxe') { g.strokeStyle = 'rgba(194,65,12,.55)'; g.lineWidth = 3; g.setLineDash([3.6, 4.2]); g.beginPath(); g.moveTo(1, c + 5); g.lineTo(S - 1, c - 5); g.stroke(); g.setLineDash([]); dot(3.5, '#C2410C', 1.6, tok('label-halo') || '#fff'); }
+  }
   function drawLegendIcons() {
+    document.querySelectorAll('canvas.lgi[data-lg]').forEach(function (cv) { lgIcon(cv, cv.dataset.lg); });
     [['lg-rain', 1], ['lg-tide', 2]].forEach(function (x) {
       var el = $(x[0]); if (!el) return;
       var cv = spotIcon(x[1], 16); cv.style.width = '16px'; cv.style.height = '16px';
@@ -5588,7 +5681,7 @@ if (typeof module !== 'undefined') module.exports = NN;
       'rep-num': { 'text-color': '#ffffff', 'text-opacity': ['get', 'op'] },
       'rain-heat': {
         // chỉ dùng khi mô phỏng; cùng thang màu với radar: xanh (nhỏ, vừa) → vàng, cam (to) → đỏ (rất to) → hồng
-        'circle-color': ['interpolate', ['linear'], ['get', 'mmh'], 0.3, '#88ddee', 0.65, '#00a3e0', 1.3, '#0077aa', 4.8, '#004768', 5.6, '#ffee00', 11.5, '#ffaa00', 23.7, '#ff4400', 48.6, '#c10000', 100, '#ffaaff'],
+        'circle-color': ['interpolate', ['linear'], ['get', 'mmh'], 0.3, '#5AA8FF', 1, '#2F7BFF', 3, '#4B4DFF', 8, '#7B3FF2', 25, '#E0479E', 50, '#FF8C42', 100, '#FFE14D'],
         // bán kính ~3,5 km mỗi điểm lưới, đổi ra điểm ảnh theo mức zoom
         'circle-radius': ['interpolate', ['exponential', 2], ['zoom'], 10, 23, 16, 1490],
         'circle-blur': 0.85, 'circle-opacity': 0.38, 'circle-pitch-alignment': 'map'
@@ -5682,7 +5775,7 @@ if (typeof module !== 'undefined') module.exports = NN;
       { id: 'metro-rail-a', type: 'line', source: 'metro', minzoom: 13, filter: ['==', ['get', 'u'], 0], layout: { 'line-join': 'round' } },
       { id: 'metro-rail-b', type: 'line', source: 'metro', minzoom: 13, filter: ['==', ['get', 'u'], 0], layout: { 'line-join': 'round' } },
       { id: 'rain-heat', type: 'circle', source: 'rainheat' },
-      { id: 'sim-rain', type: 'fill', source: 'simrain', paint: { 'fill-color': ['interpolate', ['linear'], ['get', 'mmh'], 0.3, '#88ddee', 0.65, '#00a3e0', 1.3, '#0077aa', 4.8, '#004768', 5.6, '#ffee00', 11.5, '#ffaa00', 23.7, '#ff4400', 48.6, '#c10000', 100, '#ffaaff'], 'fill-opacity': 0.09, 'fill-antialias': false } },
+      { id: 'sim-rain', type: 'fill', source: 'simrain', paint: { 'fill-color': ['interpolate', ['linear'], ['get', 'mmh'], 0.3, '#5AA8FF', 1, '#2F7BFF', 3, '#4B4DFF', 8, '#7B3FF2', 25, '#E0479E', 50, '#FF8C42', 100, '#FFE14D'], 'fill-opacity': 0.09, 'fill-antialias': false } },
       { id: 'spot-line', type: 'line', source: 'spot-lines', layout: { 'line-cap': 'butt', 'line-join': 'round' } },
       { id: 'route-safe-case', type: 'line', source: 'routes', layout: { 'line-cap': 'round', 'line-join': 'round', 'line-sort-key': ['get', 'sel'] } },
       { id: 'route-alt', type: 'line', source: 'routes', layout: { 'line-cap': 'round', 'line-join': 'round', 'line-sort-key': ['get', 'sel'] } },
@@ -6550,7 +6643,8 @@ if (typeof module !== 'undefined') module.exports = NN;
   var VIETMAP_DEFAULT = '49d69da35f28ee201535936955db54c297fbbd63b1eed149';
   function vmKey() { try { return localStorage.getItem('nn-vietmap') || VIETMAP_DEFAULT; } catch (e) { return VIETMAP_DEFAULT; } }
   var vmCache = {}, vmLast = null, vmBusy = {};
-  function vmWant(v) { return v === 'car' && !!vmKey() && !IN_CLAUDE; }
+  function vmWant(v) { return (v === 'car' || v === 'scooter') && !!vmKey() && !IN_CLAUDE; }
+  var VM_OFF = 5;       // đoạn ngoài tuyến Vietmap bị tính chậm gấp 5: chỉ rời tuyến Vietmap khi phải né chỗ ngập
   function vmK(A, B, v) { return v + '|' + A.lat.toFixed(4) + ',' + A.lng.toFixed(4) + '|' + B.lat.toFixed(4) + ',' + B.lng.toFixed(4); }
   // tuyến Vietmap đang dùng: cùng điểm đến (và cùng điểm đi nếu có) thì áp hệ số bám tuyến
   function vmOpt(o, B, v, A) {
@@ -6592,10 +6686,22 @@ if (typeof module !== 'undefined') module.exports = NN;
   }
   function vmAsk(A, B, v) {
     vmFetch(A, B, v).then(function (c) {
-      if (!c) { state.vmFail = vmK(A, B, v); if (state.result && !(typeof nav !== 'undefined' && nav.on)) renderRoute(); return; }
-      if (!G || state.vehicle !== v || !state.A || !state.B || vmK(state.A, state.B, v) !== vmK(A, B, v)) return;
-      vmLast = { A: { lat: A.lat, lng: A.lng }, B: { lat: B.lat, lng: B.lng }, v: v, c: c, bias: NN.pathBias(G, c, 1.8) };
-      if (!(typeof nav !== 'undefined' && nav.on)) runRoute(false);
+      var same = G && state.vehicle === v && state.A && state.B && vmK(state.A, state.B, v) === vmK(A, B, v);
+      if (!c) { state.vmFail = vmK(A, B, v); if (same && !(typeof nav !== 'undefined' && nav.on)) runRoute(state.vmFit); return; }
+      if (!same) return;
+      vmLast = { A: { lat: A.lat, lng: A.lng }, B: { lat: B.lat, lng: B.lng }, v: v, c: c, bias: NN.pathBias(G, c, VM_OFF) };
+      if (!(typeof nav !== 'undefined' && nav.on)) runRoute(state.vmFit);
+    });
+  }
+  // đang dẫn đường mà lệch tuyến: hỏi lại Vietmap từ chỗ đang đứng (tối đa 30 giây một lần)
+  var vmNavT = 0;
+  function vmNavRefresh() {
+    if (!nav.on || !vmWant(nav.vehicle) || !nav.pos || Date.now() - vmNavT < 30000) return;
+    vmNavT = Date.now();
+    var A = { lat: nav.pos.lat, lng: nav.pos.lng }, B = nav.dest, v = nav.vehicle;
+    vmFetch(A, B, v).then(function (c) {
+      if (!c || !nav.on || nav.dest !== B) return;
+      vmLast = { A: A, B: { lat: B.lat, lng: B.lng }, v: v, c: c, bias: NN.pathBias(G, c, VM_OFF) };
     });
   }
   // phần trăm quãng đường của tuyến trùng với tuyến Vietmap
@@ -6607,17 +6713,26 @@ if (typeof module !== 'undefined') module.exports = NN;
   function runRoute(fit) {
     if (typeof nav !== 'undefined' && nav.on) { lastFloodKey = floodKey(); navFloodCheck(true); return; }   // đang dẫn đường: tự xử lý đổi tuyến
     if (!G || !state.A || !state.B) return;
+    // xe máy, ô tô: chờ tuyến đúng biển cấm của Vietmap (tối đa 5 giây) rồi mới hiện, khỏi hiện tuyến sai rồi đổi
+    var vkey = vmK(state.A, state.B, state.vehicle);
+    if (vmWant(state.vehicle) && !vmOpt(null, state.B, state.vehicle, state.A) && state.vmFail !== vkey) {
+      state.vmFit = state.vmFit || fit;
+      $('route-out').innerHTML = '<div class="vm-wait"><span class="spin" aria-hidden="true"></span>Đang lấy tuyến đúng biển cấm, đường một chiều từ Vietmap…</div>';
+      vmAsk(state.A, state.B, state.vehicle);
+      return;
+    }
+    if (fit === undefined || fit === false) fit = !!state.vmFit;
+    state.vmFit = false;
     var res = state.vehicle === 'metro' ? metroPlan(state.A, state.B, floodsNow()) : NN.plan(G, state.A, state.B, state.vehicle, floodsNow(), state.avoidHot, null, vmOpt(null, state.B, state.vehicle, state.A));
     if (!res.error && vmOpt(null, state.B, state.vehicle, state.A)) {
       // có tuyến Vietmap: tuyến bám đúng Vietmap lên đầu và được đề xuất (trừ khi đi qua chỗ ngập nặng)
       res.vm = true;
-      var cov = res.routes.map(vmCover), recR0 = res.routes[res.rec], badL = NN.VEHICLES.car.bad;
+      var cov = res.routes.map(vmCover), recR0 = res.routes[res.rec], badL = (NN.VEHICLES[state.vehicle] || NN.VEHICLES.car).bad;
       var ord = res.routes.map(function (r, i) { return i; }).sort(function (a, b) { return (cov[b] >= 0.9) - (cov[a] >= 0.9) || res.routes[a].secs - res.routes[b].secs; });
       res.routes = ord.map(function (i) { return res.routes[i]; });
       var k = -1; res.routes.some(function (r, i) { if (vmCover(r) >= 0.9 && r.worst < badL) { k = i; return true; } return false; });
       res.rec = k >= 0 ? k : res.routes.indexOf(recR0);
     }
-    else if (!res.error && vmWant(state.vehicle)) vmAsk(state.A, state.B, state.vehicle);
     var out = $('route-out');
     if (res.error) {
       clearRoute();
@@ -6654,7 +6769,7 @@ if (typeof module !== 'undefined') module.exports = NN;
       var tags = [];
       if (i === res.rec) tags.push('<span class="rtag good">Đề xuất</span>');
       if (i === fastI) tags.push('<span class="rtag">Nhanh nhất</span>');
-      var vmc = res.vm && state.vehicle === 'car' ? vmCover(r) : -1;
+      var vmc = res.vm ? vmCover(r) : -1;
       if (vmc >= 0.9) tags.push('<span class="rtag good">Theo biển cấm của Vietmap</span>');
       var recR = res.routes[res.rec], title;
       if (i === res.rec) { var v0 = viaNames(r); title = v0.length ? 'Qua ' + v0.join(', ') : 'Tuyến đề xuất'; }
@@ -6685,7 +6800,8 @@ if (typeof module !== 'undefined') module.exports = NN;
     h += '<div class="route-acts"><button class="primary" id="nav-go"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 4 20l8-4 8 4z"/></svg><span class="nav-go-t">Bắt đầu đi<small class="nav-go-sub">Chỉ đường bằng giọng nói</small></span></button>' +
       '<button class="ghost" id="nav-preview" aria-label="Xem trước lộ trình"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"/></svg>Xem trước</button>' +
       '<button class="ghost" id="share-route"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"/></svg>Chia sẻ</button></div>';
-    h += '<div class="muted">Thời gian cho ' + veh + ' khi đường thông thoáng.' + (state.vehicle === 'car' ? (res.vm ? ' Biển cấm rẽ, đường một chiều đối chiếu với dữ liệu Vietmap.' : vmWant('car') && state.A && state.B && state.vmFail !== vmK(state.A, state.B, 'car') ? ' Đang đối chiếu biển cấm với Vietmap…' : '') : '') + '</div>';
+    if (vmWant(state.vehicle) && !res.vm) h += '<div class="rnote sub">Chưa lấy được tuyến của Vietmap, đang dùng dữ liệu bản đồ mở (OpenStreetMap). Chú ý biển báo khi đi.</div>';
+    h += '<div class="muted">Thời gian cho ' + veh + ' khi đường thông thoáng.' + (res.vm ? ' Biển cấm rẽ, đường một chiều theo dữ liệu Vietmap.' : '') + '</div>';
     out.innerHTML = h;
   }
   $('route-out').addEventListener('click', function (e) {
@@ -7804,34 +7920,51 @@ if (typeof module !== 'undefined') module.exports = NN;
     var nAi = aiFloods().length;
     var fc = live.sim ? null : forecastFeed(), fcWhere = fc && fc.first ? fcAreas(fc, fc.first) : [];
     var fcPeak = fc && fc.peak ? +fc.peak[1] : 0;
-    if (nAi && !live.sim) { title.textContent = 'Camera thấy ' + nAi + ' chỗ đang ngập' + (est.length ? ', thêm ' + est.length + ' điểm có nguy cơ' : ''); dot.className = 'now-dot flood'; }
-    else if (est.length) title.textContent = pre + est.length + ' điểm có nguy cơ đang ngập';
-    else if (camRain.length >= 2) title.textContent = 'Camera thấy đang mưa ở ' + uniq(camRain).slice(0, 2).join(', ') + ', chưa thấy ngập';
-    else if (maxNow >= 0.3) title.textContent = pre + 'Đang ' + rainWord(maxNow) + (rdOk && rWet.length ? ' ở ' + uniq(rWet).slice(0, 2).join(', ') : '') + ', chưa thấy ngập';
-    else if (fc && fc.first) { title.textContent = 'Có thể mưa khoảng ' + hhmm(fc.first * 1000) + (fcWhere.length ? ' ở ' + uniq(fcWhere).slice(0, 2).join(', ') : ''); dot.className = 'now-dot rain'; }
-    else if (live.tide && live.tide.now >= NN.TIDE_STEPS[0]) title.textContent = pre + 'Không mưa, triều đang lên cao';
-    else title.textContent = pre + 'Không mưa, chưa có dấu hiệu ngập';
-    var parts = [];
-    if (camRain.length) parts.push('Camera lúc ' + hhmm(ai.feed.updated_ts * 1000) + ' thấy đang mưa ở ' + areaList(camRain) + '.');
-    if (rdOk) { if (rWet.length) parts.push('Radar lúc ' + hhmm(rd.time * 1000) + ' thấy mưa ở ' + areaList(rWet) + '.'); }
-    else if (live.sim) { var sc = simCenter(), sa = G && NN.areaLabel(G, sc.lat, sc.lng); if (live.sim.rain > 0) parts.push('Mưa giả lập ' + live.sim.rain + ' mm, mạnh nhất quanh ' + (sa || 'giữa khung bản đồ') + '.'); }
-    else if (wet.length) parts.push('Mưa vừa trở lên ở ' + areaList(wet) + ' (theo mô hình dự báo).');
-    if (fc) {
-      if (fc.first) parts.push('Dự báo AI của Đài KTTV Nam Bộ: mưa có thể tới ' + (fcWhere.length ? areaList(fcWhere) + ' ' : 'TP.HCM ') + 'khoảng ' + hhmm(fc.first * 1000) +
-        (fcPeak >= 1 ? ', mạnh nhất khoảng ' + num(fcPeak) + ' mm trong 10 phút' + (fcPeak >= 3 ? ' (mưa to)' : '') : '') + '. Bật lớp "Dự báo mưa 2 giờ tới" để xem vùng mưa.');
-      else parts.push('Dự báo AI của Đài KTTV Nam Bộ: tới ' + hhmm(fc.to * 1000) + ' chưa thấy mưa trên TP.HCM.');
-    } else if (!live.sim && soon.length) parts.push('Dự báo một giờ tới có thể mưa to ở ' + areaList(soon) + '.');
-    if (!live.sim && live.tide && live.tide.now >= NN.TIDE_STEPS[0])
-      parts.push('Triều đang cao. AI đang xem camera ở ' + tideSpots() + ' điểm ven sông hay ngập do triều.');
-    if (live.sim) parts.push('Số liệu giả lập, không phải thời tiết thật. Cơn mưa phủ bán kính khoảng 9 km quanh giữa khung bản đồ, kéo bản đồ thì mưa dời theo.');
-
-    sub.textContent = parts.join(' ');
+    // ---- tiêu đề: một ý chính, ngắn ----
+    var nFlood = nAi + est.length, title2 = '';
+    if (nAi && !live.sim) { title2 = nAi + ' chỗ đang ngập' + (est.length ? ', ' + est.length + ' chỗ có thể ngập' : ''); dot.className = 'now-dot flood'; }
+    else if (est.length) title2 = pre + est.length + ' chỗ có thể đang ngập';
+    else if (maxNow >= 0.3) title2 = pre + 'Đang ' + rainWord(maxNow) + ', chưa thấy ngập';
+    else if (camRain.length >= 2) title2 = 'Đang mưa, chưa thấy ngập';
+    else if (fc && fc.first) { title2 = 'Có thể mưa lúc ' + hhmm(fc.first * 1000); dot.className = 'now-dot rain'; }
+    else if (live.tide && live.tide.now >= NN.TIDE_STEPS[0]) title2 = pre + 'Không mưa, triều đang cao';
+    else title2 = pre + 'Không mưa, chưa thấy ngập';
+    title.textContent = title2;
+    // ---- các dòng ngắn có biểu tượng ----
+    var short = function (n) { return n.replace(/^(Phường|Xã|Đặc khu) /, ''); };
+    var places = function (a, k) { var u = a.map(short).filter(function (x, i, arr) { return arr.indexOf(x) === i; }); k = k || 3; return u.slice(0, k).join(', ') + (u.length > k ? ' và ' + (u.length - k) + ' nơi khác' : ''); };
+    var IC = {
+      rain: '<path d="M7 15a4 4 0 0 1 .5-8 5.5 5.5 0 0 1 10.4 1.6A3.5 3.5 0 0 1 17.5 15z"/><path d="M8 18l-1 2M12 18l-1 2M16 18l-1 2"/>',
+      cam: '<rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 11l5-3v8l-5-3"/>',
+      clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+      tide: '<path d="M3 10q2.25-2.5 4.5 0t4.5 0 4.5 0 4.5 0M3 15q2.25-2.5 4.5 0t4.5 0 4.5 0 4.5 0"/>',
+      sim: '<path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M18 6l-2 2M8 16l-2 2"/>'
+    };
+    var row = function (k, head, txt, extra) {
+      return '<li><span class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + IC[k] + '</svg></span><span><b>' + esc(head) + '</b> ' + esc(txt) + (extra || '') + '</span></li>';
+    };
+    var rows = [], srcs = [];
+    if (live.sim) {
+      var sc = simCenter(), sa = G && NN.areaLabel(G, sc.lat, sc.lng);
+      if (live.sim.rain > 0) rows.push(row('sim', 'Mưa giả lập ' + live.sim.rain + ' mm', 'quanh ' + short(sa || 'giữa bản đồ') + ', kéo bản đồ thì mưa dời theo.'));
+    } else {
+      if (rdOk && rWet.length) { rows.push(row('rain', 'Đang mưa:', places(rWet) + '.')); srcs.push('radar ' + hhmm(rd.time * 1000)); }
+      else if (!rdOk && wet.length) rows.push(row('rain', 'Có thể đang mưa:', places(wet) + ' (ước tính).'));
+      if (camRain.length) { rows.push(row('cam', 'Camera thấy mưa:', places(camRain) + '.')); srcs.push('camera ' + hhmm(ai.feed.updated_ts * 1000)); }
+      if (fc && fc.first) rows.push(row('clock', 'Khoảng ' + hhmm(fc.first * 1000) + ':', 'mưa có thể tới ' + (fcWhere.length ? places(fcWhere) : 'TP.HCM') + (fcPeak >= 3 ? ', có lúc mưa to' : '') + '.', ' <button class="nlink" data-fcshow>Xem vùng mưa sắp tới</button>'));
+      else if (fc) rows.push(row('clock', 'Tới ' + hhmm(fc.to * 1000) + ':', 'chưa thấy mưa trên TP.HCM.'));
+      else if (soon.length) rows.push(row('clock', 'Giờ tới:', 'có thể mưa to ở ' + places(soon) + '.'));
+      if (fc) srcs.push('dự báo Đài KTTV Nam Bộ');
+    }
     var t = live.tide;
+    if (t && (t.now >= NN.TIDE_STEPS[0] || (t.peak != null && t.peak >= NN.TIDE_STEPS[0])))
+      rows.push(row('tide', 'Triều cường:', (t.peak != null ? 'đỉnh ' + num(t.peak, 2) + ' m lúc ' + hhmm(t.peakT) : 'đang ' + num(t.now, 2) + ' m') + '. Điểm ven sông có thể ngập dù không mưa.'));
+    sub.innerHTML = (rows.length ? '<ul class="nrows">' + rows.join('') + '</ul>' : '') + (srcs.length ? '<div class="nsrc">Theo ' + srcs.join(', ') + '</div>' : '');
+    // ---- 3 ô số: mưa mạnh nhất, số chỗ ngập, triều ----
     facts.innerHTML =
-      (camRain.length ? '<div class="fact"><b>' + camRain.length + ' camera</b><span>đang thấy mưa, AI xem lúc ' + hhmm(ai.feed.updated_ts * 1000) + '</span></div>' :
-      '<div class="fact"><b>' + num(maxNow, maxNow > 0 && maxNow < 1 ? 1 : 0) + ' mm/giờ</b><span>' + (rdOk ? 'mưa mạnh nhất trên TP.HCM, radar Nhà Bè' : live.sim ? 'mưa lớn nhất lúc này' : 'mưa lớn nhất lúc này, theo mô hình') + '</span></div>') +
-      '<div class="fact"><b>' + num(max1h) + ' mm</b><span>mưa 1 giờ qua, nơi nhiều nhất' + (live.sim ? '' : ' (mô hình)') + '</span></div>' +
-      '<div class="fact"><b>' + (t ? num(t.now, 2) + ' m' : '—') + '</b><span>' + (t ? (t.peak != null ? 'triều ngoài cửa biển, đỉnh ' + num(t.peak, 2) + ' m lúc ' + hhmm(t.peakT) : 'triều ngoài cửa biển') : 'chưa có số liệu triều') + '</span></div>';
+      '<div class="fact"><b>' + num(maxNow, maxNow > 0 && maxNow < 1 ? 1 : 0) + ' <small>mm/giờ</small></b><span>' + (maxNow >= 0.3 ? 'Mưa mạnh nhất' : 'Lượng mưa') + '</span></div>' +
+      '<div class="fact' + (nFlood ? ' bad' : '') + '"><b>' + nFlood + '</b><span>Chỗ đang ngập</span></div>' +
+      '<div class="fact"><b>' + (t ? num(t.now, 2) + ' <small>m</small>' : '—') + '</b><span>' + (t ? 'Mực triều' : 'Chưa có số triều') + '</span></div>';
     var sum = [0, 0, 0, 0, 0]; est.forEach(function (e) { sum[e.level]++; });
     $('est-summary').hidden = !est.length;
     $('est-summary').innerHTML = [1, 2, 3, 4].map(function (l) { return '<div class="sum" style="--c:' + lvColor(l) + '"><b>' + sum[l] + '</b><span>' + esc(LEVELS[l].short) + '</span></div>'; }).join('');
@@ -7867,14 +8000,18 @@ if (typeof module !== 'undefined') module.exports = NN;
   });
   // mô phỏng
   function tideWord(m) { return m >= NN.TIDE_STEPS[1] ? 'triều cường rất cao' : m >= NN.TIDE_STEPS[0] ? 'triều cường' : m >= 1.2 ? 'triều khá cao' : 'triều bình thường'; }
+  // thanh kéo theo bậc có nghĩa (không kéo lụi theo từng mm): mưa 0..120 mm, triều 0,8..1,8 m
+  var SIM_RAIN = [0, 5, 10, 20, 30, 40, 50, 70, 90, 120], SIM_TIDE = [0.8, 1.0, 1.2, 1.3, 1.4, 1.45, 1.5, 1.55, 1.6, 1.7, 1.8];
+  function simRainMM() { return SIM_RAIN[+$('sim-rain').value] || 0; }
+  function simTideM() { return SIM_TIDE[+$('sim-tide').value] || 1; }
   function simLabels() {
-    var r = +$('sim-rain').value, t = +$('sim-tide').value;
-    $('sim-rain-v').textContent = r ? r + ' mm (' + rainWord(r) + ')' : 'không mưa';
-    $('sim-tide-v').textContent = num(t, 2) + ' m (' + tideWord(t) + ')';
+    var r = simRainMM(), t = simTideM(), w = rainWord(r);
+    $('sim-rain-v').textContent = r ? w.charAt(0).toUpperCase() + w.slice(1) + ' (' + r + ' mm trong 1 giờ)' : 'Tạnh, không mưa';
+    var tw = tideWord(t); $('sim-tide-v').textContent = tw.charAt(0).toUpperCase() + tw.slice(1) + ' (' + num(t, 2) + ' m)';
   }
-  function simUpdate() { simLabels(); if (live.sim) { live.sim = { rain: +$('sim-rain').value, tide: +$('sim-tide').value }; computeEst(); } }
+  function simUpdate() { simLabels(); if (live.sim) { live.sim = { rain: simRainMM(), tide: simTideM() }; computeEst(); } }
   $('sim-rain').oninput = simUpdate; $('sim-tide').oninput = simUpdate;
-  $('sim-on').onclick = function () { live.simC = null; live.sim = { rain: +$('sim-rain').value, tide: +$('sim-tide').value }; $('sim-on').hidden = true; $('sim-off').hidden = false; computeEst(); toast('Đang mô phỏng quanh giữa khung bản đồ. Kéo bản đồ thì cơn mưa dời theo.', 4200); };
+  $('sim-on').onclick = function () { live.simC = null; live.sim = { rain: simRainMM(), tide: simTideM() }; $('sim-on').hidden = true; $('sim-off').hidden = false; computeEst(); toast('Đang mô phỏng quanh giữa khung bản đồ. Kéo bản đồ thì cơn mưa dời theo.', 4200); };
   $('sim-off').onclick = function () { live.sim = null; live.simC = null; $('sim-on').hidden = false; $('sim-off').hidden = true; computeEst(); };
   // kéo bản đồ: cơn mưa giả lập dời theo giữa khung
   var simMoveT = 0;
@@ -7899,6 +8036,59 @@ if (typeof module !== 'undefined') module.exports = NN;
     return rd;
   }
   function radarUrl(rd) { return feedBase() + rd.img + '?t=' + rd.time; }
+  // ---- tô lại ảnh mưa (radar, dự báo) theo một dải màu đậm dần: xanh dương nhạt, xanh, tím, hồng, cam, vàng (như bản đồ mưa của Apple) ----
+  // Ảnh gốc của Đài dùng dải cầu vồng; đổi từng điểm ảnh: màu gốc -> mức mưa 0..1 -> màu mới, rồi làm mềm nhẹ cho vùng mưa loang mịn.
+  var APAL = [[0, 90, 168, 255], [0.16, 47, 123, 255], [0.34, 75, 77, 255], [0.5, 123, 63, 242], [0.68, 224, 71, 158], [0.84, 255, 140, 66], [1, 255, 225, 77]];
+  function apal(t) {
+    for (var i = 1; i < APAL.length; i++) if (t <= APAL[i][0]) {
+      var a = APAL[i - 1], b = APAL[i], k = (t - a[0]) / (b[0] - a[0] || 1);
+      return [a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k, a[3] + (b[3] - a[3]) * k];
+    }
+    return APAL[APAL.length - 1].slice(1);
+  }
+  // mức mưa theo màu cầu vồng của Đài: xanh lơ, xanh dương (nhỏ) -> xanh lá -> vàng -> cam, đỏ -> tím (rất to)
+  function rainT(r, g, b) {
+    var mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+    if (mx < 40) return -1;
+    if (d < 40) return mx > 200 ? 1 : -1;                      // trắng: mưa cực lớn; xám: bỏ
+    var h = mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60;
+    if (h >= 170 && h <= 260) return 0.04 + (h - 170) / 90 * 0.16;
+    if (h >= 60 && h < 170) return 0.2 + (170 - h) / 110 * 0.35;
+    if (h < 60) return 0.55 + (60 - h) / 60 * 0.27;
+    if (h >= 330) return 0.82 + (360 - h) / 30 * 0.08;
+    return Math.min(1, 0.9 + (330 - h) / 70 * 0.1);
+  }
+  function recolorCanvas(cv) {
+    var g = cv.getContext('2d'), W = cv.width, H = cv.height, im = g.getImageData(0, 0, W, H), p = im.data;
+    for (var i = 0; i < p.length; i += 4) {
+      if (!p[i + 3]) continue;
+      var t = rainT(p[i], p[i + 1], p[i + 2]);
+      if (t < 0) { p[i + 3] = 0; continue; }
+      var c = apal(t); p[i] = c[0]; p[i + 1] = c[1]; p[i + 2] = c[2]; p[i + 3] = Math.round(p[i + 3] * (0.6 + 0.4 * t));
+    }
+    g.putImageData(im, 0, 0);
+    var out = document.createElement('canvas'); out.width = W; out.height = H;
+    var o = out.getContext('2d');
+    try { o.filter = 'blur(' + Math.max(1, W / 500).toFixed(1) + 'px)'; } catch (e) {}
+    o.drawImage(cv, 0, 0);
+    return out;
+  }
+  var styledCache = {};
+  function styleRadar(url) {
+    if (styledCache[url]) return Promise.resolve(styledCache[url]);
+    return new Promise(function (res) {
+      var img = new Image(); img.crossOrigin = 'anonymous';
+      img.onload = function () {
+        try {
+          var cv = document.createElement('canvas'); cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+          cv.getContext('2d').drawImage(img, 0, 0);
+          var u = recolorCanvas(cv).toDataURL('image/png'); styledCache = {}; styledCache[url] = u; res(u);
+        } catch (e) { res(url); }            // không đọc được điểm ảnh (chặn CORS): dùng ảnh gốc
+      };
+      img.onerror = function () { res(url); };
+      img.src = url;
+    });
+  }
   function updateRainLegend() {
     var rd = radarFeed(), on = !!(rd && $('lyr-radar').checked && map.getLayer && map.getLayer('radar'));
     var wet = rd && +rd.rain_px > 0;
@@ -7911,11 +8101,20 @@ if (typeof module !== 'undefined') module.exports = NN;
     row.hidden = !rd; note.hidden = !rd;
     if (!rd || !map.getSource) { if (map.getLayer && map.getLayer('radar')) map.setLayoutProperty('radar', 'visibility', 'none'); updateRainLegend(); return; }
     note.textContent = 'Ảnh lúc ' + hhmm(rd.time * 1000) + ', đã lọc nhiễu' + (+rd.rain_px ? '.' : '. Không có mưa trên TP.HCM.');
-    var coords = rd.bounds, url = radarUrl(rd);
+    var coords = rd.bounds, raw = radarUrl(rd);
+    if (radarShownAt !== rd.time || !map.getSource('radar')) {
+      var want = rd.time;
+      styleRadar(raw).then(function (u) { if (radarFeed() && radarFeed().time === want) radarPut(rd, u); });
+      return;
+    }
+    radarPut(rd, null);
+  }
+  function radarPut(rd, url) {
+    var coords = rd.bounds;
     if (!map.getSource('radar')) {
       map.addSource('radar', { type: 'image', url: url, coordinates: coords });
       map.addLayer({ id: 'radar', type: 'raster', source: 'radar', paint: { 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 10, 0.62, 13, 0.5, 16, 0.3], 'raster-fade-duration': 300, 'raster-resampling': 'linear' }, layout: { visibility: $('lyr-radar').checked ? 'visible' : 'none' } }, 'spot-line');
-    } else if (radarShownAt !== rd.time) {
+    } else if (url && radarShownAt !== rd.time) {
       map.getSource('radar').updateImage({ url: url, coordinates: coords });
     }
     radarShownAt = rd.time;
@@ -7965,7 +8164,8 @@ if (typeof module !== 'undefined') module.exports = NN;
         for (var i = 0; i < sp.n; i++) {
           g.clearRect(0, 0, sp.size, sp.size);
           g.drawImage(img, (i % sp.cols) * sp.size, Math.floor(i / sp.cols) * sp.size, sp.size, sp.size, 0, 0, sp.size, sp.size);
-          urls.push(cv.toDataURL('image/png'));
+          var styled; try { styled = recolorCanvas(cv).toDataURL('image/png'); } catch (e) { styled = cv.toDataURL('image/png'); }
+          urls.push(styled);
         }
         res(urls);
       };
@@ -8063,6 +8263,11 @@ if (typeof module !== 'undefined') module.exports = NN;
     }).catch(function () { $('fc-what').textContent = 'Chưa tải được ảnh dự báo.'; });
   }
   try { if (localStorage.getItem('nn-fc') === '1') $('lyr-fc').checked = true; } catch (e) {}
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('[data-fcshow]')) return;
+    var c = $('lyr-fc'); if (!c.checked) { c.checked = true; c.onchange && c.onchange(); }
+    if (typeof sheetTo === 'function') sheetTo('peek');
+  });
   $('lyr-fc').onchange = function () {
     try { localStorage.setItem('nn-fc', this.checked ? '1' : '0'); } catch (e) {}
     syncForecast();
@@ -8532,12 +8737,22 @@ if (typeof module !== 'undefined') module.exports = NN;
         return { name: r.poi && r.poi.name, phone: r.poi && r.poi.phone, lat: r.position && +r.position.lat, lng: r.position && +r.position.lon };
       }).filter(function (x) { return x.name && isFinite(x.lat) && isFinite(x.lng); });
     };
+    // Vietmap: dữ liệu địa điểm Việt Nam, có nhiều tiệm sửa xe máy (một lượt hỏi, có sẵn toạ độ)
+    var vmQ = !vmKey() || !vmBudget() ? Promise.resolve([]) : fetchJSON('https://maps.vietmap.vn/api/autocomplete?api-version=1.1&apikey=' + encodeURIComponent(vmKey()) +
+      '&text=' + encodeURIComponent('sửa xe') + '&focus.point.lat=' + lat.toFixed(6) + '&focus.point.lon=' + lng.toFixed(6) +
+      '&boundary.circle.lat=' + lat.toFixed(6) + '&boundary.circle.lon=' + lng.toFixed(6) + '&boundary.circle.radius=4&layers=venue&size=15', 8000).then(function (j) {
+      return (j && (j.features || j.data && j.data.features) || []).map(function (f) {
+        var c = f.geometry && f.geometry.coordinates, pr = f.properties || {};
+        return { name: pr.name || pr.label, lat: c && +c[1], lng: c && +c[0] };
+      }).filter(function (x) { return x.name && isFinite(x.lat) && isFinite(x.lng) && /s[uửư]a|xe|honda|yamaha|suzuki|piaggio|garage|l[oố]p|v[aá] |phụ tùng|head/i.test(x.name); });
+    }).catch(function () { return []; });
     return Promise.all([
+      vmQ,
       fetchJSON(base + 'nearbySearch/.json?categorySet=7310' + q, 8000).then(conv).catch(function () { return []; }),
       fetchJSON(base + 'poiSearch/' + encodeURIComponent('sửa xe') + '.json?' + q.slice(1), 8000).then(conv).catch(function () { return []; })
     ]).then(function (r) {
       var all = [];
-      r[0].concat(r[1]).forEach(function (x) { if (!all.some(function (y) { return NN.dist(x.lat, x.lng, y.lat, y.lng) < 25; })) { x.d = NN.dist(lat, lng, x.lat, x.lng); all.push(x); } });
+      r[0].concat(r[1], r[2]).forEach(function (x) { if (!all.some(function (y) { return NN.dist(x.lat, x.lng, y.lat, y.lng) < 25; })) { x.d = NN.dist(lat, lng, x.lat, x.lng); all.push(x); } });
       all.sort(function (a, b) { return a.d - b.d; });
       return (ttFixCache[k] = all.slice(0, 4));
     });
@@ -8934,6 +9149,7 @@ if (typeof module !== 'undefined') module.exports = NN;
   function navReroute(why, f) {
     if (!nav.on || (!nav.pos && !nav.startPt)) return;
     nav.lastRe = Date.now();
+    vmNavRefresh();
     // đang chạy trên đường: tìm đường bắt đầu theo đúng hướng đang đi (chỉ quay đầu khi thật sự không còn cách nào nhanh hơn)
     var po = nav.joined && nav.hd != null && nav.vehicle !== 'walk' && nav.hdT && Date.now() - nav.hdT < 20000 ? { heading: nav.hd, uPen: why === 'off' || why === 'wrong' ? 120 : 60 } : null;
     var res = NN.plan(G, nav.joined ? nav.pos : (nav.startPt || nav.pos), nav.dest, nav.vehicle, floodsNow(), state.avoidHot, navJamCong(), vmOpt(po, nav.dest, nav.vehicle));
@@ -9560,13 +9776,23 @@ if (typeof module !== 'undefined') module.exports = NN;
     if (map && map.once) { map.once('load', function () { setTimeout(foldAttr, 50); }); map.once('idle', foldAttr); }
     setTimeout(foldAttr, 1500);
     // thanh dải màu lượng mưa nổi trên bản đồ: hiện cùng lúc với thang mưa trong thẻ Lớp (tức là khi radar thấy mưa hoặc đang mô phỏng)
+    var wxOpen = false;
     function rainbar() {
-      $('v3-rainbar').hidden = $('rain-lg').hidden || !lv.rain;
+      var show = !$('rain-lg').hidden && lv.rain;
+      $('v3-wx').hidden = !show; $('v3-rainbar').hidden = !(show && wxOpen);
+      $('v3-wx').setAttribute('aria-expanded', String(show && wxOpen));
+      if (show) {
+        var rd = radarFeed(), mm = live.sim ? live.sim.rain : rd ? +rd.max_mmh || 0 : 0, w = rainWord(mm);
+        $('v3-wx-t').textContent = mm >= 0.3 ? w.charAt(0).toUpperCase() + w.slice(1) : 'Mưa';
+        $('v3-wx').style.setProperty('--wxc', mm >= 50 ? '#E0479E' : mm >= 10 ? '#7B3FF2' : '#2F7BFF');
+      }
       // đang có mưa trên bản đồ: nút Trú mưa nổi bật hơn nữa
       var wet = !$('rain-lg').hidden; $('v3-shelter').classList.toggle('wet', wet);
       $('v3-sh-sub').textContent = wet ? 'Đang mưa, tìm chỗ có mái che' : 'Chỗ có mái che gần nhất';
     }
     new MutationObserver(rainbar).observe($('rain-lg'), { attributes: true, attributeFilter: ['hidden'] });
+    $('v3-wx').onclick = function () { wxOpen = !wxOpen; rainbar(); };
+    $('v3-rainbar').addEventListener('click', function () { wxOpen = false; rainbar(); });
     chips.addEventListener('click', function () { setTimeout(rainbar, 30); });
     rainbar();
     // trạng thái thẻ đang mở -> lớp trên body (rẻ hơn bộ chọn :has khi bản đồ đang chạy hiệu ứng)
