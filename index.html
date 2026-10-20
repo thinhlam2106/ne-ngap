@@ -92,6 +92,19 @@ body.intro .map-pill { opacity: 0; }
 .sh-item .t b { display: block; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sh-item .t span { font-size: 12px; color: rgba(11,42,85,.66); }
 .sh-item button { flex: none; border: 0; border-radius: 99px; padding: 6px 11px; font: 600 12px var(--font-body); background: rgba(4,118,214,.12); color: var(--lam); }
+.hp-calls { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.hp-calls a { display: flex; flex-direction: column; gap: 1px; padding: 9px 12px; border-radius: 14px; background: rgba(229,56,59,.09); color: #9B1C1F; text-decoration: none; }
+.hp-calls a b { font: 700 16px var(--font-body); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.hp-calls a span { font-size: 11.5px; color: rgba(11,42,85,.7); }
+.hp-calls a:last-child { background: rgba(4,118,214,.09); color: var(--lam); }
+.hp-calls a:last-child b { font-size: 14.5px; }
+.hp-tip { font-size: 12px; line-height: 1.45; color: #5E3D00; background: rgba(255,212,92,.4); border-radius: 12px; padding: 8px 10px; }
+.hp-sec { font: 700 13px var(--font-body); color: #0B2A55; margin-top: 4px; }
+.sh-item .acts { display: flex; gap: 5px; flex: none; }
+.sh-item a.call { flex: none; border-radius: 99px; padding: 6px 10px; font: 600 12px var(--font-body); background: rgba(229,56,59,.1); color: #9B1C1F; text-decoration: none; }
+.sh-pin.fix { background: #E8590C; }
+.sh-pin.med { background: #E5383B; }
+.v3-chip.v3-help { color: #B4232A; }
 .sh-warn { font-size: 12px; line-height: 1.45; color: #5E3D00; background: rgba(255,212,92,.4); border-radius: 12px; padding: 8px 10px; }
 .sh-pin { width: 26px; height: 26px; border-radius: 50% 50% 50% 4px; transform: rotate(-45deg); background: var(--lam); box-shadow: 0 0 0 2px #fff, 0 4px 10px rgba(3,40,100,.35); display: grid; place-items: center; }
 .sh-pin span { transform: rotate(45deg); color: #fff; font: 700 12px var(--font-body); }
@@ -516,6 +529,7 @@ button { cursor: pointer; }
   padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 12px; max-width: 220px;
 }
 .legend .lg { display: flex; align-items: center; gap: 8px; }
+.legend .lg-note { font-size: 11px; line-height: 1.4; color: var(--ink-3); margin: 1px 0 3px 26px; max-width: 220px; }
 .legend .c { width: 14px; height: 14px; border-radius: 50%; background: var(--c); border: 2px solid var(--panel); box-shadow: 0 0 0 1px var(--c); flex: none; }
 .legend .h { width: 18px; height: 4px; flex: none; background: repeating-linear-gradient(90deg, var(--hot) 0 5px, transparent 5px 8px); }
 .legend .ic { width: 16px; height: 16px; flex: none; }
@@ -1724,6 +1738,7 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
     <div class="v3-chips" id="v3-chips" role="toolbar" aria-label="Nút nhanh">
       <button class="v3-chip" data-chip="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z"/></svg><span>Nhà</span></button>
       <button class="v3-chip" data-chip="work"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h16v11H4zM9 8V5h6v3M4 13h16"/></svg><span>Chỗ làm</span></button>
+      <button class="v3-chip v3-help" data-chip="help"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/><path d="M6 6l3.5 3.5M14.5 14.5 18 18M18 6l-3.5 3.5M9.5 14.5 6 18"/></svg><span>Cần giúp</span></button>
       <button class="v3-chip v3-tg" data-chip="hot" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3s6 6.6 6 11a6 6 0 0 1-12 0c0-4.4 6-11 6-11z"/></svg><span>Hay ngập</span></button>
       <button class="v3-chip v3-tg" data-chip="rain" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 15a4 4 0 0 1-.6-7.96A5.5 5.5 0 0 1 17 8a3.5 3.5 0 0 1 0 7zM9 18l-1 2.5M13 18l-1 2.5M17 18l-1 2.5"/></svg><span>Vùng mưa</span></button>
       <button class="v3-chip v3-tg" data-chip="cam" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Camera</span></button>
@@ -1776,7 +1791,7 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
       <div class="cc-row"><span>Thực hiện</span><b>Nhóm Nhóm</b></div>
       <div class="cc-row"><span>Dữ liệu</span><div>Radar Đài KTTV khu vực Nam Bộ, Phòng CSGT Công an TP.HCM, camera giao thông TP.HCM, OpenStreetMap, Open-Meteo, TomTom</div></div>
       <div class="cc-row"><span>Đường dây nóng</span><a class="tel" href="tel:0326080808">0326 080 808</a></div>
-      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">19/10, bản 22:14</span></div>
+      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">20/10, bản 20:00</span></div>
     </div>
   </div>
   <button class="zen-btn" id="zen-btn" aria-pressed="false" aria-label="Ẩn bảng để xem trọn bản đồ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Ẩn bảng</span></button>
@@ -1855,12 +1870,12 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
         <ul class="ilist">
           <li><span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 15a4 4 0 0 1 .5-8 5.5 5.5 0 0 1 10.4 1.6A3.5 3.5 0 0 1 17.5 15z"/><path d="M8 18l-1 2M12 18l-1 2M16 18l-1 2"/></svg></span><span><b>Radar mưa</b>Đài Khí tượng Thủy văn Nam Bộ, 10 phút cập nhật một lần.</span></li>
           <li><span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 11l5-3v8l-5-3"/></svg></span><span><b>AI xem camera</b>Đang mưa thì xem toàn bộ camera giao thông, khoảng 15 phút một lần. Chỉ báo khi thấy rõ nước.</span></li>
-          <li><span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/></svg></span><span><b>Điểm hay ngập</b>122 điểm CSGT cảnh báo. Mưa từ 20 mm/giờ: có thể ngập mắt cá; từ 40 mm: nửa bánh xe.</span></li>
+          <li><span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/></svg></span><span><b>Điểm hay ngập</b>122 điểm CSGT cảnh báo. Mưa từ 20 mm/giờ: có thể ngập mắt cá; từ 40 mm: nửa bánh xe. Điểm do triều thì ngập theo giờ nước sông lên, có khi trời không mưa.</span></li>
           <li><span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 5.5a3 3 0 0 1 0 5.5M18 19a5 5 0 0 0-2.5-4.3"/></svg></span><span><b>Người đi đường</b>Mức ngang pô, lút yên chỉ hiện khi có người báo.</span></li>
         </ul>
         <a class="src" href="https://giaothong.hochiminhcity.gov.vn/" target="_blank" rel="noopener">Xem camera giao thông trực tiếp của TP.HCM</a>
       </details>
-      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 19/10, bản 22:14.</span></div>
+      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 20/10, bản 20:00.</span></div>
     </section>
 
     <!-- Chỉ đường -->
@@ -1937,6 +1952,7 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
           <button data-c="1" aria-pressed="false">Do mưa</button>
           <button data-c="2" aria-pressed="false">Do triều cường</button>
         </div>
+        <div class="muted" style="font-size:12px;margin-top:6px">Do mưa: ngập khi mưa to, rút sau khi tạnh. Do triều: ngập lúc nước sông lên cao, trời nắng vẫn có thể ngập.</div>
       </div>
       <div id="spot-out"></div>
       <details class="sim" id="goong-box" hidden>
@@ -1969,6 +1985,21 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
     <div class="muted" id="sh-sub"></div>
     <div class="sh-list" id="sh-list"></div>
     <div class="sh-warn">Đừng dừng xe trú dưới gầm cầu vượt hay trong hầm chui: dễ gây kẹt xe và tai nạn.</div>
+  </div>
+  <div class="side-card" id="help-card" role="dialog" aria-label="Cần giúp khi ngập" hidden>
+    <div class="rc-head"><b>Cần giúp khi ngập</b><button class="icon-btn" id="hp-close" aria-label="Đóng"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="hp-calls">
+      <a href="tel:115"><b>115</b><span>Cấp cứu</span></a>
+      <a href="tel:114"><b>114</b><span>Cứu nạn, cứu hộ</span></a>
+      <a href="tel:113"><b>113</b><span>Công an</span></a>
+      <a href="tel:0326080808"><b>0326 080 808</b><span>CSGT TP.HCM</span></a>
+    </div>
+    <div class="hp-tip"><b>Xe chết máy vì nước:</b> tắt máy, dắt xe lên chỗ cao, đừng đề nổ lại ngay để tránh hỏng máy.</div>
+    <div class="hp-sec">Sửa xe gần bạn</div>
+    <div class="sh-list" id="hp-fix"></div>
+    <div class="hp-sec">Bệnh viện gần bạn</div>
+    <div class="sh-list" id="hp-med"></div>
+    <div class="muted" id="hp-sub"></div>
   </div>
   <div class="nav-top" id="nav-top" hidden aria-live="polite">
     <div class="nav-ic" id="nav-ic"></div>
@@ -2038,6 +2069,7 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
     <div class="lg"><span class="c" style="--c:var(--lv4)"></span>Lút yên xe</div>
     <div class="lg"><span class="ic" id="lg-rain"></span>Điểm hay ngập khi mưa</div>
     <div class="lg"><span class="ic" id="lg-tide"></span>Điểm hay ngập do triều cường</div>
+    <div class="lg-note">Ngập do mưa: rút sau khi tạnh. Ngập do triều: theo giờ nước sông lên, trời nắng vẫn có thể ngập.</div>
     <div class="lg"><span class="mt" aria-hidden="true"><i></i></span>Metro số 1</div>
     <div class="lg"><span class="kx" aria-hidden="true"></span>Hay kẹt xe</div>
   </div>
@@ -7253,6 +7285,7 @@ if (typeof module !== 'undefined') module.exports = NN;
   var spotState = { c: 0, q: '', near: null, more: false };
   var qMarker = null;
   var CAUSE = ['', 'Do mưa', 'Do triều cường'];
+  var CAUSE_WHY = ['', 'Nước dâng khi mưa to, thường rút sau khi tạnh.', 'Nước sông dâng lúc triều cường, trời nắng vẫn có thể ngập.'];
   function spotIconHTML(c) { return '<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5" style="fill:var(--panel);stroke:var(--hot)" stroke-width="1.8"/>' + (c === 1 ? '<path d="M10 4.5c1.6 2.4 3.6 4.4 3.6 6.6a3.6 3.6 0 0 1-7.2 0c0-2.2 2-4.2 3.6-6.6z" style="fill:var(--hot)"/>' : '<path d="M5 8.5q1.25-1.6 2.5 0t2.5 0 2.5 0 2.5 0M5 12q1.25-1.6 2.5 0t2.5 0 2.5 0 2.5 0" style="fill:none;stroke:var(--hot)" stroke-width="1.6" stroke-linecap="round"/>') + '</svg>'; }
   function spotDesc(sp) {
     if (sp.g) return sp.g;
@@ -7373,7 +7406,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     popup = new maplibregl.Popup({ maxWidth: '290px', offset: 12 }).setLngLat([sp.lng, sp.lat]).setHTML(
       '<div class="pop"><div class="lv">' + spotIconHTML(sp.c) + '<span>' + esc(sp.s) + '</span></div>' +
       (desc ? '<div class="m">' + esc(desc) + '</div>' : '') +
-      '<div class="m">Điểm hay ngập ' + esc(CAUSE[sp.c].toLowerCase()) + ', ' + esc(spotArea(sp)) + '</div>' +
+      '<div class="m">Điểm hay ngập ' + esc(CAUSE[sp.c].toLowerCase()) + ', ' + esc(spotArea(sp)) + '. ' + esc(CAUSE_WHY[sp.c] || '') + '</div>' +
       '<div class="m">' + (sp.src === 'csgt' ? 'Điểm có nguy cơ ngập do Phòng CSGT Công an TP.HCM cảnh báo (10/2026).' : 'Điểm hay ngập theo báo chí đưa tin năm 2026, chưa có trong danh sách của CSGT.') + '</div>' +
       obsHTML(sp) +
       (sp.cams && sp.cams.length ? camHTML(sp.cams[0]) + quickLevels(sp.cams[0]) : '<div class="acts row"><button class="mini" data-report-here="' + esc(sp.id) + '">Báo đang ngập ở đây</button></div>') +
@@ -8470,6 +8503,98 @@ if (typeof module !== 'undefined') module.exports = NN;
   });
 
   // =====================================================================
+  // Cần giúp: số khẩn cấp, tiệm sửa xe và bệnh viện gần nhất
+  // =====================================================================
+  var hpMarkers = [], hpOrigin = null, hpList = [];
+  function closeHelp() { $('help-card').hidden = true; hpMarkers.forEach(function (m) { m.remove(); }); hpMarkers = []; }
+  function poiNear(types, lat, lng, maxD, n) {
+    var P = G && G.poi; if (!P) return [];
+    var ti = {}; types.forEach(function (t) { var i = G.types.indexOf(t); if (i >= 0) ti[i] = t; });
+    var out = [];
+    for (var i = 0; i < P.lat.length; i++) {
+      if (!(P.type[i] in ti) || !P.name[i]) continue;
+      if (Math.abs(P.lat[i] - lat) > 0.08 || Math.abs(P.lng[i] - lng) > 0.08) continue;
+      var d = NN.dist(lat, lng, P.lat[i], P.lng[i]); if (d > maxD) continue;
+      out.push({ name: P.name[i], lat: P.lat[i], lng: P.lng[i], d: d, kind: ti[P.type[i]] });
+    }
+    out.sort(function (a, b) { return a.d - b.d; });
+    var res = [];
+    out.forEach(function (x) { if (res.length < n && !res.some(function (y) { return NN.norm(y.name) === NN.norm(x.name); })) res.push(x); });
+    return res;
+  }
+  var ttFixCache = {};
+  function ttRepair(lat, lng) {
+    var k = lat.toFixed(3) + ',' + lng.toFixed(3);
+    if (ttFixCache[k]) return Promise.resolve(ttFixCache[k]);
+    var base = 'https://api.tomtom.com/search/2/', q = '&key=' + encodeURIComponent(ttKey()) + '&lat=' + lat.toFixed(6) + '&lon=' + lng.toFixed(6) + '&radius=3000&limit=25&language=vi-VN';
+    var conv = function (j) {
+      return (j && j.results || []).map(function (r) {
+        return { name: r.poi && r.poi.name, phone: r.poi && r.poi.phone, lat: r.position && +r.position.lat, lng: r.position && +r.position.lon };
+      }).filter(function (x) { return x.name && isFinite(x.lat) && isFinite(x.lng); });
+    };
+    return Promise.all([
+      fetchJSON(base + 'nearbySearch/.json?categorySet=7310' + q, 8000).then(conv).catch(function () { return []; }),
+      fetchJSON(base + 'poiSearch/' + encodeURIComponent('sửa xe') + '.json?' + q.slice(1), 8000).then(conv).catch(function () { return []; })
+    ]).then(function (r) {
+      var all = [];
+      r[0].concat(r[1]).forEach(function (x) { if (!all.some(function (y) { return NN.dist(x.lat, x.lng, y.lat, y.lng) < 25; })) { x.d = NN.dist(lat, lng, x.lat, x.lng); all.push(x); } });
+      all.sort(function (a, b) { return a.d - b.d; });
+      return (ttFixCache[k] = all.slice(0, 4));
+    });
+  }
+  function hpRow(x, i, cls) {
+    var tel = x.phone ? String(x.phone).replace(/[^\d+]/g, '') : '';
+    return '<div class="sh-item"><span class="n" style="background:' + (cls === 'fix' ? '#E8590C' : '#E5383B') + '">' + (i + 1) + '</span><span class="t"><b>' + esc(x.name) + '</b><span>Cách ' + fmtKm(x.d) + '</span></span>' +
+      '<span class="acts">' + (tel ? '<a class="call" href="tel:' + esc(tel) + '">Gọi</a>' : '') + '<button data-hp="' + hpList.length + '">Đường đi</button></span></div>';
+  }
+  function showHelp(o, fix) {
+    hpOrigin = o; hpList = [];
+    hpMarkers.forEach(function (m) { m.remove(); }); hpMarkers = [];
+    var med = poiNear(['Bệnh viện'], o.lat, o.lng, 8000, 3);
+    if (med.length < 2) med = med.concat(poiNear(['Phòng khám'], o.lat, o.lng, 3000, 2 - med.length));
+    var put = function (list, cls, box) {
+      box.innerHTML = list.map(function (x, i) { var h = hpRow(x, i, cls); hpList.push(x); return h; }).join('');
+      list.forEach(function (x, i) {
+        var el = document.createElement('div'); el.className = 'sh-pin ' + cls; el.innerHTML = '<span>' + (i + 1) + '</span>'; el.title = x.name;
+        hpMarkers.push(new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([x.lng, x.lat]).addTo(map));
+      });
+    };
+    if (fix === null) $('hp-fix').innerHTML = '<div class="muted">Đang tìm tiệm sửa xe…</div>';
+    else if (!fix.length) $('hp-fix').innerHTML = '<div class="muted">Dữ liệu bản đồ chưa có tiệm sửa xe gần đây. Tiệm thường nằm dọc các đường lớn; hỏi người dân quanh đó hoặc gọi 114.</div>';
+    else put(fix, 'fix', $('hp-fix'));
+    if (med.length) put(med, 'med', $('hp-med')); else $('hp-med').innerHTML = '<div class="muted">Không thấy bệnh viện trong vòng 8 km. Gọi 115 nếu cần cấp cứu.</div>';
+    if (fix !== null && hpList.length) {
+      var bb = new maplibregl.LngLatBounds([o.lng, o.lat], [o.lng, o.lat]); hpList.forEach(function (x) { bb.extend([x.lng, x.lat]); });
+      map.fitBounds(bb, { padding: isPhone() ? { top: 130, bottom: Math.round(window.innerHeight * 0.5) + 20, left: 40, right: 40 } : { top: 80, bottom: 80, left: 800, right: 120 }, maxZoom: 16, duration: 700 });
+    }
+    $('hp-sub').textContent = o.mine ? 'Tính từ vị trí của bạn' + (o.acc ? ' (' + accWord(o.acc) + ')' : '') + '.' : 'Tính từ giữa khung bản đồ (chưa có vị trí của bạn).';
+  }
+  function openHelp() {
+    if (!G) return;
+    if (!$('help-card').hidden) { closeHelp(); return; }
+    if (!$('shelter-card').hidden) closeShelter();
+    if ($('report-card') && !$('report-card').hidden) closeReport();
+    $('help-card').hidden = false; sheetTo('peek');
+    $('hp-fix').innerHTML = ''; $('hp-med').innerHTML = ''; $('hp-sub').textContent = 'Đang dò vị trí của bạn…';
+    var go = function (o) {
+      showHelp(o, null);
+      ttRepair(o.lat, o.lng).then(function (fx) { if (!$('help-card').hidden && hpOrigin === o) showHelp(o, fx); });
+    };
+    var c = map.getCenter();
+    var f = LOC.fix && Date.now() - LOC.fix.t < 60000 ? LOC.fix : null;
+    if (f && inCity(f)) { go({ lat: f.lat, lng: f.lng, acc: f.acc, mine: true }); return; }
+    locBest(12000, 30).then(function (g) { go(inCity(g) ? { lat: g.lat, lng: g.lng, acc: g.acc, mine: true } : { lat: c.lat, lng: c.lng }); },
+      function () { go({ lat: c.lat, lng: c.lng }); });
+  }
+  $('hp-close').onclick = closeHelp;
+  $('help-card').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-hp]'); if (!b || !hpOrigin) return;
+    var x = hpList[+b.dataset.hp]; if (!x) return;
+    var o = hpOrigin; closeHelp();
+    setTab('route'); setPoint('A', { lat: o.lat, lng: o.lng, label: o.mine ? 'Vị trí của bạn' : NN.placeName(G, o.lat, o.lng) }, false); setPoint('B', { lat: x.lat, lng: x.lng, label: x.name }, true);
+  });
+
+  // =====================================================================
   // Dẫn đường trực tiếp: bám GPS, đọc chỉ dẫn tiếng Việt, tự đổi tuyến khi phía trước có chỗ ngập mới
   // =====================================================================
   var nav = { on: false };
@@ -9405,6 +9530,7 @@ if (typeof module !== 'undefined') module.exports = NN;
           toast('Nhập địa chỉ ' + (k === 'home' ? 'nhà' : 'chỗ làm') + ' rồi bấm Lưu. Lần sau bấm nút này là có đường né ngập.', 4500);
         }
       } else if (k === 'shelter') { setZen(true); $('shelter-btn').click(); }
+      else if (k === 'help') { setZen(true); openHelp(); }
       else {
         lv[k] = !lv[k]; lsSet('nn-v3-lyr', lv);
         if (k === 'rain') setRain(lv[k]);
@@ -9446,11 +9572,11 @@ if (typeof module !== 'undefined') module.exports = NN;
     // trạng thái thẻ đang mở -> lớp trên body (rẻ hơn bộ chọn :has khi bản đồ đang chạy hiệu ứng)
     function openState() {
       body.classList.toggle('rc-open', !$('report-card').hidden && !$('report-card').classList.contains('away'));
-      body.classList.toggle('sh-open', !$('shelter-card').hidden && !$('shelter-card').classList.contains('away'));
+      body.classList.toggle('sh-open', (!$('shelter-card').hidden && !$('shelter-card').classList.contains('away')) || !$('help-card').hidden);
       body.classList.toggle('card-open', [].some.call(document.querySelectorAll('.v3-card'), function (c) { return !c.hidden; }));
     }
     var mo2 = new MutationObserver(openState);
-    ['report-card', 'shelter-card'].forEach(function (id) { mo2.observe($(id), { attributes: true, attributeFilter: ['hidden', 'class'] }); });
+    ['report-card', 'shelter-card', 'help-card'].forEach(function (id) { mo2.observe($(id), { attributes: true, attributeFilter: ['hidden', 'class'] }); });
     document.querySelectorAll('.v3-card').forEach(function (c) { mo2.observe(c, { attributes: true, attributeFilter: ['hidden'] }); });
     openState();
     // khung thông tin trên bản đồ đang mở (điện thoại): ẩn các nút nổi để không che khung, dời bản đồ cho khung có chỗ hiện
