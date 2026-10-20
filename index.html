@@ -6,9 +6,8 @@
 <meta name="description" content="Né Ngập: bản đồ ngập TP.HCM theo mưa, triều và người đi đường. Tìm đường né chỗ ngập.">
 <meta name="theme-color" content="#0476D6">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
-<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTAAADWklEQVRYhe2VTWhcVRTHf+e++yYkrUUlpJCAFKE0M2kSwSh+FlPrqt0KpmgXXRQXFi3tTCK2EDSkzBhtiSAouhNT97pro+lCglRqjTMZ6UZQUvOhC9OkNO++d1xMZnozNViK0s38l/9z7jm/c9+990FDDTV0jyV3terIpZD7WtrDUFoBokiXWF6d4+O+6H8DSJ0o9yQmOQjsA3qAsC4lQuUHJDlvxEys5dMz/wmAzRafRWQE2HOnsBXp14g56fLpb+8OYLi4NViVswKH7wR0MwqFT+IkOsZY78qdAwzN7rCJfgl01UUikAugkyqUjJp5gESS7aLsRtiLshewdet+dC4+wPvdv/47wNDsjjDRKYWHPPcmMO4sZxjNXNtsXABy5XZLfBzkNSBVtRV+iV28px5iI8Bwcatdlem6yWeM6MBavqtYNVKDs92q+rhCa6WILojwXX1Ogp5DyWzYiZbVJxnuW/1HgGCw9Kkohz3rosMcoNC5zLCacKV8SI1m64r6Kirk40L6MxDl6NVttjn6CnimthMqH8Xvpl+9DWD9tE953ozDPE2hc5kTV9qshF8gPLdJ440SzjsXDPDerqV1iGkgXWUQeCoqZKYBzK1FMuI1v2lEB241t1ObNP8DZOE2V9lng/gix39u5YOdf4kkA0D1kRKFkWqqAQgHf+pl4z0fX8t3FRlWY409h0inN96CoK+7IGxzhUyrK6S3uyBsEzgGLHo10jaIPweVKL/7CsKHXuz51GCxqwagaga8YOQsZwDClfIhkH4v9r1L1rqjQtc4N65HNlfut7lyPzeuR1Ehc9ZZeoHLXv4LQa50EMBpNAbE1UCCvFQDoPK8Vie8UL1qajTrFZt3Nt7PWM+izZVO2VTTHCSTkEzaVNOczZZOMpr+3Vn2A0u1asggAIXe34BvfLgKwJFLIZW3fV06CZVr5J92QUcZ7Z632fIp4G2g2SvWjPCOzZbeZDRzDZHTXqy7KVfeVRuu1oZHeFEDw4NbOvB+LCqUADRJHvOKaBSkJnjj8v2IDrGZRN7i6NVtLtAJ33boE5WeSdGzm3i41GFCkgf8ZKO6WEmWds9e4vTORZtKPepPrujLKvqKl9dit6z1rX/CP2tcmnQAmLobE6IbejfUUEMN3RP9DQLqRNv9gSldAAAAAElFTkSuQmCC">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Cpath d=%27M2.5 23a13.5 13.5 0 0 1 27 0M8.2 23a7.8 7.8 0 0 1 15.6 0M13.4 23a2.6 2.6 0 0 1 5.2 0%27 fill=%27none%27 stroke=%27%230476D6%27 stroke-width=%273.4%27/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -1473,10 +1472,24 @@ body.nav #app .maplibregl-ctrl-bottom-left { left: 0; }
 .v3-rainbar { z-index: 6; left: calc(var(--rl) + 112px); bottom: 44px; width: 290px; padding: 8px 14px 6px; border-radius: 18px; display: flex; flex-direction: column; gap: 3px; color: #0B2A55; transition: left .6s var(--ease), opacity .3s; }
 .v3-rainbar .ttl { font: 700 12px var(--font-body); color: #0B2A55; }
 .rb-v { display: none; }
+/* cảm giác bấm thật: bỏ khung sáng vuông mặc định của điện thoại, nút nhún xuống khi chạm */
+button, a, summary, label, input[type=range] { -webkit-tap-highlight-color: transparent; }
+.v3-wx, .v3-chip, .v3-layers, .v3-compass, #app .loc-btn, .v3-go, .v3-shelter, .v3-peek, .v3-ni, .hp-calls a, .sh-item button, .rcard, .pl-add, .nlink {
+  transition: transform .14s cubic-bezier(.3,.7,.4,1.4), background-color .2s, color .2s, box-shadow .2s, opacity .3s; }
+.v3-wx:active, .v3-chip:active, .v3-layers:active, .v3-compass:active, #app .loc-btn:active, .v3-go:active, .hp-calls a:active, .sh-item button:active, .pl-add:active { transform: scale(.92); }
+.v3-shelter:active, .v3-peek:active, .rcard:active { transform: scale(.97); }
+.v3-ni:active i { transform: scale(.88); }
+.v3-ni i { transition: transform .14s cubic-bezier(.3,.7,.4,1.4); }
+/* nút thời tiết đang mở: tô đặc, nhìn rõ là đang bật */
+.v3-wx[aria-expanded="true"] { background: #0476D6; color: #fff; box-shadow: 0 6px 16px rgba(4,118,214,.35); }
+.v3-wx[aria-expanded="true"] svg path:last-child { stroke: #fff; }
+/* thang màu bung ra từ nút, không hiện đột ngột */
+.v3-rainbar:not([hidden]) { animation: rbpop .22s cubic-bezier(.2,.8,.3,1.15) both; transform-origin: top left; }
+@media (min-width: 761px) { .v3-rainbar:not([hidden]) { transform-origin: bottom right; } }
+@keyframes rbpop { from { opacity: 0; transform: translateY(-6px) scale(.9); } to { opacity: 1; transform: none; } }
 .v3-wx { position: absolute; z-index: 6; display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 12px 0 9px; border: 0; border-radius: 20px; background: rgba(255,255,255,.96);
   box-shadow: 0 4px 14px rgba(3,40,100,.16); color: #0B2A55; font: 600 12.5px var(--font-body); cursor: pointer; transition: opacity .3s; }
 .v3-wx svg { width: 22px; height: 22px; }
-.v3-wx[aria-expanded="true"] { background: #E8F1FF; }
 @media (min-width: 761px) { .v3-wx { right: 120px; bottom: 22px; } .v3-rainbar, body:not(.zen) .v3-rainbar { bottom: 72px !important; } }
 @media (max-width: 760px) { .v3-wx { left: 10px; top: calc(var(--v3-top) + 2px); } }
 .v3-compass { position: absolute; z-index: 7; width: 40px; height: 40px; border-radius: 50%; border: 0; display: grid; place-items: center; background: rgba(255,255,255,.96);
@@ -1838,7 +1851,7 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
       <div class="cc-row"><span>Thực hiện</span><b>Nhóm Nhóm</b></div>
       <div class="cc-row"><span>Dữ liệu</span><div>Radar Đài KTTV khu vực Nam Bộ, Phòng CSGT Công an TP.HCM, camera giao thông TP.HCM, OpenStreetMap, Open-Meteo, TomTom</div></div>
       <div class="cc-row"><span>Đường dây nóng</span><a class="tel" href="tel:0326080808">0326 080 808</a></div>
-      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">20/10, bản 21:35</span></div>
+      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">20/10, bản 21:48</span></div>
     </div>
   </div>
   <button class="zen-btn" id="zen-btn" aria-pressed="false" aria-label="Ẩn bảng để xem trọn bản đồ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Ẩn bảng</span></button>
@@ -1924,7 +1937,7 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
         </ul>
         <a class="src" href="https://giaothong.hochiminhcity.gov.vn/" target="_blank" rel="noopener">Xem camera giao thông trực tiếp của TP.HCM</a>
       </details>
-      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 20/10, bản 21:35.</span></div>
+      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 20/10, bản 21:48.</span></div>
     </section>
 
     <!-- Chỉ đường -->
