@@ -482,9 +482,12 @@ button { cursor: pointer; }
 .rain-lg { display: flex; flex-direction: column; gap: 3px; padding-bottom: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--line); width: 100%; }
 .legend:has(.rain-lg:not([hidden])) { max-width: 260px; min-width: 232px; }
 .rain-lg .unit { text-transform: none; letter-spacing: 0; font-weight: 600; color: var(--ink-3); }
-.rain-bar { height: 10px; border-radius: 5px; background: linear-gradient(90deg, #5AA8FF 0%, #2F7BFF 16%, #4B4DFF 34%, #7B3FF2 50%, #E0479E 68%, #FF8C42 84%, #FFE14D 100%); }
+.rain-bar { height: 6px; border-radius: 3px; background: linear-gradient(90deg, #5AA8FF 0%, #2F7BFF 12%, #4B4DFF 25%, #7B3FF2 42%, #E0479E 62%, #FF8C42 82%, #FFE14D 100%); }
 .rain-words, .rain-ticks { position: relative; height: 14px; font-size: 10.5px; color: var(--ink-2); }
 .rain-words span { position: absolute; text-align: center; font-weight: 600; white-space: nowrap; }
+.rain-words.rw4 { display: grid; grid-template-columns: repeat(4, 1fr); height: auto; margin-top: 5px; }
+.rain-lg .ttl, .v3-rainbar .ttl { margin-bottom: 6px; }
+.rain-words.rw4 span { position: static; }
 .rain-ticks span { position: absolute; transform: translateX(-50%); font-variant-numeric: tabular-nums; }
 .rain-src { font-size: 10.5px; color: var(--ink-3); line-height: 1.3; }
 /* Dự báo mưa 2 giờ tới: thang mm/10 phút của Đài KTTV Nam Bộ (1 → 15, tuyến tính) */
@@ -1502,8 +1505,8 @@ button, a, summary, label, input[type=range] { -webkit-tap-highlight-color: tran
   .rb-v { display: flex; flex-direction: column; gap: 5px; }
   .rb-v b { font: 700 11px var(--font-body); color: #0B2A55; }
   .rb-col { display: flex; gap: 6px; height: 112px; }
-  .rb-col i { width: 7px; border-radius: 4px; background: linear-gradient(0deg, #5AA8FF 0%, #2F7BFF 16%, #4B4DFF 34%, #7B3FF2 50%, #E0479E 68%, #FF8C42 84%, #FFE14D 100%); }
-  .rb-col ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; justify-content: space-between; font-size: 10.5px; color: rgba(11,42,85,.75); }
+  .rb-col i { width: 5px; border-radius: 3px; background: linear-gradient(0deg, #5AA8FF 0%, #2F7BFF 12%, #4B4DFF 25%, #7B3FF2 42%, #E0479E 62%, #FF8C42 82%, #FFE14D 100%); }
+  .rb-col ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; justify-content: space-around; font-size: 10.5px; color: rgba(11,42,85,.75); }
 }
 .v3-wx.dry svg path:last-child { display: none; }
 .v3-wx.dry:not([aria-expanded="true"]) { color: #43536B; }
@@ -1808,10 +1811,9 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
   <button class="v3-layers" id="v3-layers" aria-expanded="false" aria-label="Lớp bản đồ và chú giải"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 8.5l10 5.5 10-5.5zM2 13.5l10 5.5 10-5.5"/></svg><span>Lớp</span></button>
   <button class="v3-wx" id="v3-wx" aria-expanded="false" aria-label="Lượng mưa trên bản đồ, bấm để xem thang màu" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 15a4 4 0 0 1-.6-7.96A5.5 5.5 0 0 1 17 8a3.5 3.5 0 0 1 0 7z"/><path d="M9 18l-1 2.5M13 18l-1 2.5M17 18l-1 2.5" stroke="var(--wxc,#2F7BFF)"/></svg><span id="v3-wx-t">Mưa</span></button>
   <div class="v3-rainbar" id="v3-rainbar" aria-label="Thang lượng mưa" hidden>
-    <div class="ttl" id="v3-rb-t">Lượng mưa <span class="unit">mm/giờ</span></div>
-    <div class="rain-words"><span style="left:0;width:34%">nhỏ</span><span style="left:34%;width:24%">vừa</span><span style="left:58%;width:20%">to</span><span style="left:78%;width:22%">rất to</span></div>
+    <div class="ttl" id="v3-rb-t">Lượng mưa</div>
     <div class="rain-bar" aria-hidden="true"></div>
-    <div class="rain-ticks"><span style="left:16%">1</span><span style="left:34%">3</span><span style="left:48%">8</span><span style="left:66%">25</span><span style="left:90%">70</span></div>
+    <div class="rain-words rw4"><span>Nhỏ</span><span>Vừa</span><span>To</span><span>Rất to</span></div>
     <div class="rb-dry" id="v3-rb-dry" hidden>Lúc này không có mưa. Khi có mưa, màu trên bản đồ theo thang này.</div>
     <div class="rb-v" aria-hidden="true"><b>Mưa</b><div class="rb-col"><i></i><ul><li>Rất to</li><li>To</li><li>Vừa</li><li>Nhỏ</li></ul></div></div>
   </div>
@@ -1856,7 +1858,7 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
       <div class="cc-row"><span>Thực hiện</span><b>Nhóm Nhóm</b></div>
       <div class="cc-row"><span>Dữ liệu</span><div>Radar Đài KTTV khu vực Nam Bộ, Phòng CSGT Công an TP.HCM, camera giao thông TP.HCM, OpenStreetMap, Open-Meteo, TomTom</div></div>
       <div class="cc-row"><span>Đường dây nóng</span><a class="tel" href="tel:0326080808">0326 080 808</a></div>
-      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">21/10, bản 10:39</span></div>
+      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">21/10, bản 11:10</span></div>
     </div>
   </div>
   <button class="zen-btn" id="zen-btn" aria-pressed="false" aria-label="Ẩn bảng để xem trọn bản đồ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Ẩn bảng</span></button>
@@ -1942,7 +1944,7 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
         </ul>
         <a class="src" href="https://giaothong.hochiminhcity.gov.vn/" target="_blank" rel="noopener">Xem camera giao thông trực tiếp của TP.HCM</a>
       </details>
-      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 21/10, bản 10:39.</span></div>
+      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 21/10, bản 11:10.</span></div>
     </section>
 
     <!-- Chỉ đường -->
@@ -2114,10 +2116,9 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
   </div>
   <div class="legend" aria-label="Chú giải">
     <div class="rain-lg" id="rain-lg" hidden>
-      <div class="ttl">Lượng mưa <span class="unit">mm/giờ</span></div>
-      <div class="rain-words"><span style="left:0;width:34%">nhỏ</span><span style="left:34%;width:24%">vừa</span><span style="left:58%;width:20%">to</span><span style="left:78%;width:22%">rất to</span></div>
+      <div class="ttl">Lượng mưa</div>
       <div class="rain-bar" aria-hidden="true"></div>
-      <div class="rain-ticks"><span style="left:16%">1</span><span style="left:34%">3</span><span style="left:48%">8</span><span style="left:66%">25</span><span style="left:90%">70</span></div>
+      <div class="rain-words rw4"><span>Nhỏ</span><span>Vừa</span><span>To</span><span>Rất to</span></div>
       <div class="rain-src" id="rain-src"></div>
     </div>
     <div class="rain-lg" id="fc-lg" hidden>
