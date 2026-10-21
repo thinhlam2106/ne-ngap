@@ -1505,6 +1505,10 @@ button, a, summary, label, input[type=range] { -webkit-tap-highlight-color: tran
   .rb-col i { width: 7px; border-radius: 4px; background: linear-gradient(0deg, #5AA8FF 0%, #2F7BFF 16%, #4B4DFF 34%, #7B3FF2 50%, #E0479E 68%, #FF8C42 84%, #FFE14D 100%); }
   .rb-col ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; justify-content: space-between; font-size: 10.5px; color: rgba(11,42,85,.75); }
 }
+.v3-wx.dry svg path:last-child { display: none; }
+.v3-wx.dry:not([aria-expanded="true"]) { color: #43536B; }
+.rb-dry { font-size: 11px; line-height: 1.35; color: rgba(11,42,85,.7); }
+@media (max-width: 760px) { .rb-dry { max-width: 92px; font-size: 10.5px; order: 2; } #app .v3-rainbar .rb-dry { margin-top: 2px; } }
 .v3-rainbar .ttl .unit { font-weight: 600; color: rgba(11,42,85,.6); }
 body:not(.zen) .v3-rainbar { left: calc(var(--rl) + 516px); }
 #app.lyr-open .v3-rainbar, body.nav .v3-rainbar, body.intro .v3-rainbar, #app.lyr-open .v3-wx, body.nav .v3-wx, body.intro .v3-wx { opacity: 0; pointer-events: none; }
@@ -1798,7 +1802,7 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
       <button class="v3-chip v3-help" data-chip="help"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/><path d="M6 6l3.5 3.5M14.5 14.5 18 18M18 6l-3.5 3.5M9.5 14.5 6 18"/></svg><span>Cần giúp</span></button>
       <button class="v3-chip v3-tg" data-chip="hot" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3s6 6.6 6 11a6 6 0 0 1-12 0c0-4.4 6-11 6-11z"/></svg><span>Hay ngập</span></button>
       <button class="v3-chip v3-tg" data-chip="rain" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 15a4 4 0 0 1-.6-7.96A5.5 5.5 0 0 1 17 8a3.5 3.5 0 0 1 0 7zM9 18l-1 2.5M13 18l-1 2.5M17 18l-1 2.5"/></svg><span>Vùng mưa</span></button>
-      <button class="v3-chip v3-tg" data-chip="cam" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Camera</span></button>
+      <button class="v3-chip v3-tg" data-chip="cam" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.75 12h3.632a1 1 0 0 1 .894 1.447l-2.034 4.069a1 1 0 0 1-1.708.134l-2.124-2.97"/><path d="M17.106 9.053a1 1 0 0 1 .447 1.341l-3.106 6.211a1 1 0 0 1-1.342.447L3.61 12.3a2.92 2.92 0 0 1-1.3-3.91L3.69 5.6a2.92 2.92 0 0 1 3.92-1.3z"/><path d="M2 19h3.76a2 2 0 0 0 1.8-1.1L9 15"/><path d="M2 21v-4"/><path d="M7 9h.01"/></svg><span>Camera</span></button>
     </div>
   </div>
   <button class="v3-layers" id="v3-layers" aria-expanded="false" aria-label="Lớp bản đồ và chú giải"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 8.5l10 5.5 10-5.5zM2 13.5l10 5.5 10-5.5"/></svg><span>Lớp</span></button>
@@ -1808,6 +1812,7 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
     <div class="rain-words"><span style="left:0;width:34%">nhỏ</span><span style="left:34%;width:24%">vừa</span><span style="left:58%;width:20%">to</span><span style="left:78%;width:22%">rất to</span></div>
     <div class="rain-bar" aria-hidden="true"></div>
     <div class="rain-ticks"><span style="left:16%">1</span><span style="left:34%">3</span><span style="left:48%">8</span><span style="left:66%">25</span><span style="left:90%">70</span></div>
+    <div class="rb-dry" id="v3-rb-dry" hidden>Lúc này không có mưa. Khi có mưa, màu trên bản đồ theo thang này.</div>
     <div class="rb-v" aria-hidden="true"><b>Mưa</b><div class="rb-col"><i></i><ul><li>Rất to</li><li>To</li><li>Vừa</li><li>Nhỏ</li></ul></div></div>
   </div>
   <button class="v3-compass" id="v3-compass" aria-label="Xoay bản đồ về hướng bắc" title="Về hướng bắc" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 8 12h8z" fill="#E5383B"/><path d="M12 21l4-9H8z" fill="#9AA8BF"/></svg></button>
@@ -1851,7 +1856,7 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
       <div class="cc-row"><span>Thực hiện</span><b>Nhóm Nhóm</b></div>
       <div class="cc-row"><span>Dữ liệu</span><div>Radar Đài KTTV khu vực Nam Bộ, Phòng CSGT Công an TP.HCM, camera giao thông TP.HCM, OpenStreetMap, Open-Meteo, TomTom</div></div>
       <div class="cc-row"><span>Đường dây nóng</span><a class="tel" href="tel:0326080808">0326 080 808</a></div>
-      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">20/10, bản 21:48</span></div>
+      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">21/10, bản 10:39</span></div>
     </div>
   </div>
   <button class="zen-btn" id="zen-btn" aria-pressed="false" aria-label="Ẩn bảng để xem trọn bản đồ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Ẩn bảng</span></button>
@@ -1931,13 +1936,13 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
         <summary>Bản đồ dựa vào đâu để báo ngập?</summary>
         <ul class="ilist">
           <li><span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 15a4 4 0 0 1 .5-8 5.5 5.5 0 0 1 10.4 1.6A3.5 3.5 0 0 1 17.5 15z"/><path d="M8 18l-1 2M12 18l-1 2M16 18l-1 2"/></svg></span><span><b>Radar mưa</b>Đài Khí tượng Thủy văn Nam Bộ, 10 phút cập nhật một lần.</span></li>
-          <li><span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 11l5-3v8l-5-3"/></svg></span><span><b>AI xem camera</b>Đang mưa thì xem toàn bộ camera giao thông, khoảng 15 phút một lần. Chỉ báo khi thấy rõ nước.</span></li>
+          <li><span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.75 12h3.632a1 1 0 0 1 .894 1.447l-2.034 4.069a1 1 0 0 1-1.708.134l-2.124-2.97"/><path d="M17.106 9.053a1 1 0 0 1 .447 1.341l-3.106 6.211a1 1 0 0 1-1.342.447L3.61 12.3a2.92 2.92 0 0 1-1.3-3.91L3.69 5.6a2.92 2.92 0 0 1 3.92-1.3z"/><path d="M2 19h3.76a2 2 0 0 0 1.8-1.1L9 15"/><path d="M2 21v-4"/><path d="M7 9h.01"/></svg></span><span><b>AI xem camera</b>Đang mưa thì xem toàn bộ camera giao thông, khoảng 15 phút một lần. Chỉ báo khi thấy rõ nước.</span></li>
           <li><span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/></svg></span><span><b>Điểm hay ngập</b>122 điểm CSGT cảnh báo. Mưa từ 20 mm/giờ: có thể ngập mắt cá; từ 40 mm: nửa bánh xe. Điểm do triều thì ngập theo giờ nước sông lên, có khi trời không mưa.</span></li>
           <li><span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 5.5a3 3 0 0 1 0 5.5M18 19a5 5 0 0 0-2.5-4.3"/></svg></span><span><b>Người đi đường</b>Mức ngang pô, lút yên chỉ hiện khi có người báo.</span></li>
         </ul>
         <a class="src" href="https://giaothong.hochiminhcity.gov.vn/" target="_blank" rel="noopener">Xem camera giao thông trực tiếp của TP.HCM</a>
       </details>
-      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 20/10, bản 21:48.</span></div>
+      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 21/10, bản 10:39.</span></div>
     </section>
 
     <!-- Chỉ đường -->
@@ -5533,9 +5538,17 @@ if (typeof module !== 'undefined') module.exports = NN;
     var g = c.getContext('2d'); g.scale(dpr, dpr);
     g.fillStyle = tok('ink'); g.strokeStyle = tok('panel'); g.lineWidth = 2;
     g.beginPath(); if (g.roundRect) g.roundRect(2, 2, px - 4, px - 4, 6); else g.rect(2, 2, px - 4, px - 4); g.fill(); g.stroke();
-    g.fillStyle = tok('panel');
-    g.fillRect(6, 8, 8, 6);
-    g.beginPath(); g.moveTo(14, 11); g.lineTo(17, 8.5); g.lineTo(17, 13.5); g.closePath(); g.fill();
+    // camera giám sát (CCTV) gắn trên giá, không phải máy chụp hình
+    g.save(); g.translate(4.2, 4.4); g.scale(0.57, 0.57);
+    g.strokeStyle = tok('panel'); g.fillStyle = tok('panel'); g.lineWidth = 2.6; g.lineCap = 'round'; g.lineJoin = 'round';
+    if (window.Path2D) {
+      var body = new Path2D('M17.106 9.053a1 1 0 0 1 .447 1.341l-3.106 6.211a1 1 0 0 1-1.342.447L3.61 12.3a2.92 2.92 0 0 1-1.3-3.91L3.69 5.6a2.92 2.92 0 0 1 3.92-1.3z');
+      g.fill(body); g.stroke(body);
+      g.stroke(new Path2D('M16.75 12h3.632a1 1 0 0 1 .894 1.447l-2.034 4.069a1 1 0 0 1-1.708.134l-2.124-2.97'));
+      g.stroke(new Path2D('M2 19h3.76a2 2 0 0 0 1.8-1.1L9 15M2 21v-4'));
+      g.fillStyle = tok('ink'); g.beginPath(); g.arc(7, 8.6, 1.5, 0, 7); g.fill();
+    }
+    g.restore();
     return c;
   }
   // mũi tên chỉ chiều đi: nhọn về bên phải, MapLibre xoay theo hướng đường
@@ -7948,7 +7961,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     var places = function (a, k) { var u = a.map(short).filter(function (x, i, arr) { return arr.indexOf(x) === i; }); k = k || 3; return u.slice(0, k).join(', ') + (u.length > k ? ' và ' + (u.length - k) + ' nơi khác' : ''); };
     var IC = {
       rain: '<path d="M7 15a4 4 0 0 1 .5-8 5.5 5.5 0 0 1 10.4 1.6A3.5 3.5 0 0 1 17.5 15z"/><path d="M8 18l-1 2M12 18l-1 2M16 18l-1 2"/>',
-      cam: '<rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 11l5-3v8l-5-3"/>',
+      cam: '<path d="M16.75 12h3.632a1 1 0 0 1 .894 1.447l-2.034 4.069a1 1 0 0 1-1.708.134l-2.124-2.97"/><path d="M17.106 9.053a1 1 0 0 1 .447 1.341l-3.106 6.211a1 1 0 0 1-1.342.447L3.61 12.3a2.92 2.92 0 0 1-1.3-3.91L3.69 5.6a2.92 2.92 0 0 1 3.92-1.3z"/><path d="M2 19h3.76a2 2 0 0 0 1.8-1.1L9 15"/><path d="M2 21v-4"/><path d="M7 9h.01"/>',
       clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
       tide: '<path d="M3 10q2.25-2.5 4.5 0t4.5 0 4.5 0 4.5 0M3 15q2.25-2.5 4.5 0t4.5 0 4.5 0 4.5 0"/>',
       sim: '<path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M18 6l-2 2M8 16l-2 2"/>'
@@ -9730,7 +9743,7 @@ if (typeof module !== 'undefined') module.exports = NN;
     var _renderPlaces = renderPlaces;
     renderPlaces = function () { _renderPlaces(); chipNames(); };
     chipNames();
-    var LAY = { hot: ['spot-icon', 'spot-line', 'spot-recent'], cam: ['cam-icon'], rain: ['camrain-halo', 'camrain-dot'] };
+    var LAY = { hot: ['spot-icon', 'spot-line', 'spot-recent'], cam: ['cam-icon', 'cam-cone'], rain: ['camrain-halo', 'camrain-dot'] };
     var lv = lsGet('nn-v3-lyr', { hot: true, cam: true, rain: true });
     function applyLay() {
       if (!map || !map.getLayer) return;
@@ -9791,10 +9804,12 @@ if (typeof module !== 'undefined') module.exports = NN;
     // thanh dải màu lượng mưa nổi trên bản đồ: hiện cùng lúc với thang mưa trong thẻ Lớp (tức là khi radar thấy mưa hoặc đang mô phỏng)
     var wxOpen = false;
     function rainbar() {
-      var show = !$('rain-lg').hidden && lv.rain;
+      var show = !!lv.rain, wet0 = !$('rain-lg').hidden;
       $('v3-wx').hidden = !show; $('v3-rainbar').hidden = !(show && wxOpen);
       $('v3-wx').setAttribute('aria-expanded', String(show && wxOpen));
-      if (show) {
+      $('v3-wx').classList.toggle('dry', !wet0); $('v3-rb-dry').hidden = wet0;
+      if (show && !wet0) $('v3-wx-t').textContent = 'Không mưa';
+      if (show && wet0) {
         var rd = radarFeed(), mm = live.sim ? live.sim.rain : rd ? +rd.max_mmh || 0 : 0, w = rainWord(mm);
         $('v3-wx-t').textContent = mm >= 0.3 ? w.charAt(0).toUpperCase() + w.slice(1) : 'Mưa';
         $('v3-wx').style.setProperty('--wxc', mm >= 50 ? '#E0479E' : mm >= 10 ? '#7B3FF2' : '#2F7BFF');
