@@ -1858,7 +1858,7 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
       <div class="cc-row"><span>Thực hiện</span><b>Nhóm Nhóm</b></div>
       <div class="cc-row"><span>Dữ liệu</span><div>Radar Đài KTTV khu vực Nam Bộ, Phòng CSGT Công an TP.HCM, camera giao thông TP.HCM, OpenStreetMap, Open-Meteo, TomTom</div></div>
       <div class="cc-row"><span>Đường dây nóng</span><a class="tel" href="tel:0326080808">0326 080 808</a></div>
-      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">21/10, bản 11:10</span></div>
+      <div class="cc-row"><span>Phiên bản</span><span id="build-ver">22/10, bản 10:22</span></div>
     </div>
   </div>
   <button class="zen-btn" id="zen-btn" aria-pressed="false" aria-label="Ẩn bảng để xem trọn bản đồ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Ẩn bảng</span></button>
@@ -1944,7 +1944,7 @@ body.nav .v3-shelter, body.intro .v3-shelter, body.v3-picking .v3-shelter, body.
         </ul>
         <a class="src" href="https://giaothong.hochiminhcity.gov.vn/" target="_blank" rel="noopener">Xem camera giao thông trực tiếp của TP.HCM</a>
       </details>
-      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 21/10, bản 11:10.</span></div>
+      <div class="credit-inline"><span>Thực hiện bởi</span><b class="nhom">NHÓM NHÓM</b><span>Đồ án Đổi mới sáng tạo vì xã hội. Dữ liệu: CSGT TP.HCM, camera giao thông TP.HCM, OpenStreetMap. Phiên bản 22/10, bản 10:22.</span></div>
     </section>
 
     <!-- Chỉ đường -->
@@ -3972,8 +3972,9 @@ var NN = (function () {
   // Tốc độ trung bình nội đô (km/h) theo cấp đường: 0 cao tốc ... 6 đường nhỏ, 7 hẻm
   var SPEED = {
     // cấp 8 là phà chở xe: chậm vì tính cả lúc chờ phà (thường 5–15 phút)
-    scooter: [0, 38, 30, 27, 24, 20, 16, 12, 6],
-    moto: [0, 38, 30, 27, 24, 20, 16, 12, 6],
+    // đường nhỏ, hẻm tính chậm hơn thực tế một chút: ưu tiên đường lớn, chỉ vào hẻm khi đỡ vòng nhiều
+    scooter: [0, 38, 30, 27, 24, 20, 14, 9, 6],
+    moto: [0, 38, 30, 27, 24, 20, 14, 9, 6],
     car: [55, 42, 32, 28, 24, 18, 14, 8, 6],
     walk: [0, 4.8, 4.8, 4.8, 4.8, 4.8, 4.8, 4.8, 4]
   };
@@ -4681,7 +4682,11 @@ var NN = (function () {
   // Hệ số bám tuyến: đoạn đường nằm dọc theo đường gấp khúc coords ([[lng, lat]...], vd. tuyến của Vietmap) giữ hệ số 1,
   // các đoạn khác nhân 'off'. Chỉ nhận đoạn cùng hướng với tuyến (lệch dưới 35°) để không kéo sang đường cắt ngang.
   function pathBias(G, coords, off, radius) {
-    var b = new Float32Array(G.nSeg); b.fill(off || 1.8); radius = radius || 16;
+    // Ngoài tuyến của Vietmap: đường lớn chỉ bị phạt nhẹ (vẫn được chọn nếu đi thẳng, gọn hơn), đường nhỏ và hẻm phạt nặng
+    // để không bị kéo vào hẻm chỉ vì Vietmap (xe máy) thích đi tắt.
+    off = off || 1.8; radius = radius || 16;
+    var b = new Float32Array(G.nSeg);
+    for (var si = 0; si < G.nSeg; si++) { var cl = G.ways[G.segWay[si]][0]; b[si] = cl <= 4 ? Math.min(off, 1.2) : cl === 5 ? Math.min(off, 2) : off; }
     for (var i = 1; i < coords.length; i++) {
       var a = coords[i - 1], c = coords[i], L = dist(a[1], a[0], c[1], c[0]); if (L < 0.5) continue;
       var h = bearing(a[1], a[0], c[1], c[0]), n = Math.max(1, Math.ceil(L / 12));
@@ -6737,6 +6742,12 @@ if (typeof module !== 'undefined') module.exports = NN;
     var on = 0; r.segs.forEach(function (s) { if (vmLast.bias[s] === 1) on += G.segLen[s]; });
     return r.meters ? on / r.meters : 0;
   }
+  // tuyến "ổn": đi theo Vietmap, hoặc rời Vietmap nhưng chỉ đi trên đường lớn (cấp 1–4) thay cho đoạn hẻm Vietmap đi tắt
+  function vmOk(r) {
+    if (!vmLast || !r || !r.segs) return 0;
+    var on = 0; r.segs.forEach(function (s) { if (vmLast.bias[s] === 1 || G.ways[G.segWay[s]][0] <= 4) on += G.segLen[s]; });
+    return r.meters ? on / r.meters : 0;
+  }
   function runRoute(fit) {
     if (typeof nav !== 'undefined' && nav.on) { lastFloodKey = floodKey(); navFloodCheck(true); return; }   // đang dẫn đường: tự xử lý đổi tuyến
     if (!G || !state.A || !state.B) return;
@@ -6754,10 +6765,10 @@ if (typeof module !== 'undefined') module.exports = NN;
     if (!res.error && vmOpt(null, state.B, state.vehicle, state.A)) {
       // có tuyến Vietmap: tuyến bám đúng Vietmap lên đầu và được đề xuất (trừ khi đi qua chỗ ngập nặng)
       res.vm = true;
-      var cov = res.routes.map(vmCover), recR0 = res.routes[res.rec], badL = (NN.VEHICLES[state.vehicle] || NN.VEHICLES.car).bad;
+      var cov = res.routes.map(vmOk), recR0 = res.routes[res.rec], badL = (NN.VEHICLES[state.vehicle] || NN.VEHICLES.car).bad;
       var ord = res.routes.map(function (r, i) { return i; }).sort(function (a, b) { return (cov[b] >= 0.9) - (cov[a] >= 0.9) || res.routes[a].secs - res.routes[b].secs; });
       res.routes = ord.map(function (i) { return res.routes[i]; });
-      var k = -1; res.routes.some(function (r, i) { if (vmCover(r) >= 0.9 && r.worst < badL) { k = i; return true; } return false; });
+      var k = -1; res.routes.some(function (r, i) { if (vmOk(r) >= 0.9 && r.worst < badL) { k = i; return true; } return false; });
       res.rec = k >= 0 ? k : res.routes.indexOf(recR0);
     }
     var out = $('route-out');
@@ -6819,7 +6830,7 @@ if (typeof module !== 'undefined') module.exports = NN;
         extra += '<div class="rnote">Chỗ hay ngập: ' + esc(nm.slice(0, 4).join(', ')) + (nm.length > 4 ? '…' : '') + '</div>';
       }
       h += rainNote(rr);
-      if (vmc >= 0 && vmc < 0.9) h += '<div class="rnote sub">Có đoạn khác tuyến của Vietmap, chưa đối chiếu biển cấm. Chú ý biển báo khi đi.</div>';
+      if (vmc >= 0 && vmc < 0.9) h += '<div class="rnote sub">' + (vmOk(r) >= 0.9 ? 'Đi đường lớn thay cho đoạn hẻm Vietmap gợi ý. Chú ý biển báo khi đi.' : 'Có đoạn khác tuyến của Vietmap, chưa đối chiếu biển cấm. Chú ý biển báo khi đi.') + '</div>';
       if (r.worst >= VV.bad) extra += '<div class="warn"><b>' + esc(LEVELS[r.worst].name) + '.</b> ' + esc(r.worst <= 3 ? VV.note : LEVELS[r.worst].advice) + '</div>';
       if (extra) h += '<div class="xtra"><div>' + extra + '</div></div>';
       h += '</button>';
@@ -9381,7 +9392,7 @@ if (typeof module !== 'undefined') module.exports = NN;
       });
       // như Google Maps: tính cả kẹt xe mà tuyến khác (không qua chỗ ngập sâu) nhanh hơn rõ (từ 2 phút) thì đưa lên làm đề xuất
       var bad = (NN.VEHICLES[state.vehicle] || NN.VEHICLES.scooter).bad, cur = res.routes[res.rec], best = res.rec;
-      res.routes.forEach(function (r, ri) { if (r.worst < bad && (!res.vm || vmCover(r) >= 0.9) && r.secs + (r.trafDelay || 0) < res.routes[best].secs + (res.routes[best].trafDelay || 0)) best = ri; });
+      res.routes.forEach(function (r, ri) { if (r.worst < bad && (!res.vm || vmOk(r) >= 0.9) && r.secs + (r.trafDelay || 0) < res.routes[best].secs + (res.routes[best].trafDelay || 0)) best = ri; });
       if (best !== res.rec && !res.userPicked && cur.secs + (cur.trafDelay || 0) - (res.routes[best].secs + (res.routes[best].trafDelay || 0)) >= 120) {
         res.rec = best; state.sel = best; res.byTraffic = true;
         renderRoute(); labelsFor = null; drawRoutes(false);
