@@ -1,5 +1,5 @@
-22:00:49 restrict 40900 mục 44 giây, 10003574 byte
-22:01:47 turns 1761 mục 43 giây, 828533 byte
-22:02:02   thử https://overpass-api.de/api/interpreter HTTP 502 '# 502 Gateway Timeout\n\nThis Overpass API server is currently at capacity. All query workers are busy\nand the request queue is full.\n\n## What to do\n\nRetry your request using exponential backoff: wait a'
-22:03:07 stops 7101 mục 65 giây, 988745 byte
-22:04:12 bus 359 mục 50 giây, 6837707 byte
+22:09:27 restrict 40882 mục 38 giây, 10013615 byte
+22:09:43   thử https://overpass-api.de/api/interpreter HTTP 502 '# 502 Gateway Timeout\n\nThis Overpass API server is currently at capacity. All query workers are busy\nand the request queue is full.\n\n## What to do\n\nRetry your request using exponential backoff: wait a'
+22:10:57 turns 1760 mục 75 giây, 831154 byte
+22:12:02 stops 7099 mục 50 giây, 988561 byte
+22:13:02 bus 359 mục 46 giây, 6867099 byte
